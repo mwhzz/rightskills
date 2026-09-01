@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Noto_Sans_Bengali } from "next/font/google";
 import { AppHeader } from "@/components/app-header";
 import { SiteFooter } from "@/components/site-footer";
+import { MAINTENANCE_MODE } from "@/lib/maintenance";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -36,9 +37,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} ${notoBengali.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col font-sans">
-        <AppHeader />
+        {MAINTENANCE_MODE ? null : <AppHeader />}
         <main className="flex-1">{children}</main>
-        <SiteFooter />
+        {MAINTENANCE_MODE ? null : <SiteFooter />}
       </body>
     </html>
   );
