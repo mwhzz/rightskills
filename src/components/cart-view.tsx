@@ -2,14 +2,14 @@ import Link from "next/link";
 import { Trash2 } from "lucide-react";
 import { CourseCover } from "@/components/course-cover";
 import { buttonVariants } from "@/components/ui/button";
-import { courses } from "@/lib/courses";
 import { formatBdt } from "@/lib/format";
 import { getCart } from "@/lib/session";
 import { removeFromCartAction } from "@/app/actions";
+import { listPublishedCourses } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 
 export async function CartView() {
-  const cart = await getCart();
+  const [cart, courses] = await Promise.all([getCart(), listPublishedCourses()]);
   const items = courses.filter((course) => cart.includes(course.slug));
   const cartTotal = items.reduce((sum, course) => sum + course.priceBdt, 0);
 
@@ -18,8 +18,8 @@ export async function CartView() {
       <div className="rounded-xl border border-dashed bg-card px-6 py-16 text-center">
         <p className="font-heading text-lg font-semibold">Cart is empty</p>
         <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-          Pick a course from the catalogue. Prices are in Bangladeshi taka and
-          checkout is a demo — nothing is charged.
+          Pick a course from the catalogue. Pay by bKash or Nagad send-money;
+          access unlocks after an admin confirms your TrxID.
         </p>
         <Link
           href="/courses"
@@ -91,8 +91,7 @@ export async function CartView() {
           Checkout
         </Link>
         <p className="mt-3 text-xs leading-5 text-muted-foreground">
-          Pay with bKash, Nagad, or card. This is a demo — access unlocks
-          without a real charge.
+          You will send money to our bKash or Nagad number, then paste the TrxID.
         </p>
       </aside>
     </div>

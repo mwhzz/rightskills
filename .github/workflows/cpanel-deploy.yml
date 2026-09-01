@@ -21,9 +21,20 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+        env:
+          DATABASE_URL: mysql://build:build@127.0.0.1:3306/build
+          SESSION_SECRET: github-actions-build-secret-please-override
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+        env:
+          DATABASE_URL: mysql://build:build@127.0.0.1:3306/build
 
       - name: Build
         run: npm run build
+        env:
+          DATABASE_URL: mysql://build:build@127.0.0.1:3306/build
+          SESSION_SECRET: github-actions-build-secret-please-override
 
       - name: Upload .next and trigger flag over FTP
         env:

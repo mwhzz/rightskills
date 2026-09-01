@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { CourseCatalog } from "@/components/course-catalog";
 import { categories } from "@/lib/courses";
+import { listPublishedCourses } from "@/lib/queries";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Courses",
@@ -22,6 +25,7 @@ export default async function CoursesPage({
   const initialCategory = categories.some((item) => item.id === params.category)
     ? params.category
     : undefined;
+  const courses = await listPublishedCourses();
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
@@ -35,6 +39,7 @@ export default async function CoursesPage({
         </p>
       </div>
       <CourseCatalog
+        courses={courses}
         query={params.q ?? ""}
         category={initialCategory ?? "all"}
         level={params.level ?? "all"}

@@ -40,8 +40,9 @@ trap 'rmdir "$LOCKDIR" 2>/dev/null || true' EXIT
   git reset --hard origin/main
 
   npm install
-
-  mkdir -p tmp
+  npx prisma generate
+  npx prisma migrate deploy
+  mkdir -p uploads/lessons tmp
   touch tmp/restart.txt
 
   echo "===== $(date -Is) done ====="

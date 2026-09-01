@@ -22,7 +22,6 @@ export function CoursePlayer({
   const active =
     lessons.find((lesson) => lesson.id === activeLessonId) ?? lessons[0];
   const doneSet = new Set(completed);
-  const activeDone = doneSet.has(active.id);
 
   if (!owned) {
     return (
@@ -32,7 +31,8 @@ export function CoursePlayer({
           This course is locked
         </p>
         <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-          Purchase {course.title} to watch lessons and track progress.
+          Purchase {course.title} and wait for payment confirmation to watch
+          lessons.
         </p>
         <Link
           href={`/courses/${course.slug}`}
@@ -43,6 +43,19 @@ export function CoursePlayer({
       </div>
     );
   }
+
+  if (!active) {
+    return (
+      <div className="rounded-xl border bg-card px-6 py-16 text-center">
+        <p className="font-heading text-lg font-semibold">No lessons yet</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          The teacher has not added lessons to this course.
+        </p>
+      </div>
+    );
+  }
+
+  const activeDone = doneSet.has(active.id);
 
   return (
     <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
@@ -82,23 +95,38 @@ export function CoursePlayer({
         </nav>
       </aside>
       <section className="min-w-0">
-        <div className="flex aspect-video items-center justify-center rounded-xl bg-zinc-950 text-center text-white">
-          <div className="px-6">
-            <p className="text-xs tracking-[0.2em] text-white/50 uppercase">
-              Lesson player
-            </p>
-            <p className="mt-2 font-heading text-xl font-semibold text-balance">
-              {active.title}
-            </p>
-            <p className="mt-1 text-sm text-white/60">
-              {active.moduleTitle} · {active.durationMin} min
-            </p>
-          </div>
+        <div className="overflow-hidden rounded-xl bg-zinc-950">
+          {active.videoPath ? (
+            <video
+              key={active.id}
+              className="aspect-video w-full"
+              controls
+              playsInline
+              src={`/api/lessons/${active.id}/video`}
+            />
+          ) : (
+            <div className="flex aspect-video items-center justify-center text-center text-white">
+              <div className="px-6">
+                <p className="text-xs tracking-[0.2em] text-white/50 uppercase">
+                  Lesson player
+                </p>
+                <p className="mt-2 font-heading text-xl font-semibold text-balance">
+                  {active.title}
+                </p>
+                <p className="mt-1 text-sm text-white/60">
+                  {active.moduleTitle} · {active.durationMin} min
+                </p>
+                <p className="mt-3 text-xs text-white/40">
+                  Video not uploaded yet. Read the notes below.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
         <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="font-heading text-2xl font-semibold">{active.title}</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground whitespace-pre-wrap">
               {active.body}
             </p>
           </div>

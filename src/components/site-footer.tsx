@@ -51,7 +51,8 @@ export function SiteFooter() {
             </li>
           </ul>
           <p className="mt-6 text-xs leading-5 text-muted-foreground">
-            Demo checkout uses bKash, Nagad, and card — no real payment is taken.
+            Pay with bKash or Nagad Send Money. Courses unlock after we confirm
+            your TrxID.
           </p>
         </div>
       </div>

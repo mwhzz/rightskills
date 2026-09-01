@@ -17,6 +17,7 @@ export type Lesson = {
   durationMin: number;
   preview?: boolean;
   body: string;
+  videoPath?: string | null;
 };
 
 export type Module = {

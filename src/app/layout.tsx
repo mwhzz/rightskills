@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Noto_Sans_Bengali } from "next/font/google";
+import { headers } from "next/headers";
 import { AppHeader } from "@/components/app-header";
 import { SiteFooter } from "@/components/site-footer";
 import { MaintenanceScreen } from "@/components/maintenance-screen";
-import { MAINTENANCE_MODE } from "@/lib/maintenance";
+import { isMaintenanceBypass, MAINTENANCE_MODE } from "@/lib/maintenance";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -31,17 +32,23 @@ export const metadata: Metadata = {
     "Buy job-ready skill courses in Bangladesh. Learn web development, design, English, Excel, and freelance — prices in taka, checkout with bKash or Nagad.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const pathname = (await headers()).get("x-pathname") ?? "";
+  const isAdmin = pathname.startsWith("/admin");
+  const showMaintenance = MAINTENANCE_MODE && !isMaintenanceBypass(pathname);
+
   return (
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${notoBengali.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col font-sans">
-        {MAINTENANCE_MODE ? (
+        {showMaintenance ? (
           <main className="flex-1">
             <MaintenanceScreen />
           </main>
+        ) : isAdmin ? (
+          <main className="flex-1">{children}</main>
         ) : (
           <>
             <AppHeader />

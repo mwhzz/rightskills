@@ -9,7 +9,8 @@ import {
 } from "lucide-react";
 import { CourseCard } from "@/components/course-card";
 import { buttonVariants } from "@/components/ui/button";
-import { categories, getFeaturedCourses } from "@/lib/courses";
+import { categories } from "@/lib/courses";
+import { listFeaturedCourses } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 
 const stats = [
@@ -31,7 +32,7 @@ const reasons = [
   },
   {
     title: "Pay the way you already pay",
-    body: "Checkout with bKash, Nagad, or card. This preview is a demo — no real charge, access still unlocks.",
+    body: "Checkout with bKash or Nagad send-money. An admin confirms the TrxID, then your courses unlock.",
     icon: Banknote,
   },
 ];
@@ -57,8 +58,10 @@ const quotes = [
   },
 ];
 
-export default function HomePage() {
-  const featured = getFeaturedCourses();
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  const featured = await listFeaturedCourses();
 
   return (
     <div>

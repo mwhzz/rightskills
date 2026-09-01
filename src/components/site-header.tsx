@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, ShoppingBag, BookOpen } from "lucide-react";
+import { Menu, ShoppingBag, BookOpen, LayoutDashboard } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -12,15 +12,24 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { logoutAction } from "@/app/actions";
 import { cn } from "@/lib/utils";
+import type { Role } from "@prisma/client";
 
 const links = [
   { href: "/courses", label: "Courses" },
   { href: "/learn", label: "My learning" },
 ];
 
-export function SiteHeader({ cartCount = 0 }: { cartCount?: number }) {
+export function SiteHeader({
+  cartCount = 0,
+  user,
+}: {
+  cartCount?: number;
+  user?: { name: string; role: Role } | null;
+}) {
   const pathname = usePathname();
+  const staff = user?.role === "admin" || user?.role === "teacher";
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/80 bg-background/90 backdrop-blur-md">
@@ -52,6 +61,19 @@ export function SiteHeader({ cartCount = 0 }: { cartCount?: number }) {
               {link.label}
             </Link>
           ))}
+          {user ? (
+            <Link
+              href="/account/orders"
+              className={cn(
+                "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                pathname.startsWith("/account")
+                  ? "bg-muted text-foreground"
+                  : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+              )}
+            >
+              Orders
+            </Link>
+          ) : null}
         </nav>
 
         <div className="flex items-center gap-1.5">
@@ -70,15 +92,32 @@ export function SiteHeader({ cartCount = 0 }: { cartCount?: number }) {
               </span>
             ) : null}
           </Link>
-          <Link
-            href="/courses"
-            className={cn(
-              buttonVariants({ size: "sm" }),
-              "hidden sm:inline-flex"
-            )}
-          >
-            Browse courses
-          </Link>
+          {staff ? (
+            <Link
+              href="/admin"
+              className={cn(
+                buttonVariants({ variant: "outline", size: "sm" }),
+                "hidden sm:inline-flex"
+              )}
+            >
+              <LayoutDashboard data-icon="inline-start" />
+              Admin
+            </Link>
+          ) : null}
+          {user ? (
+            <form action={logoutAction} className="hidden sm:block">
+              <button type="submit" className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}>
+                Log out
+              </button>
+            </form>
+          ) : (
+            <Link
+              href="/login"
+              className={cn(buttonVariants({ size: "sm" }), "hidden sm:inline-flex")}
+            >
+              Log in
+            </Link>
+          )}
 
           <Sheet>
             <SheetTrigger
@@ -98,10 +137,10 @@ export function SiteHeader({ cartCount = 0 }: { cartCount?: number }) {
                 <SheetTitle>Menu</SheetTitle>
               </SheetHeader>
               <div className="flex flex-col gap-1 px-4">
-                <Link
-                  href="/"
-                  className="rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted"
-                >
+                {user ? (
+                  <p className="px-3 py-2 text-sm text-muted-foreground">{user.name}</p>
+                ) : null}
+                <Link href="/" className="rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted">
                   Home
                 </Link>
                 {links.map((link) => (
@@ -113,20 +152,35 @@ export function SiteHeader({ cartCount = 0 }: { cartCount?: number }) {
                     {link.label}
                   </Link>
                 ))}
-                <Link
-                  href="/cart"
-                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted"
-                >
+                <Link href="/cart" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted">
                   <ShoppingBag className="size-4" />
                   Cart {cartCount > 0 ? `(${cartCount})` : ""}
                 </Link>
-                <Link
-                  href="/learn"
-                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted"
-                >
+                <Link href="/learn" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted">
                   <BookOpen className="size-4" />
                   Continue learning
                 </Link>
+                {user ? (
+                  <Link href="/account/orders" className="rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted">
+                    My orders
+                  </Link>
+                ) : null}
+                {staff ? (
+                  <Link href="/admin" className="rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted">
+                    Admin panel
+                  </Link>
+                ) : null}
+                {user ? (
+                  <form action={logoutAction}>
+                    <button type="submit" className="w-full rounded-lg px-3 py-2 text-left text-sm font-medium hover:bg-muted">
+                      Log out
+                    </button>
+                  </form>
+                ) : (
+                  <Link href="/login" className="rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted">
+                    Log in
+                  </Link>
+                )}
               </div>
             </SheetContent>
           </Sheet>

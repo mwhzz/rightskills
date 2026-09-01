@@ -1,15 +1,10 @@
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { CourseCard } from "@/components/course-card";
-import {
-  categories,
-  courses,
-  levels,
-  type CategoryId,
-  type Level,
-} from "@/lib/courses";
+import { categories, levels, type CategoryId, type Level } from "@/lib/courses";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import type { Course } from "@/lib/courses";
 
 type SortId = "popular" | "price-asc" | "price-desc" | "rating";
 
@@ -23,11 +18,13 @@ function isSort(value: string | undefined): value is SortId {
 }
 
 export function CourseCatalog({
+  courses,
   query = "",
   category = "all",
   level = "all",
   sort = "popular",
 }: {
+  courses: Course[];
   query?: string;
   category?: string;
   level?: string;
@@ -76,10 +73,7 @@ export function CourseCatalog({
               aria-label="Search courses"
             />
           </div>
-          <button
-            type="submit"
-            className={cn(buttonVariants({ size: "lg" }), "h-10")}
-          >
+          <button type="submit" className={cn(buttonVariants({ size: "lg" }), "h-10")}>
             Search
           </button>
         </div>
@@ -127,10 +121,7 @@ export function CourseCatalog({
               <option value="price-desc">Price: high to low</option>
             </select>
           </label>
-          <Link
-            href="/courses"
-            className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
-          >
+          <Link href="/courses" className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}>
             Reset
           </Link>
         </div>

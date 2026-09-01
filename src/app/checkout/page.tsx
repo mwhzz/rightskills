@@ -1,18 +1,25 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { CheckoutForm } from "@/components/checkout-form";
-import { courses } from "@/lib/courses";
 import { formatBdt } from "@/lib/format";
 import { getCart } from "@/lib/session";
+import { getSession } from "@/lib/auth";
+import { listPublishedCourses } from "@/lib/queries";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+
+export const dynamic = "force-dynamic";
 
 export default async function CheckoutPage({
   searchParams,
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
+  const session = await getSession();
+  if (!session) redirect("/login?next=/checkout");
+
   const { error } = await searchParams;
-  const cart = await getCart();
+  const [cart, courses] = await Promise.all([getCart(), listPublishedCourses()]);
   const items = courses.filter((course) => cart.includes(course.slug));
   const cartTotal = items.reduce((sum, course) => sum + course.priceBdt, 0);
 
@@ -22,7 +29,8 @@ export default async function CheckoutPage({
         Checkout
       </h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        Demo payment — bKash, Nagad, or card. No money is collected.
+        Place the order, then send the exact amount. Your courses unlock after
+        we confirm the TrxID.
       </p>
 
       {items.length === 0 ? (

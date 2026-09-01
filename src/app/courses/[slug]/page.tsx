@@ -9,12 +9,18 @@ import { CourseCard } from "@/components/course-card";
 import {
   categoryLabel,
   courseHours,
-  courses,
-  getCourse,
   lessonCount,
 } from "@/lib/courses";
 import { formatBdt, formatStudents } from "@/lib/format";
-import { getCart, getOwnedSlugs } from "@/lib/session";
+import { getCart } from "@/lib/session";
+import { getSession } from "@/lib/auth";
+import {
+  getOwnedSlugsForUser,
+  getPublishedCourse,
+  listPublishedCourses,
+} from "@/lib/queries";
+
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
@@ -22,7 +28,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const course = getCourse(slug);
+  const course = await getPublishedCourse(slug);
   if (!course) return { title: "Course" };
   return {
     title: course.title,
@@ -36,14 +42,16 @@ export default async function CourseDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const course = getCourse(slug);
+  const course = await getPublishedCourse(slug);
   if (!course) notFound();
 
-  const [cart, ownedSlugs] = await Promise.all([getCart(), getOwnedSlugs()]);
+  const [cart, session] = await Promise.all([getCart(), getSession()]);
+  const ownedSlugs = session ? await getOwnedSlugsForUser(session.id) : [];
   const owned = ownedSlugs.includes(course.slug);
   const inCart = cart.includes(course.slug);
 
-  const related = courses
+  const all = await listPublishedCourses();
+  const related = all
     .filter(
       (item) => item.slug !== course.slug && item.category === course.category
     )
@@ -187,7 +195,7 @@ export default async function CourseDetailPage({
               ) : null}
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              One-time payment · lifetime access on this browser
+              One-time payment · access on your account after admin confirms TrxID
             </p>
             <div className="mt-5 space-y-2">
               <AddToCartButton
@@ -201,7 +209,7 @@ export default async function CourseDetailPage({
               <li>{lessonCount(course)} on-demand lessons</li>
               <li>{courseHours(course)} hours of teaching</li>
               <li>Taught in {course.language}</li>
-              <li>Pay with bKash, Nagad, or card</li>
+              <li>Pay with bKash or Nagad (send money)</li>
             </ul>
           </div>
         </aside>

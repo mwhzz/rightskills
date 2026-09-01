@@ -1,0 +1,150 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  student
+  teacher
+  admin
+}
+
+enum OrderStatus {
+  pending
+  awaiting_review
+  paid
+  rejected
+}
+
+enum PaymentMethod {
+  bkash
+  nagad
+  card
+}
+
+model User {
+  id            String           @id @default(cuid())
+  phone         String           @unique
+  passwordHash  String
+  name          String
+  email         String?
+  role          Role             @default(student)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  coursesTaught Course[]         @relation("TeacherCourses")
+  orders        Order[]
+  enrollments   Enrollment[]
+  progress      LessonProgress[]
+}
+
+model Course {
+  id                 String       @id @default(cuid())
+  slug               String       @unique
+  title              String
+  banglaTitle        String
+  subtitle           String       @db.Text
+  description        String       @db.Text
+  category           String
+  level              String
+  language           String
+  priceBdt           Int
+  originalPriceBdt   Int?
+  rating             Float        @default(0)
+  reviewCount        Int          @default(0)
+  students           Int          @default(0)
+  featured           Boolean      @default(false)
+  published          Boolean      @default(true)
+  outcomes           Json
+  instructorName     String
+  instructorTitle    String
+  instructorBio      String       @db.Text
+  instructorInitials String
+  coverFrom          String
+  coverTo            String
+  coverPattern       String
+  teacherId          String?
+  teacher            User?        @relation("TeacherCourses", fields: [teacherId], references: [id], onDelete: SetNull)
+  modules            Module[]
+  enrollments        Enrollment[]
+  orderItems         OrderItem[]
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+}
+
+model Module {
+  id        String   @id @default(cuid())
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title     String
+  sortOrder Int      @default(0)
+  lessons   Lesson[]
+}
+
+model Lesson {
+  id          String           @id @default(cuid())
+  moduleId    String
+  module      Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  title       String
+  durationMin Int              @default(0)
+  preview     Boolean          @default(false)
+  body        String           @db.Text
+  videoPath   String?
+  sortOrder   Int              @default(0)
+  progress    LessonProgress[]
+}
+
+model Order {
+  id        String        @id @default(cuid())
+  orderId   String        @unique
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalBdt  Int
+  method    PaymentMethod
+  status    OrderStatus   @default(pending)
+  trxId     String?
+  items     OrderItem[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model OrderItem {
+  id       String @id @default(cuid())
+  orderId  String
+  order    Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id])
+  priceBdt Int
+}
+
+model Enrollment {
+  id        String   @id @default(cuid())
+  userId    String
+  courseId  String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, courseId])
+}
+
+model LessonProgress {
+  id        String  @id @default(cuid())
+  userId    String
+  lessonId  String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson    Lesson  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  completed Boolean @default(true)
+
+  @@unique([userId, lessonId])
+}
+
+model Setting {
+  id                String @id @default("default")
+  bkashNumber       String @default("")
+  nagadNumber       String @default("")
+  payInstructions   String @db.Text
+}
