@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Noto_Sans_Bengali } from "next/font/google";
 import { AppHeader } from "@/components/app-header";
 import { SiteFooter } from "@/components/site-footer";
+import { MaintenanceScreen } from "@/components/maintenance-screen";
 import { MAINTENANCE_MODE } from "@/lib/maintenance";
 import "./globals.css";
 
@@ -37,9 +38,17 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} ${notoBengali.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col font-sans">
-        {MAINTENANCE_MODE ? null : <AppHeader />}
-        <main className="flex-1">{children}</main>
-        {MAINTENANCE_MODE ? null : <SiteFooter />}
+        {MAINTENANCE_MODE ? (
+          <main className="flex-1">
+            <MaintenanceScreen />
+          </main>
+        ) : (
+          <>
+            <AppHeader />
+            <main className="flex-1">{children}</main>
+            <SiteFooter />
+          </>
+        )}
       </body>
     </html>
   );
