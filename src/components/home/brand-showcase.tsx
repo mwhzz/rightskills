@@ -45,11 +45,13 @@ export function BrandShowcase({ brands }: { brands: StudioBrand[] }) {
           )}
         >
           <div className="relative aspect-[16/10] lg:aspect-auto lg:min-h-[22rem]">
-            <img
-              src={item.image}
-              alt={`${item.name} brand photography`}
-              className="absolute inset-0 h-full w-full object-cover"
-            />
+            {i === index ? (
+              <img
+                src={item.image}
+                alt={`${item.name} brand photography`}
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            ) : null}
             <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(20,12,6,0.45),transparent_45%)]" />
             <p className="absolute bottom-4 left-5 font-heading text-sm tracking-[0.18em] text-white/80 uppercase">
               {String(i + 1).padStart(2, "0")} / {String(brands.length).padStart(2, "0")}

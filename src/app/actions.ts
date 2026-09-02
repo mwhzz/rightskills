@@ -16,7 +16,11 @@ import {
   normalizePin,
 } from "@/lib/auth";
 import { getCart, setCartCookie } from "@/lib/session";
-import { getOwnedSlugsForUser, getPublishedCourse } from "@/lib/queries";
+import {
+  clearPublicCache,
+  getOwnedSlugsForUser,
+  getPublishedCourse,
+} from "@/lib/queries";
 import { makeOrderId, type PaymentMethod } from "@/lib/store";
 import {
   isUploadFile,
@@ -309,6 +313,7 @@ export async function saveSettingsAction(
       homeBanners: "[]",
     },
   });
+  clearPublicCache();
   redirect("/admin/settings?saved=1");
 }
 
@@ -366,6 +371,7 @@ export async function saveHomeBannersAction(formData: FormData) {
       homeBanners: JSON.stringify(banners),
     },
   });
+  clearPublicCache();
   redirect("/admin/banners?saved=1");
 }
 
@@ -502,6 +508,7 @@ export async function saveCourseAction(
       where: { id },
       data: { ...data, slug: existing.slug },
     });
+    clearPublicCache();
     redirect(`/admin/courses/${id}`);
   }
 
@@ -510,6 +517,7 @@ export async function saveCourseAction(
   const created = await prisma.course.create({
     data: { ...data, slug },
   });
+  clearPublicCache();
   redirect(`/admin/courses/${created.id}`);
 }
 

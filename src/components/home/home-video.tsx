@@ -51,7 +51,7 @@ export function HomeVideo({
         muted
         loop
         playsInline
-        preload="metadata"
+        preload="none"
         onCanPlay={() => setReady(true)}
         onPlay={() => setPaused(false)}
         onPause={() => setPaused(true)}

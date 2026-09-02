@@ -8,7 +8,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   --font-heading: var(--font-heading-face), var(--font-sans), ui-sans-serif, sans-serif;
   --animate-rs-fade-up: rs-fade-up 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
   --animate-rs-float: rs-float 7s ease-in-out infinite;

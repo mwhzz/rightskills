@@ -64,7 +64,7 @@ export function mapCourse(row: CourseRecord): Course {
             title: lesson.title,
             durationMin: lesson.durationMin,
             preview: lesson.preview,
-            body: lesson.body,
+            body: lesson.body ?? "",
             videoPath: lesson.videoPath,
             resources: (lesson.resources ?? []).map((resource) => ({
               id: resource.id,

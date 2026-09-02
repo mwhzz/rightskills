@@ -28,6 +28,22 @@ export type HomeStats = {
   rating: number | null;
 };
 
+const PUBLIC_TTL_MS = 45_000;
+const mem = new Map<string, { exp: number; data: unknown }>();
+
+export function clearPublicCache() {
+  mem.clear();
+}
+
+async function cached<T>(key: string, ttlMs: number, fn: () => Promise<T>): Promise<T> {
+  const now = Date.now();
+  const hit = mem.get(key);
+  if (hit && hit.exp > now) return hit.data as T;
+  const data = await fn();
+  mem.set(key, { exp: now + ttlMs, data });
+  return data;
+}
+
 const courseInclude = {
   modules: {
     include: {
@@ -40,63 +56,91 @@ const courseInclude = {
   },
 };
 
+/** Enough for cards/rails. Skips lesson bodies, videos, and files. */
+const cardInclude = {
+  modules: {
+    orderBy: { sortOrder: "asc" as const },
+    select: {
+      id: true,
+      title: true,
+      sortOrder: true,
+      lessons: {
+        orderBy: { sortOrder: "asc" as const },
+        select: {
+          id: true,
+          title: true,
+          durationMin: true,
+          preview: true,
+        },
+      },
+    },
+  },
+};
+
+async function loadPublishedCardRows() {
+  return cached("published-card-rows", PUBLIC_TTL_MS, () =>
+    prisma.course.findMany({
+      where: { published: true },
+      include: cardInclude,
+    })
+  );
+}
+
+function mapCard(
+  row: Awaited<ReturnType<typeof loadPublishedCardRows>>[number]
+): Course {
+  return mapCourse(row as unknown as CourseRecord);
+}
+
 export async function listPublishedCourses(): Promise<Course[]> {
-  const rows = await prisma.course.findMany({
-    where: { published: true },
-    include: courseInclude,
-    orderBy: { students: "desc" },
-  });
-  return rows.map((row) => mapCourse(row as CourseRecord));
+  const rows = await loadPublishedCardRows();
+  return [...rows]
+    .sort((a, b) => b.students - a.students)
+    .map(mapCard);
 }
 
 export async function listFeaturedCourses(take = 6): Promise<Course[]> {
-  const rows = await prisma.course.findMany({
-    where: { published: true, featured: true },
-    include: courseInclude,
-    orderBy: { students: "desc" },
-    take,
-  });
-  return rows.map((row) => mapCourse(row as CourseRecord));
+  const rows = await loadPublishedCardRows();
+  return rows
+    .filter((row) => row.featured)
+    .sort((a, b) => b.students - a.students)
+    .slice(0, take)
+    .map(mapCard);
 }
 
 export async function listNewestCourses(take = 3): Promise<Course[]> {
-  const rows = await prisma.course.findMany({
-    where: { published: true },
-    include: courseInclude,
-    orderBy: { createdAt: "desc" },
-    take,
-  });
-  return rows.map((row) => mapCourse(row as CourseRecord));
+  const rows = await loadPublishedCardRows();
+  return [...rows]
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+    .slice(0, take)
+    .map(mapCard);
 }
 
 export async function listPopularCourses(take = 3): Promise<Course[]> {
-  const rows = await prisma.course.findMany({
-    where: { published: true },
-    include: courseInclude,
-    orderBy: { students: "desc" },
-    take,
-  });
-  return rows.map((row) => mapCourse(row as CourseRecord));
+  return (await listPublishedCourses()).slice(0, take);
 }
 
 export const getHomeStats = cache(async (): Promise<HomeStats> => {
-  const [students, courses, ratingAgg] = await Promise.all([
-    prisma.user.count({ where: { role: "student" } }),
-    prisma.course.count({ where: { published: true } }),
-    prisma.course.aggregate({
-      where: { published: true, reviewCount: { gt: 0 } },
-      _avg: { rating: true },
-    }),
-  ]);
-  return {
-    students,
-    courses,
-    rating: ratingAgg._avg.rating,
-  };
+  return cached("home-stats", PUBLIC_TTL_MS, async () => {
+    const [students, courses, ratingAgg] = await Promise.all([
+      prisma.user.count({ where: { role: "student" } }),
+      prisma.course.count({ where: { published: true } }),
+      prisma.course.aggregate({
+        where: { published: true, reviewCount: { gt: 0 } },
+        _avg: { rating: true },
+      }),
+    ]);
+    return {
+      students,
+      courses,
+      rating: ratingAgg._avg.rating,
+    };
+  });
 });
 
 export const getHomepageLearning = cache(
   async (userId: string): Promise<HomepageLearning> => {
+    return cached(`learn:${userId}`, 20_000, async () => {
     const [enrollments, progressRows, openOrderCount] = await Promise.all([
       prisma.enrollment.findMany({
         where: { userId },
@@ -167,6 +211,7 @@ export const getHomepageLearning = cache(
         : null,
       openOrderCount,
     };
+    });
   }
 );
 
@@ -204,16 +249,18 @@ export async function getHomeBanners(): Promise<HomeBanner[]> {
 }
 
 export async function getSettings() {
-  return prisma.setting.upsert({
-    where: { id: "default" },
-    update: {},
-    create: {
-      id: "default",
-      bkashNumber: "",
-      nagadNumber: "",
-      payInstructions:
-        "Send the exact amount to the number below. Use your order ID as the reference, then paste the TrxID on your orders page.",
-      homeBanners: "[]",
-    },
+  return cached("settings", PUBLIC_TTL_MS, async () => {
+    const existing = await prisma.setting.findUnique({ where: { id: "default" } });
+    if (existing) return existing;
+    return prisma.setting.create({
+      data: {
+        id: "default",
+        bkashNumber: "",
+        nagadNumber: "",
+        payInstructions:
+          "Send the exact amount to the number below. Use your order ID as the reference, then paste the TrxID on your orders page.",
+        homeBanners: "[]",
+      },
+    });
   });
 }

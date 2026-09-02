@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Bricolage_Grotesque, Figtree, Geist_Mono } from "next/font/google";
+import { Bricolage_Grotesque, Figtree } from "next/font/google";
 import { headers } from "next/headers";
 import { AppChrome } from "@/components/app-chrome";
 import { MaintenanceScreen } from "@/components/maintenance-screen";
@@ -10,16 +10,13 @@ import "./globals.css";
 const sans = Figtree({
   variable: "--font-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const heading = Bricolage_Grotesque({
   variable: "--font-heading-face",
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -38,7 +35,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${sans.variable} ${heading.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${sans.variable} ${heading.variable} h-full antialiased`}
     >
       <body className="flex h-full min-h-full flex-col font-sans">
         {showMaintenance ? (

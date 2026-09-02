@@ -70,6 +70,8 @@ export function Instructors() {
                 <img
                   src={person.photo}
                   alt=""
+                  loading="lazy"
+                  decoding="async"
                   className="size-11 shrink-0 rounded-full object-cover"
                 />
                 <span className="truncate text-base">

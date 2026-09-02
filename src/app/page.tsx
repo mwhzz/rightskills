@@ -78,12 +78,7 @@ export default async function HomePage() {
 
   return (
     <div className="overflow-x-hidden">
-      <section className="relative overflow-hidden">
-        <BackgroundVideo
-          src={brand.heroBackground}
-          label="Learner working on a laptop"
-          wash="light"
-        />
+      <section className="relative overflow-hidden bg-[linear-gradient(180deg,#fffaf5_0%,#fff7f0_45%,#fffaf5_100%)]">
         <div aria-hidden className="pointer-events-none absolute inset-0">
           <div className="absolute -top-16 right-[-12%] h-64 w-64 rounded-full bg-primary/18 blur-3xl animate-rs-glow sm:h-80 sm:w-80" />
           <div className="absolute -bottom-20 left-[-10%] h-52 w-52 rounded-full bg-primary/10 blur-3xl animate-rs-float" />
