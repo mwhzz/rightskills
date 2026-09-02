@@ -48,6 +48,7 @@ jobs:
           sudo apt-get install -y lftp
           mkdir -p tmp
           date -Is > tmp/deploy.flag
+          date -Is > tmp/restart.txt
           lftp -c "
             set ftp:ssl-force true
             set ftp:ssl-protect-data true
@@ -56,10 +57,11 @@ jobs:
             set net:timeout 30
             set ftp:passive-mode true
             open -u righwail --env-password ftp://198.54.116.49:21
-            mkdir -p /rightskills/.next
-            mkdir -p /rightskills/tmp
+            mkdir -fp /rightskills/.next || true
+            mkdir -fp /rightskills/tmp || true
             mirror -R --parallel=4 --delete .next /rightskills/.next
             put tmp/deploy.flag -o /rightskills/tmp/deploy.flag
+            put tmp/restart.txt -o /rightskills/tmp/restart.txt
             bye
           "
 

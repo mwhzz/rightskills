@@ -5,7 +5,7 @@ const next = require("next");
 const port = parseInt(process.env.PORT, 10) || 3000;
 const app = next({ dev: false });
 const handle = app.getRequestHandler();
-const MAINTENANCE_MODE = true;
+const MAINTENANCE_MODE = process.env.MAINTENANCE_MODE === "true";
 
 function isMaintenanceBypass(pathname) {
   return (

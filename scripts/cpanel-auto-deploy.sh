@@ -30,11 +30,13 @@ trap 'rmdir "$LOCKDIR" 2>/dev/null || true' EXIT
 {
   echo "===== $(date -Is) start ====="
 
-  rm -f "$FLAG"
-
   # shellcheck disable=SC1090
   source "$VENV"
   cd "$APP"
+  mkdir -p uploads/lessons tmp
+
+  # Pick up the GitHub-uploaded .next even if git/npm fail later.
+  touch tmp/restart.txt
 
   git fetch origin main
   git reset --hard origin/main
@@ -44,6 +46,7 @@ trap 'rmdir "$LOCKDIR" 2>/dev/null || true' EXIT
   npx prisma migrate deploy
   mkdir -p uploads/lessons tmp
   touch tmp/restart.txt
+  rm -f "$FLAG"
 
   echo "===== $(date -Is) done ====="
 } >>"$LOG" 2>&1
