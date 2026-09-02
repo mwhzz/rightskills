@@ -410,10 +410,10 @@ export async function setUserPinAction(formData: FormData) {
 export type SaveCourseState = { error: string } | null;
 
 const HEX = /^#[0-9A-Fa-f]{6}$/;
-const categoryIds = new Set(categories.map((item) => item.id));
-const levelSet = new Set(levels);
-const languageSet = new Set(["English", "Bangla", "Bangla + English"]);
-const patternSet = new Set(["grid", "dots", "waves"]);
+const categoryIds = new Set<string>(categories.map((item) => item.id));
+const levelSet = new Set<string>(levels);
+const languageSet = new Set<string>(["English", "Bangla", "Bangla + English"]);
+const patternSet = new Set<string>(["grid", "dots", "waves"]);
 
 export async function saveCourseAction(
   _prev: SaveCourseState,
@@ -447,7 +447,7 @@ export async function saveCourseAction(
   if (title.length < 3) return { error: "Give the course a title of at least 3 characters." };
   if (!slug) return { error: "Add a URL slug, or type a title so we can make one." };
   if (!categoryIds.has(category)) return { error: "Pick a valid category." };
-  if (!levelSet.has(level as (typeof levels)[number])) return { error: "Pick a valid level." };
+  if (!levelSet.has(level)) return { error: "Pick a valid level." };
   if (!languageSet.has(language)) return { error: "Pick a valid language." };
   if (!Number.isFinite(priceBdt) || priceBdt < 1) {
     return { error: "Set a price of at least ৳1." };

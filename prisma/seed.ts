@@ -1,6 +1,6 @@
 import { PrismaClient, Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { courses } from "../src/lib/courses.ts";
+import { courses } from "../src/lib/courses";
 
 const prisma = new PrismaClient();
 
@@ -29,6 +29,7 @@ async function main() {
       nagadNumber: "01800000000",
       payInstructions:
         "Send Money the exact order total. Put the order ID in the reference. Then open My orders and paste the TrxID.",
+      homeBanners: "[]",
     },
   });
 
