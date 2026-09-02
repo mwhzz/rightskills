@@ -11,6 +11,12 @@ export type CategoryId = (typeof categories)[number]["id"];
 export type Level = "Beginner" | "Intermediate" | "Advanced";
 export type CourseLanguage = "Bangla" | "English" | "Bangla + English";
 
+export type LessonResourceFile = {
+  id: string;
+  name: string;
+  sizeBytes: number;
+};
+
 export type Lesson = {
   id: string;
   title: string;
@@ -18,6 +24,7 @@ export type Lesson = {
   preview?: boolean;
   body: string;
   videoPath?: string | null;
+  resources?: LessonResourceFile[];
 };
 
 export type Module = {
@@ -600,3 +607,9 @@ export function categoryLabel(id: CategoryId) {
 }
 
 export const levels: Level[] = ["Beginner", "Intermediate", "Advanced"];
+export const courseLanguages: CourseLanguage[] = [
+  "English",
+  "Bangla",
+  "Bangla + English",
+];
+export const coverPatterns = ["grid", "dots", "waves"] as const;

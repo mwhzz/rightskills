@@ -1,14 +1,19 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Noto_Sans_Bengali } from "next/font/google";
+import { Bricolage_Grotesque, Figtree, Geist_Mono } from "next/font/google";
 import { headers } from "next/headers";
-import { AppHeader } from "@/components/app-header";
-import { SiteFooter } from "@/components/site-footer";
+import { AppChrome } from "@/components/app-chrome";
 import { MaintenanceScreen } from "@/components/maintenance-screen";
 import { isMaintenanceBypass, MAINTENANCE_MODE } from "@/lib/maintenance";
+import { brand } from "@/lib/brand";
 import "./globals.css";
 
-const geistSans = Geist({
+const sans = Figtree({
   variable: "--font-sans",
+  subsets: ["latin"],
+});
+
+const heading = Bricolage_Grotesque({
+  variable: "--font-heading-face",
   subsets: ["latin"],
 });
 
@@ -17,19 +22,12 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const notoBengali = Noto_Sans_Bengali({
-  variable: "--font-bn",
-  subsets: ["bengali", "latin"],
-  weight: ["400", "500", "600", "700"],
-});
-
 export const metadata: Metadata = {
   title: {
-    default: "Skills Bangladesh",
-    template: "%s · Skills Bangladesh",
+    default: brand.name,
+    template: `%s · ${brand.name}`,
   },
-  description:
-    "Buy job-ready skill courses in Bangladesh. Learn web development, design, English, Excel, and freelance — prices in taka, checkout with bKash or Nagad.",
+  description: brand.description,
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
@@ -40,21 +38,17 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${notoBengali.variable} h-full antialiased`}
+      className={`${sans.variable} ${heading.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col font-sans">
+      <body className="flex h-full min-h-full flex-col font-sans">
         {showMaintenance ? (
           <main className="flex-1">
             <MaintenanceScreen />
           </main>
         ) : isAdmin ? (
-          <main className="flex-1">{children}</main>
+          <main className="flex h-full min-h-0 flex-1 flex-col">{children}</main>
         ) : (
-          <>
-            <AppHeader />
-            <main className="flex-1">{children}</main>
-            <SiteFooter />
-          </>
+          <AppChrome>{children}</AppChrome>
         )}
       </body>
     </html>

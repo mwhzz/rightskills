@@ -6,24 +6,31 @@ import { cn } from "@/lib/utils";
 const errors: Record<string, string> = {
   name: "Enter your full name.",
   phone: "Enter an 11-digit Bangladeshi mobile number (01XXXXXXXXX).",
-  password: "Password must be at least 6 characters.",
+  pin: "Enter a 4-digit PIN.",
   taken: "That mobile number already has an account. Log in instead.",
-  invalid: "Mobile number or password is wrong.",
+  invalid: "Mobile number or PIN is wrong.",
 };
 
 export function AuthForm({
   mode,
   error,
   next,
+  embedded = false,
 }: {
   mode: "login" | "register";
   error?: string;
   next?: string;
+  embedded?: boolean;
 }) {
   const action = mode === "login" ? loginAction : registerAction;
+  const nextValue = next || "";
+  const nextQuery = nextValue
+    ? `?next=${encodeURIComponent(nextValue)}`
+    : "";
+
   return (
-    <form action={action} className="mt-8 space-y-4">
-      <input type="hidden" name="next" value={next || "/learn"} />
+    <form action={action} className={cn(embedded ? "mt-4 space-y-4" : "mt-8 space-y-4")}>
+      <input type="hidden" name="next" value={nextValue} />
       {mode === "register" ? (
         <div className="space-y-1.5">
           <label htmlFor="name" className="text-sm font-medium">
@@ -53,16 +60,21 @@ export function AuthForm({
         />
       </div>
       <div className="space-y-1.5">
-        <label htmlFor="password" className="text-sm font-medium">
-          Password
+        <label htmlFor="pin" className="text-sm font-medium">
+          4-digit PIN
         </label>
         <input
-          id="password"
-          name="password"
+          id="pin"
+          name="pin"
           type="password"
+          inputMode="numeric"
+          autoComplete="off"
           required
-          minLength={6}
-          className="h-10 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          minLength={4}
+          maxLength={4}
+          pattern="[0-9]{4}"
+          placeholder="••••"
+          className="h-10 w-full rounded-lg border border-input bg-transparent px-2.5 text-center font-heading text-lg tracking-[0.5em] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
         />
       </div>
       {error && errors[error] ? (
@@ -70,26 +82,40 @@ export function AuthForm({
           {errors[error]}
         </p>
       ) : null}
-      <button type="submit" className={cn(buttonVariants({ size: "lg" }), "w-full")}>
-        {mode === "login" ? "Log in" : "Create account"}
+      <button type="submit" className={cn(buttonVariants({ size: "lg" }), "h-10 w-full")}>
+        {mode === "login"
+          ? embedded
+            ? "Log in and continue"
+            : "Log in"
+          : embedded
+            ? "Create account and continue"
+            : "Create account"}
       </button>
-      <p className="text-center text-sm text-muted-foreground">
-        {mode === "login" ? (
-          <>
-            New here?{" "}
-            <Link href="/register" className="font-medium text-foreground hover:underline">
-              Create an account
-            </Link>
-          </>
-        ) : (
-          <>
-            Already have an account?{" "}
-            <Link href="/login" className="font-medium text-foreground hover:underline">
-              Log in
-            </Link>
-          </>
-        )}
-      </p>
+      {embedded ? null : (
+        <p className="text-center text-sm text-muted-foreground">
+          {mode === "login" ? (
+            <>
+              New here?{" "}
+              <Link
+                href={`/register${nextQuery}`}
+                className="font-medium text-foreground hover:underline"
+              >
+                Create an account
+              </Link>
+            </>
+          ) : (
+            <>
+              Already have an account?{" "}
+              <Link
+                href={`/login${nextQuery}`}
+                className="font-medium text-foreground hover:underline"
+              >
+                Log in
+              </Link>
+            </>
+          )}
+        </p>
+      )}
     </form>
   );
 }

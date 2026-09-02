@@ -2,65 +2,64 @@ import { createReadStream } from "node:fs";
 import { stat } from "node:fs/promises";
 import { Readable } from "node:stream";
 import { NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
-import { absoluteUploadPath } from "@/lib/uploads";
+import { authorizeLessonMedia } from "@/lib/lesson-media";
+import { absoluteUploadPath, videoContentType } from "@/lib/uploads";
 
 export const runtime = "nodejs";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   context: { params: Promise<{ id: string }> }
 ) {
   const { id } = await context.params;
-  const session = await getSession();
-  if (!session) {
-    return new NextResponse("Unauthorized", { status: 401 });
+  const access = await authorizeLessonMedia(id);
+  if ("error" in access) {
+    return new NextResponse(access.error, { status: access.status });
   }
-
-  const lesson = await prisma.lesson.findUnique({
-    where: { id },
-    include: { module: { include: { course: true } } },
-  });
-  if (!lesson?.videoPath) {
+  if (!access.lesson.videoPath) {
     return new NextResponse("Not found", { status: 404 });
   }
 
-  const staff = session.role === "admin" || session.role === "teacher";
-  if (!staff) {
-    const enrolled = await prisma.enrollment.findUnique({
-      where: {
-        userId_courseId: {
-          userId: session.id,
-          courseId: lesson.module.courseId,
-        },
-      },
-    });
-    if (!enrolled) {
-      return new NextResponse("Forbidden", { status: 403 });
-    }
-  } else if (session.role === "teacher" && lesson.module.course.teacherId !== session.id) {
-    return new NextResponse("Forbidden", { status: 403 });
-  }
-
-  const filePath = absoluteUploadPath(lesson.videoPath);
+  const filePath = absoluteUploadPath(access.lesson.videoPath);
   const fileStat = await stat(filePath).catch(() => null);
   if (!fileStat) {
     return new NextResponse("Missing file", { status: 404 });
   }
 
-  const stream = createReadStream(filePath);
-  const webStream = Readable.toWeb(stream) as unknown as ReadableStream;
-  const type = lesson.videoPath.endsWith(".webm")
-    ? "video/webm"
-    : lesson.videoPath.endsWith(".mov")
-      ? "video/quicktime"
-      : "video/mp4";
+  const size = fileStat.size;
+  const type = videoContentType(access.lesson.videoPath);
+  const range = request.headers.get("range");
 
-  return new NextResponse(webStream, {
+  if (range) {
+    const match = /bytes=(\d*)-(\d*)/.exec(range);
+    let start = match?.[1] ? Number(match[1]) : 0;
+    let end = match?.[2] ? Number(match[2]) : size - 1;
+    if (!Number.isFinite(start)) start = 0;
+    if (!Number.isFinite(end) || end >= size) end = size - 1;
+    if (start > end || start >= size) {
+      return new NextResponse(null, {
+        status: 416,
+        headers: { "Content-Range": `bytes */${size}` },
+      });
+    }
+    const stream = createReadStream(filePath, { start, end });
+    return new NextResponse(Readable.toWeb(stream) as unknown as ReadableStream, {
+      status: 206,
+      headers: {
+        "Content-Type": type,
+        "Content-Length": String(end - start + 1),
+        "Content-Range": `bytes ${start}-${end}/${size}`,
+        "Accept-Ranges": "bytes",
+        "Cache-Control": "private, max-age=3600",
+      },
+    });
+  }
+
+  const stream = createReadStream(filePath);
+  return new NextResponse(Readable.toWeb(stream) as unknown as ReadableStream, {
     headers: {
       "Content-Type": type,
-      "Content-Length": String(fileStat.size),
+      "Content-Length": String(size),
       "Accept-Ranges": "bytes",
       "Cache-Control": "private, max-age=3600",
     },

@@ -20,7 +20,7 @@ export function AddToCartButton({
     return (
       <Link
         href={`/learn/${slug}`}
-        className={cn(buttonVariants({ size: "lg" }), "w-full")}
+        className={cn(buttonVariants({ size: "lg" }), "h-12 w-full text-base")}
       >
         <Check data-icon="inline-start" />
         Go to course
@@ -32,7 +32,10 @@ export function AddToCartButton({
     return (
       <Link
         href="/cart"
-        className={cn(buttonVariants({ size: "lg", variant: "outline" }), "w-full")}
+        className={cn(
+          buttonVariants({ size: "lg", variant: "outline" }),
+          "h-12 w-full text-base"
+        )}
       >
         <ShoppingBag data-icon="inline-start" />
         In cart — checkout
@@ -43,7 +46,10 @@ export function AddToCartButton({
   return (
     <form action={addToCartAction}>
       <input type="hidden" name="slug" value={slug} />
-      <button type="submit" className={cn(buttonVariants({ size: "lg" }), "w-full")}>
+      <button
+        type="submit"
+        className={cn(buttonVariants({ size: "lg" }), "h-12 w-full text-base")}
+      >
         <ShoppingBag data-icon="inline-start" />
         Add to cart
       </button>
@@ -65,7 +71,10 @@ export function BuyNowButton({
       <input type="hidden" name="slug" value={slug} />
       <button
         type="submit"
-        className={cn(buttonVariants({ size: "lg", variant: "outline" }), "w-full")}
+        className={cn(
+          buttonVariants({ size: "lg", variant: "outline" }),
+          "h-12 w-full text-base"
+        )}
       >
         Buy now
       </button>

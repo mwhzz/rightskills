@@ -1,67 +1,155 @@
 import Link from "next/link";
+import type { Role } from "@prisma/client";
 import { BrandMark } from "@/components/brand-mark";
+import { logoutAction } from "@/app/actions";
+import { brand } from "@/lib/brand";
 import { categories } from "@/lib/courses";
 
-export function SiteFooter() {
+const learn = [
+  { href: "/courses", label: "All courses" },
+  { href: "/brands", label: "Studio" },
+  { href: "/instructors", label: "Instructors" },
+  { href: "/cart", label: "Cart" },
+];
+
+export function SiteFooter({
+  user = null,
+}: {
+  user?: { name: string; role: Role } | null;
+}) {
+  const staff = user?.role === "admin" || user?.role === "teacher";
+  const account = user
+    ? [
+        { href: "/account", label: "My panel" },
+        { href: "/learn", label: "My learning" },
+        { href: "/account/orders", label: "Orders" },
+        ...(staff ? [{ href: "/admin", label: "Studio" }] : []),
+      ]
+    : [
+        { href: "/login", label: "Log in" },
+        { href: "/register", label: "Create account" },
+        { href: "/checkout", label: "Checkout" },
+      ];
+
   return (
-    <footer className="mt-auto border-t bg-card">
-      <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-4">
-        <div className="md:col-span-2">
-          <Link href="/" className="inline-flex items-center gap-2.5">
-            <BrandMark className="size-8 text-primary" />
-            <span className="text-sm font-semibold">Skills Bangladesh</span>
-          </Link>
-          <p className="mt-3 max-w-sm text-sm leading-6 text-muted-foreground">
-            Job-ready courses priced in taka, taught for the Bangladeshi market —
-            freelance, office, and career skills you can use this month.
-          </p>
-        </div>
-        <div>
-          <p className="text-sm font-semibold">Categories</p>
-          <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-            {categories.map((category) => (
-              <li key={category.id}>
-                <Link
-                  href={`/courses?category=${category.id}`}
-                  className="hover:text-foreground"
-                >
-                  {category.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div>
-          <p className="text-sm font-semibold">Learn</p>
-          <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-            <li>
-              <Link href="/courses" className="hover:text-foreground">
-                All courses
+    <footer className="mt-auto bg-[oklch(0.205_0.028_48)] text-[oklch(0.97_0.01_75)]">
+      <div className="relative overflow-hidden">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-24 right-[-8%] h-64 w-64 rounded-full bg-primary/25 blur-3xl"
+        />
+        <div className="relative mx-auto w-full max-w-7xl px-4 pt-16 pb-10 sm:px-6">
+          <div className="flex flex-col gap-10 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-md">
+              <Link href="/" className="inline-flex items-center gap-2.5">
+                <BrandMark className="size-9 text-primary" />
+                <span className="font-heading text-lg font-semibold tracking-tight">
+                  {brand.name}
+                </span>
               </Link>
-            </li>
-            <li>
-              <Link href="/learn" className="hover:text-foreground">
-                My learning
-              </Link>
-            </li>
-            <li>
-              <Link href="/cart" className="hover:text-foreground">
-                Cart
-              </Link>
-            </li>
-          </ul>
-          <p className="mt-6 text-xs leading-5 text-muted-foreground">
-            Pay with bKash or Nagad Send Money. Courses unlock after we confirm
-            your TrxID.
-          </p>
+              <p className="mt-5 font-heading text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+                Skills, taught with care.
+              </p>
+              <p className="mt-3 text-base leading-7 text-white/55">
+                {brand.description}
+              </p>
+            </div>
+            <p className="text-sm text-white/40">
+              Dhaka · bKash & Nagad after checkout
+            </p>
+          </div>
+
+          <div className="mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+            <FooterCol title="Learn" links={learn} />
+            <div>
+              <p className="text-xs font-medium tracking-[0.18em] text-white/40 uppercase">
+                Topics
+              </p>
+              <ul className="mt-4 space-y-2.5 text-sm text-white/65">
+                {categories.map((category) => (
+                  <li key={category.id}>
+                    <Link
+                      href={`/courses?category=${category.id}`}
+                      className="transition-colors hover:text-white"
+                    >
+                      {category.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <p className="text-xs font-medium tracking-[0.18em] text-white/40 uppercase">
+                Account
+              </p>
+              <ul className="mt-4 space-y-2.5 text-sm text-white/65">
+                {account.map((link) => (
+                  <li key={link.href}>
+                    <Link href={link.href} className="transition-colors hover:text-white">
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+                {user ? (
+                  <li>
+                    <form action={logoutAction}>
+                      <button
+                        type="submit"
+                        className="transition-colors hover:text-white"
+                      >
+                        Log out
+                      </button>
+                    </form>
+                  </li>
+                ) : null}
+              </ul>
+            </div>
+            <div>
+              <p className="text-xs font-medium tracking-[0.18em] text-white/40 uppercase">
+                Access
+              </p>
+              <p className="mt-4 max-w-xs text-sm leading-7 text-white/55">
+                Short, finished lessons. Access unlocks after payment is
+                confirmed — we do not auto-unlock, and we do not issue
+                certificates.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
-      <div className="border-t">
-        <p className="mx-auto max-w-6xl px-4 py-4 text-xs text-muted-foreground sm:px-6">
-          © {new Date().getFullYear()} Skills Bangladesh. Built for learners across
-          Bangladesh.
-        </p>
+      <div className="border-t border-white/10">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-4 py-5 text-xs text-white/40 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <p>
+            © {new Date().getFullYear()} {brand.name}. All rights reserved.
+          </p>
+          <p>Manual bKash / Nagad · TrxID review</p>
+        </div>
       </div>
     </footer>
+  );
+}
+
+function FooterCol({
+  title,
+  links,
+}: {
+  title: string;
+  links: { href: string; label: string }[];
+}) {
+  return (
+    <div>
+      <p className="text-xs font-medium tracking-[0.18em] text-white/40 uppercase">
+        {title}
+      </p>
+      <ul className="mt-4 space-y-2.5 text-sm text-white/65">
+        {links.map((link) => (
+          <li key={link.href}>
+            <Link href={link.href} className="transition-colors hover:text-white">
+              {link.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

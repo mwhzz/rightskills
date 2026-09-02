@@ -39,9 +39,16 @@ yarn-error.log*
 # uploads
 /uploads
 
+# local secrets notes
+/db details
+/db-details*
+
 # vercel
 .vercel
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# superdesign temp templates
+.superdesign/tmp/

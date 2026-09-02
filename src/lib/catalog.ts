@@ -1,4 +1,9 @@
-import type { Course as DbCourse, Lesson as DbLesson, Module as DbModule } from "@prisma/client";
+import type {
+  Course as DbCourse,
+  Lesson as DbLesson,
+  LessonResource,
+  Module as DbModule,
+} from "@prisma/client";
 import {
   type Course,
   type CourseLanguage,
@@ -8,7 +13,9 @@ import {
 } from "@/lib/courses";
 
 export type CourseRecord = DbCourse & {
-  modules: (DbModule & { lessons: DbLesson[] })[];
+  modules: (DbModule & {
+    lessons: (DbLesson & { resources?: LessonResource[] })[];
+  })[];
 };
 
 export function mapCourse(row: CourseRecord): Course {
@@ -59,6 +66,11 @@ export function mapCourse(row: CourseRecord): Course {
             preview: lesson.preview,
             body: lesson.body,
             videoPath: lesson.videoPath,
+            resources: (lesson.resources ?? []).map((resource) => ({
+              id: resource.id,
+              name: resource.name,
+              sizeBytes: resource.sizeBytes,
+            })),
           })),
       })),
   };

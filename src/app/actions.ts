@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/db";
@@ -11,38 +12,49 @@ import {
   normalizePhone,
   requireRole,
   requireUser,
+  safeNextPath,
+  normalizePin,
 } from "@/lib/auth";
 import { getCart, setCartCookie } from "@/lib/session";
 import { getOwnedSlugsForUser, getPublishedCourse } from "@/lib/queries";
 import { makeOrderId, type PaymentMethod } from "@/lib/store";
-import { saveLessonVideo } from "@/lib/uploads";
+import {
+  isUploadFile,
+  removeUpload,
+  saveLessonResource,
+  saveLessonVideo,
+} from "@/lib/uploads";
+import { initialsFromName, slugify } from "@/lib/slug";
+import { categories, levels } from "@/lib/courses";
+import { refreshCourseRating } from "@/lib/reviews";
 
-function slugify(value: string) {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 80);
+function authFail(mode: "login" | "register", code: string, next: string): never {
+  if (next.startsWith("/checkout")) {
+    redirect(`/checkout?auth=${mode}&error=${code}`);
+  }
+  const query = new URLSearchParams({ error: code });
+  if (next.startsWith("/")) query.set("next", next);
+  redirect(`/${mode}?${query.toString()}`);
 }
 
 export async function registerAction(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const phone = normalizePhone(String(formData.get("phone") ?? ""));
-  const password = String(formData.get("password") ?? "");
-  const next = String(formData.get("next") ?? "/learn");
+  const pin = normalizePin(String(formData.get("pin") ?? formData.get("password") ?? ""));
+  const next = String(formData.get("next") ?? "/account");
 
-  if (name.length < 3) redirect("/register?error=name");
-  if (!phone) redirect("/register?error=phone");
-  if (password.length < 6) redirect("/register?error=password");
+  if (name.length < 3) authFail("register", "name", next);
+  if (!phone) authFail("register", "phone", next);
+  if (!pin) authFail("register", "pin", next);
 
   const exists = await prisma.user.findUnique({ where: { phone } });
-  if (exists) redirect("/register?error=taken");
+  if (exists) authFail("register", "taken", next);
 
   const user = await prisma.user.create({
     data: {
       name,
       phone,
-      passwordHash: await bcrypt.hash(password, 12),
+      passwordHash: await bcrypt.hash(pin, 12),
       role: Role.student,
     },
   });
@@ -52,18 +64,19 @@ export async function registerAction(formData: FormData) {
     name: user.name,
     role: user.role,
   });
-  redirect(next.startsWith("/") ? next : "/learn");
+  redirect(safeNextPath(next, user.role));
 }
 
 export async function loginAction(formData: FormData) {
   const phone = normalizePhone(String(formData.get("phone") ?? ""));
-  const password = String(formData.get("password") ?? "");
-  const next = String(formData.get("next") ?? "/learn");
-  if (!phone) redirect("/login?error=phone");
+  const pin = normalizePin(String(formData.get("pin") ?? formData.get("password") ?? ""));
+  const next = String(formData.get("next") ?? "");
+  if (!phone) authFail("login", "phone", next);
+  if (!pin) authFail("login", "pin", next);
 
   const user = await prisma.user.findUnique({ where: { phone } });
-  if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
-    redirect("/login?error=invalid");
+  if (!user || !(await bcrypt.compare(pin, user.passwordHash))) {
+    authFail("login", "invalid", next);
   }
   await createSession({
     id: user.id,
@@ -71,11 +84,12 @@ export async function loginAction(formData: FormData) {
     name: user.name,
     role: user.role,
   });
-  redirect(next.startsWith("/") ? next : "/learn");
+  redirect(safeNextPath(next, user.role));
 }
 
 export async function logoutAction() {
   await clearSession();
+  revalidatePath("/", "layout");
   redirect("/");
 }
 
@@ -104,8 +118,7 @@ export async function buyNowAction(formData: FormData) {
   }
   const cart = await getCart();
   if (!cart.includes(slug)) await setCartCookie([...cart, slug]);
-  const user = await getSession();
-  redirect(user ? "/checkout" : "/login?next=/checkout");
+  redirect("/checkout");
 }
 
 export async function removeFromCartAction(formData: FormData) {
@@ -115,7 +128,8 @@ export async function removeFromCartAction(formData: FormData) {
 }
 
 export async function checkoutAction(formData: FormData) {
-  const user = await requireUser();
+  const user = await getSession();
+  if (!user) redirect("/checkout");
   const method = String(formData.get("method") ?? "bkash") as PaymentMethod;
   if (!["bkash", "nagad", "card"].includes(method)) {
     redirect("/checkout?error=method");
@@ -151,26 +165,58 @@ export async function checkoutAction(formData: FormData) {
 }
 
 export async function submitTrxAction(formData: FormData) {
-  const user = await requireUser();
+  const user = await requireUser("/account/orders");
   const orderId = String(formData.get("orderId") ?? "");
   const trxId = String(formData.get("trxId") ?? "").trim();
-  if (trxId.length < 4) redirect(`/account/orders?error=trx`);
+  const from = String(formData.get("from") ?? "");
+  const successPath = `/checkout/success?order=${encodeURIComponent(orderId)}`;
+  if (trxId.length < 4) {
+    redirect(from === "success" ? `${successPath}&error=trx` : `/account/orders?error=trx`);
+  }
 
   const order = await prisma.order.findFirst({
     where: { orderId, userId: user.id },
   });
   if (!order) redirect("/account/orders");
-  if (order.status === "paid") redirect("/account/orders");
+  if (order.status === "paid") {
+    redirect(from === "success" ? successPath : "/account/orders");
+  }
 
   await prisma.order.update({
     where: { id: order.id },
     data: { trxId, status: "awaiting_review" },
   });
-  redirect("/account/orders?submitted=1");
+  redirect(
+    from === "success" ? `${successPath}&submitted=1` : "/account/orders?submitted=1"
+  );
+}
+
+export async function submitReviewAction(formData: FormData) {
+  const user = await requireUser("/learn");
+  const slug = String(formData.get("slug") ?? "");
+  const rating = Number(formData.get("rating") ?? 0);
+  const body = String(formData.get("body") ?? "").trim();
+  const owned = await getOwnedSlugsForUser(user.id);
+  if (!owned.includes(slug)) redirect(`/learn/${slug}`);
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    redirect(`/learn/${slug}?review=rating`);
+  }
+  if (body.length < 12) redirect(`/learn/${slug}?review=short`);
+
+  const course = await prisma.course.findUnique({ where: { slug } });
+  if (!course) redirect("/learn");
+
+  await prisma.courseReview.upsert({
+    where: { courseId_userId: { courseId: course.id, userId: user.id } },
+    update: { rating, body },
+    create: { courseId: course.id, userId: user.id, rating, body },
+  });
+  await refreshCourseRating(course.id);
+  redirect(`/learn/${slug}?review=saved`);
 }
 
 export async function toggleLessonAction(formData: FormData) {
-  const user = await requireUser();
+  const user = await requireUser("/learn");
   const slug = String(formData.get("slug") ?? "");
   const lessonId = String(formData.get("lessonId") ?? "");
   const owned = await getOwnedSlugsForUser(user.id);
@@ -229,50 +275,150 @@ export async function rejectOrderAction(formData: FormData) {
   redirect("/admin/orders");
 }
 
-export async function saveSettingsAction(formData: FormData) {
+export async function saveSettingsAction(
+  _prev: { error: string } | null,
+  formData: FormData
+): Promise<{ error: string } | null> {
   await requireRole("admin");
+  const bkashRaw = String(formData.get("bkashNumber") ?? "").trim();
+  const nagadRaw = String(formData.get("nagadNumber") ?? "").trim();
+  const payInstructions = String(formData.get("payInstructions") ?? "").trim();
+  const bkashNumber = bkashRaw ? normalizePhone(bkashRaw) : "";
+  const nagadNumber = nagadRaw ? normalizePhone(nagadRaw) : "";
+  if (bkashRaw && !bkashNumber) {
+    return { error: "Enter a valid bKash number (01XXXXXXXXX)." };
+  }
+  if (nagadRaw && !nagadNumber) {
+    return { error: "Enter a valid Nagad number (01XXXXXXXXX)." };
+  }
+  if (!payInstructions) {
+    return { error: "Add the instructions students read after checkout." };
+  }
   await prisma.setting.upsert({
     where: { id: "default" },
     update: {
-      bkashNumber: String(formData.get("bkashNumber") ?? "").trim(),
-      nagadNumber: String(formData.get("nagadNumber") ?? "").trim(),
-      payInstructions: String(formData.get("payInstructions") ?? "").trim(),
+      bkashNumber: bkashNumber ?? "",
+      nagadNumber: nagadNumber ?? "",
+      payInstructions,
     },
     create: {
       id: "default",
-      bkashNumber: String(formData.get("bkashNumber") ?? "").trim(),
-      nagadNumber: String(formData.get("nagadNumber") ?? "").trim(),
-      payInstructions: String(formData.get("payInstructions") ?? "").trim(),
+      bkashNumber: bkashNumber ?? "",
+      nagadNumber: nagadNumber ?? "",
+      payInstructions,
+      homeBanners: "[]",
     },
   });
   redirect("/admin/settings?saved=1");
+}
+
+function sanitizeImage(value: string) {
+  const image = value.trim();
+  if (image.startsWith("/") || image.startsWith("https://")) {
+    return image.slice(0, 240);
+  }
+  return "";
+}
+
+export async function saveHomeBannersAction(formData: FormData) {
+  await requireRole("admin");
+  const raw = String(formData.get("banners") ?? "[]");
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    redirect("/admin/banners?error=json");
+  }
+  if (!Array.isArray(parsed)) redirect("/admin/banners?error=json");
+  const banners = parsed
+    .slice(0, 8)
+    .map((item, index) => {
+      if (!item || typeof item !== "object") return null;
+      const row = item as Record<string, unknown>;
+      const title = String(row.title ?? "").trim();
+      const href = String(row.href ?? "").trim();
+      if (!title || !href) return null;
+      if (!href.startsWith("/") && !href.startsWith("https://")) return null;
+      return {
+        id: String(row.id ?? `banner-${index}`).slice(0, 40),
+        badge: String(row.badge ?? "Offer").trim().slice(0, 24) || "Offer",
+        title: title.slice(0, 80),
+        subtitle: String(row.subtitle ?? "").trim().slice(0, 160),
+        cta: String(row.cta ?? "Learn more").trim().slice(0, 32) || "Learn more",
+        href: href.slice(0, 200),
+        from: String(row.from ?? "#ea580c").slice(0, 16),
+        to: String(row.to ?? "#7c2d12").slice(0, 16),
+        image: sanitizeImage(String(row.image ?? "")),
+      };
+    })
+    .filter((item) => item !== null);
+  if (banners.length === 0) redirect("/admin/banners?error=empty");
+
+  await prisma.setting.upsert({
+    where: { id: "default" },
+    update: { homeBanners: JSON.stringify(banners) },
+    create: {
+      id: "default",
+      bkashNumber: "",
+      nagadNumber: "",
+      payInstructions:
+        "Send the exact amount to the number below. Use your order ID as the reference, then paste the TrxID on your orders page.",
+      homeBanners: JSON.stringify(banners),
+    },
+  });
+  redirect("/admin/banners?saved=1");
 }
 
 export async function createTeacherAction(formData: FormData) {
   await requireRole("admin");
   const name = String(formData.get("name") ?? "").trim();
   const phone = normalizePhone(String(formData.get("phone") ?? ""));
-  const password = String(formData.get("password") ?? "");
-  if (!name || !phone || password.length < 6) redirect("/admin/users?error=1");
+  const pin = normalizePin(String(formData.get("pin") ?? formData.get("password") ?? ""));
+  if (!name || !phone || !pin) redirect("/admin/users?error=1");
 
   await prisma.user.upsert({
     where: { phone },
     update: {
       name,
       role: Role.teacher,
-      passwordHash: await bcrypt.hash(password, 12),
+      passwordHash: await bcrypt.hash(pin, 12),
     },
     create: {
       name,
       phone,
       role: Role.teacher,
-      passwordHash: await bcrypt.hash(password, 12),
+      passwordHash: await bcrypt.hash(pin, 12),
     },
   });
   redirect("/admin/users?created=1");
 }
 
-export async function saveCourseAction(formData: FormData) {
+export async function setUserPinAction(formData: FormData) {
+  await requireRole("admin");
+  const phone = normalizePhone(String(formData.get("phone") ?? ""));
+  const pin = normalizePin(String(formData.get("pin") ?? ""));
+  if (!phone || !pin) redirect("/admin/users?error=1");
+  const user = await prisma.user.findUnique({ where: { phone } });
+  if (!user) redirect("/admin/users?error=1");
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { passwordHash: await bcrypt.hash(pin, 12) },
+  });
+  redirect("/admin/users?pin=1");
+}
+
+export type SaveCourseState = { error: string } | null;
+
+const HEX = /^#[0-9A-Fa-f]{6}$/;
+const categoryIds = new Set(categories.map((item) => item.id));
+const levelSet = new Set(levels);
+const languageSet = new Set(["English", "Bangla", "Bangla + English"]);
+const patternSet = new Set(["grid", "dots", "waves"]);
+
+export async function saveCourseAction(
+  _prev: SaveCourseState,
+  formData: FormData
+): Promise<SaveCourseState> {
   const user = await requireRole("admin", "teacher");
   const id = String(formData.get("id") ?? "");
   const title = String(formData.get("title") ?? "").trim();
@@ -281,14 +427,46 @@ export async function saveCourseAction(formData: FormData) {
   const description = String(formData.get("description") ?? "").trim();
   const category = String(formData.get("category") ?? "development");
   const level = String(formData.get("level") ?? "Beginner");
-  const language = String(formData.get("language") ?? "Bangla + English");
+  const language = String(formData.get("language") ?? "English");
   const priceBdt = Number(formData.get("priceBdt") ?? 0);
-  const originalPriceBdtRaw = String(formData.get("originalPriceBdt") ?? "");
+  const originalPriceBdtRaw = String(formData.get("originalPriceBdt") ?? "").trim();
   const featured = formData.get("featured") === "on";
   const published = formData.get("published") === "on";
+  const instructorName = String(formData.get("instructorName") ?? "").trim();
+  const instructorTitle = String(formData.get("instructorTitle") ?? "").trim();
+  const instructorBio = String(formData.get("instructorBio") ?? "").trim();
+  const coverFrom = String(formData.get("coverFrom") ?? "#EA6A1A").trim();
+  const coverTo = String(formData.get("coverTo") ?? "#9A3412").trim();
+  const coverPattern = String(formData.get("coverPattern") ?? "grid");
+  const outcomes = String(formData.get("outcomes") ?? "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
   let slug = slugify(String(formData.get("slug") ?? title));
-  if (!title || !slug || !Number.isFinite(priceBdt)) {
-    redirect("/admin/courses?error=1");
+
+  if (title.length < 3) return { error: "Give the course a title of at least 3 characters." };
+  if (!slug) return { error: "Add a URL slug, or type a title so we can make one." };
+  if (!categoryIds.has(category)) return { error: "Pick a valid category." };
+  if (!levelSet.has(level as (typeof levels)[number])) return { error: "Pick a valid level." };
+  if (!languageSet.has(language)) return { error: "Pick a valid language." };
+  if (!Number.isFinite(priceBdt) || priceBdt < 1) {
+    return { error: "Set a price of at least ৳1." };
+  }
+  const originalPriceBdt = originalPriceBdtRaw ? Number(originalPriceBdtRaw) : null;
+  if (originalPriceBdt != null && (!Number.isFinite(originalPriceBdt) || originalPriceBdt <= priceBdt)) {
+    return { error: "The original price must be higher than the sale price." };
+  }
+  if (!HEX.test(coverFrom) || !HEX.test(coverTo)) {
+    return { error: "Cover colours must be hex values like #EA6A1A." };
+  }
+  if (!patternSet.has(coverPattern)) return { error: "Pick a cover pattern." };
+  if (published) {
+    if (!subtitle) return { error: "Add a subtitle before publishing." };
+    if (description.length < 40) {
+      return { error: "Write a longer description (40+ characters) before publishing." };
+    }
+    if (outcomes.length === 0) return { error: "Add at least one outcome before publishing." };
+    if (!instructorName) return { error: "Add an instructor before publishing." };
   }
 
   const data = {
@@ -300,28 +478,25 @@ export async function saveCourseAction(formData: FormData) {
     level,
     language,
     priceBdt: Math.round(priceBdt),
-    originalPriceBdt: originalPriceBdtRaw ? Number(originalPriceBdtRaw) : null,
+    originalPriceBdt: originalPriceBdt != null ? Math.round(originalPriceBdt) : null,
     featured,
     published,
-    outcomes: String(formData.get("outcomes") ?? "")
-      .split("\n")
-      .map((line) => line.trim())
-      .filter(Boolean),
-    instructorName: String(formData.get("instructorName") ?? user.name),
-    instructorTitle: String(formData.get("instructorTitle") ?? "Instructor"),
-    instructorBio: String(formData.get("instructorBio") ?? ""),
-    instructorInitials: String(formData.get("instructorInitials") ?? user.name.slice(0, 2)).slice(0, 3),
-    coverFrom: String(formData.get("coverFrom") ?? "#0B6E4F"),
-    coverTo: String(formData.get("coverTo") ?? "#083D2C"),
-    coverPattern: String(formData.get("coverPattern") ?? "grid"),
-    teacherId: user.role === "teacher" ? user.id : String(formData.get("teacherId") ?? user.id) || user.id,
+    outcomes,
+    instructorName: instructorName || user.name,
+    instructorTitle: instructorTitle || "Instructor",
+    instructorBio,
+    instructorInitials: initialsFromName(instructorName || user.name).slice(0, 3),
+    coverFrom,
+    coverTo,
+    coverPattern,
+    teacherId: user.role === "teacher" ? user.id : user.id,
   };
 
   if (id) {
     const existing = await prisma.course.findUnique({ where: { id } });
-    if (!existing) redirect("/admin/courses");
+    if (!existing) return { error: "That course is gone." };
     if (user.role === "teacher" && existing.teacherId !== user.id) {
-      redirect("/admin/courses");
+      return { error: "You can only edit your own courses." };
     }
     await prisma.course.update({
       where: { id },
@@ -357,6 +532,45 @@ export async function addModuleAction(formData: FormData) {
   redirect(`/admin/courses/${courseId}`);
 }
 
+function courseMediaPath(courseId: string, error?: string) {
+  if (error) {
+    return `/admin/courses/${courseId}?error=${encodeURIComponent(error)}`;
+  }
+  return `/admin/courses/${courseId}`;
+}
+
+async function saveLessonFiles(lessonId: string, formData: FormData) {
+  const video = formData.get("video");
+  if (isUploadFile(video)) {
+    const saved = await saveLessonVideo(lessonId, video);
+    await prisma.lesson.update({
+      where: { id: lessonId },
+      data: {
+        videoPath: saved.relative,
+        videoName: saved.name,
+        videoBytes: saved.bytes,
+      },
+    });
+  }
+  const files = formData.getAll("resources").filter(isUploadFile);
+  const existing = await prisma.lessonResource.count({ where: { lessonId } });
+  if (existing + files.length > 20) {
+    throw new Error("A lesson can have at most 20 resources.");
+  }
+  for (const file of files) {
+    const saved = await saveLessonResource(lessonId, file);
+    await prisma.lessonResource.create({
+      data: {
+        lessonId,
+        name: saved.name,
+        filePath: saved.relative,
+        mimeType: saved.mimeType,
+        sizeBytes: saved.bytes,
+      },
+    });
+  }
+}
+
 export async function addLessonAction(formData: FormData) {
   const user = await requireRole("admin", "teacher");
   const moduleId = String(formData.get("moduleId") ?? "");
@@ -369,7 +583,7 @@ export async function addLessonAction(formData: FormData) {
     where: { id: moduleId },
     include: { course: true },
   });
-  if (!module || !title) redirect(`/admin/courses/${courseId}`);
+  if (!module || !title) redirect(courseMediaPath(courseId));
   if (user.role === "teacher" && module.course.teacherId !== user.id) {
     redirect("/admin/courses");
   }
@@ -387,15 +601,17 @@ export async function addLessonAction(formData: FormData) {
       sortOrder: (last?.sortOrder ?? -1) + 1,
     },
   });
-  const video = formData.get("video");
-  if (video instanceof File && video.size > 0) {
-    const videoPath = await saveLessonVideo(lesson.id, video);
-    await prisma.lesson.update({
-      where: { id: lesson.id },
-      data: { videoPath },
-    });
+  try {
+    await saveLessonFiles(lesson.id, formData);
+  } catch (error) {
+    redirect(
+      courseMediaPath(
+        courseId,
+        error instanceof Error ? error.message : "Could not save the files."
+      )
+    );
   }
-  redirect(`/admin/courses/${courseId}`);
+  redirect(courseMediaPath(courseId));
 }
 
 export async function updateLessonAction(formData: FormData) {
@@ -410,20 +626,64 @@ export async function updateLessonAction(formData: FormData) {
   if (user.role === "teacher" && lesson.module.course.teacherId !== user.id) {
     redirect("/admin/courses");
   }
-  const data = {
-    title: String(formData.get("title") ?? lesson.title).trim(),
-    body: String(formData.get("body") ?? lesson.body),
-    durationMin: Number(formData.get("durationMin") ?? lesson.durationMin),
-    preview: formData.get("preview") === "on",
-  };
-  const video = formData.get("video");
-  let videoPath = lesson.videoPath;
-  if (video instanceof File && video.size > 0) {
-    videoPath = await saveLessonVideo(lesson.id, video);
+  try {
+    await prisma.lesson.update({
+      where: { id: lessonId },
+      data: {
+        title: String(formData.get("title") ?? lesson.title).trim(),
+        body: String(formData.get("body") ?? lesson.body),
+        durationMin: Number(formData.get("durationMin") ?? lesson.durationMin),
+        preview: formData.get("preview") === "on",
+      },
+    });
+    await saveLessonFiles(lesson.id, formData);
+  } catch (error) {
+    redirect(
+      courseMediaPath(
+        courseId,
+        error instanceof Error ? error.message : "Could not save the files."
+      )
+    );
   }
+  redirect(courseMediaPath(courseId));
+}
+
+export async function removeLessonVideoAction(formData: FormData) {
+  const user = await requireRole("admin", "teacher");
+  const lessonId = String(formData.get("lessonId") ?? "");
+  const courseId = String(formData.get("courseId") ?? "");
+  const lesson = await prisma.lesson.findUnique({
+    where: { id: lessonId },
+    include: { module: { include: { course: true } } },
+  });
+  if (!lesson) redirect("/admin/courses");
+  if (user.role === "teacher" && lesson.module.course.teacherId !== user.id) {
+    redirect("/admin/courses");
+  }
+  await removeUpload(lesson.videoPath);
   await prisma.lesson.update({
     where: { id: lessonId },
-    data: { ...data, videoPath },
+    data: { videoPath: null, videoName: null, videoBytes: null },
   });
-  redirect(`/admin/courses/${courseId}`);
+  redirect(courseMediaPath(courseId));
+}
+
+export async function deleteLessonResourceAction(formData: FormData) {
+  const user = await requireRole("admin", "teacher");
+  const resourceId = String(formData.get("resourceId") ?? "");
+  const courseId = String(formData.get("courseId") ?? "");
+  const resource = await prisma.lessonResource.findUnique({
+    where: { id: resourceId },
+    include: { lesson: { include: { module: { include: { course: true } } } } },
+  });
+  if (!resource) redirect(courseMediaPath(courseId));
+  if (
+    user.role === "teacher" &&
+    resource.lesson.module.course.teacherId !== user.id
+  ) {
+    redirect("/admin/courses");
+  }
+  await removeUpload(resource.filePath);
+  await prisma.lessonResource.delete({ where: { id: resourceId } });
+  redirect(courseMediaPath(courseId));
 }

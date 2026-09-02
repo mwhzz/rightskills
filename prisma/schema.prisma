@@ -39,6 +39,7 @@ model User {
   orders        Order[]
   enrollments   Enrollment[]
   progress      LessonProgress[]
+  reviews       CourseReview[]
 }
 
 model Course {
@@ -71,6 +72,7 @@ model Course {
   modules            Module[]
   enrollments        Enrollment[]
   orderItems         OrderItem[]
+  reviews            CourseReview[]
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
 }
@@ -93,8 +95,39 @@ model Lesson {
   preview     Boolean          @default(false)
   body        String           @db.Text
   videoPath   String?
+  videoName   String?
+  videoBytes  Int?
   sortOrder   Int              @default(0)
   progress    LessonProgress[]
+  resources   LessonResource[]
+}
+
+model LessonResource {
+  id        String   @id @default(cuid())
+  lessonId  String
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  name      String
+  filePath  String
+  mimeType  String
+  sizeBytes Int
+  createdAt DateTime @default(now())
+
+  @@index([lessonId])
+}
+
+model CourseReview {
+  id        String   @id @default(cuid())
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating    Int
+  body      String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([courseId, userId])
+  @@index([courseId])
 }
 
 model Order {
@@ -147,4 +180,5 @@ model Setting {
   bkashNumber       String @default("")
   nagadNumber       String @default("")
   payInstructions   String @db.Text
+  homeBanners       String @db.Text
 }

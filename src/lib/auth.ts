@@ -33,6 +33,11 @@ export function normalizePhone(input: string): string | null {
   return null;
 }
 
+export function normalizePin(input: string): string | null {
+  const digits = input.replace(/\D/g, "");
+  return /^\d{4}$/.test(digits) ? digits : null;
+}
+
 export async function createSession(user: SessionUser) {
   const token = await new SignJWT({
     sub: user.id,
@@ -57,6 +62,13 @@ export async function createSession(user: SessionUser) {
 
 export async function clearSession() {
   const store = await cookies();
+  store.set(COOKIE, "", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 0,
+  });
   store.delete(COOKIE);
 }
 
@@ -77,14 +89,26 @@ export async function getSession(): Promise<SessionUser | null> {
   }
 }
 
-export async function requireUser() {
+export function safeNextPath(next: string | undefined, role?: Role) {
+  if (next && next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/login") && !next.startsWith("/register")) {
+    return next;
+  }
+  if (role === "admin" || role === "teacher") return "/admin";
+  return "/account";
+}
+
+export async function requireUser(next = "/account") {
   const user = await getSession();
-  if (!user) redirect("/login");
+  if (!user) {
+    const dest = next.startsWith("/") ? next : "/account";
+    redirect(`/login?next=${encodeURIComponent(dest)}`);
+  }
   return user;
 }
 
 export async function requireRole(...roles: Role[]) {
-  const user = await requireUser();
+  const user = await getSession();
+  if (!user) redirect("/login?next=/admin");
   if (!roles.includes(user.role)) redirect("/");
   return user;
 }

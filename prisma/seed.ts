@@ -1,12 +1,12 @@
 import { PrismaClient, Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { courses } from "../src/lib/courses";
+import { courses } from "../src/lib/courses.ts";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const password = process.env.ADMIN_PASSWORD || "Admin1234!";
-  const passwordHash = await bcrypt.hash(password, 12);
+  const pin = process.env.ADMIN_PIN || "1234";
+  const passwordHash = await bcrypt.hash(pin, 12);
 
   const admin = await prisma.user.upsert({
     where: { phone: "01700000000" },
@@ -110,7 +110,7 @@ async function main() {
     }
   }
 
-  console.log("Seed complete. Admin phone 01700000000");
+  console.log("Seed complete. Admin phone 01700000000 · PIN 1234");
 }
 
 main()
