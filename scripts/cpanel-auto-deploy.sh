@@ -30,8 +30,11 @@ trap 'rmdir "$LOCKDIR" 2>/dev/null || true' EXIT
 {
   echo "===== $(date -Is) start ====="
 
+  # CloudLinux activate references unset vars; nounset must be off while sourcing.
+  set +u
   # shellcheck disable=SC1090
   source "$VENV"
+  set -u
   cd "$APP"
   mkdir -p uploads/lessons tmp
 
