@@ -1,13 +1,13 @@
 import Link from "next/link";
-import { ArrowRight, Play } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { BackgroundVideo } from "@/components/home/background-video";
 import { BrandPortfolio } from "@/components/home/brand-portfolio";
 import { ContinueStrip } from "@/components/home/continue-strip";
 import { CourseRail } from "@/components/home/course-rail";
 import { HomeFaq } from "@/components/home/home-faq";
+import { HomeHero } from "@/components/home/home-hero";
 import { HowItWorks } from "@/components/home/how-it-works";
 import { Instructors } from "@/components/home/instructors";
-import { OfferBanner } from "@/components/home/offer-banner";
 import { Reveal } from "@/components/home/reveal";
 import { Reviews } from "@/components/home/reviews";
 import { SkillStrip } from "@/components/home/skill-strip";
@@ -15,126 +15,47 @@ import { buttonVariants } from "@/components/ui/button";
 import { getSession } from "@/lib/auth";
 import { brand } from "@/lib/brand";
 import { courses as fallbackCourses, getFeaturedCourses } from "@/lib/courses";
-import { formatStudents } from "@/lib/format";
 import {
-  getHomeBanners,
-  getHomeStats,
   getHomepageLearning,
   listFeaturedCourses,
   listNewestCourses,
   listPopularCourses,
-  type HomeStats,
 } from "@/lib/queries";
-import { defaultHomeBanners } from "@/lib/home-banners";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 async function loadHome() {
   try {
-    const [featured, newest, popular, banners, stats] = await Promise.all([
+    const [featured, newest, popular] = await Promise.all([
       listFeaturedCourses(3),
       listNewestCourses(3),
       listPopularCourses(3),
-      getHomeBanners(),
-      getHomeStats(),
     ]);
-    return { featured, newest, popular, banners, stats };
+    return { featured, newest, popular };
   } catch {
     const featured = getFeaturedCourses().slice(0, 3);
     const newest = fallbackCourses.slice(0, 3);
     const popular = [...fallbackCourses]
       .sort((a, b) => b.students - a.students)
       .slice(0, 3);
-    const stats: HomeStats = {
-      students: 0,
-      courses: fallbackCourses.length,
-      rating: null,
-    };
-    return { featured, newest, popular, banners: defaultHomeBanners, stats };
+    return { featured, newest, popular };
   }
 }
 
 export default async function HomePage() {
   const session = await getSession();
-  const [{ featured, newest, popular, banners, stats }, learning] =
-    await Promise.all([
-      loadHome(),
-      session ? getHomepageLearning(session.id).catch(() => null) : null,
-    ]);
+  const [{ featured, newest, popular }, learning] = await Promise.all([
+    loadHome(),
+    session ? getHomepageLearning(session.id).catch(() => null) : null,
+  ]);
 
   const ownedSlugs = learning?.ownedSlugs;
   const progressBySlug = learning?.progressBySlug;
-  const statItems = [
-    { value: formatStudents(stats.students), label: "Students" },
-    {
-      value: stats.rating != null ? stats.rating.toFixed(1) : "New",
-      label: "Avg. rating",
-    },
-    { value: String(stats.courses), label: "Courses" },
-  ];
 
   return (
     <div className="overflow-x-hidden">
-      <section className="relative overflow-hidden bg-[linear-gradient(180deg,#fffaf5_0%,#fff7f0_45%,#fffaf5_100%)]">
-        <div aria-hidden className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-16 right-[-12%] h-64 w-64 rounded-full bg-primary/18 blur-3xl animate-rs-glow sm:h-80 sm:w-80" />
-          <div className="absolute -bottom-20 left-[-10%] h-52 w-52 rounded-full bg-primary/10 blur-3xl animate-rs-float" />
-        </div>
-
-        <div className="relative mx-auto w-full max-w-7xl px-4 pt-8 pb-8 sm:px-6 lg:pt-10 lg:pb-10">
-          <div className="animate-rs-fade-up">
-            <p className="text-sm font-medium tracking-[0.18em] text-primary uppercase">
-              {brand.name}
-            </p>
-            <h1 className="mt-3 font-heading text-4xl font-semibold leading-[1.08] tracking-tight text-balance sm:text-5xl lg:text-[3.35rem]">
-              Skills, taught{" "}
-              <span className="text-primary">with care.</span>
-            </h1>
-            <p className="mt-4 max-w-md text-base leading-7 text-muted-foreground sm:text-lg">
-              Cinematic lessons. Short paths. Pay by bKash or Nagad — access
-              unlocks after your TrxID is confirmed.
-            </p>
-            <div className="mt-6 flex flex-wrap gap-2.5">
-              <Link
-                href="/courses"
-                className={cn(buttonVariants({ size: "lg" }), "h-10 rounded-full px-5")}
-              >
-                Browse courses
-                <ArrowRight data-icon="inline-end" />
-              </Link>
-              <Link
-                href={session ? "/account" : "#how-it-works"}
-                className={cn(
-                  buttonVariants({ size: "lg", variant: "outline" }),
-                  "h-10 rounded-full bg-background/70 px-5 backdrop-blur-sm"
-                )}
-              >
-                <Play data-icon="inline-start" className="size-3.5 fill-current" />
-                {session ? "My panel" : "How it works"}
-              </Link>
-            </div>
-            <dl className="mt-7 grid max-w-md grid-cols-3 gap-3">
-              {statItems.map((stat) => (
-                <div key={stat.label}>
-                  <dt className="text-xs text-muted-foreground">{stat.label}</dt>
-                  <dd className="mt-0.5 font-heading text-2xl font-semibold tracking-tight">
-                    {stat.value}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-
-          <div className="relative mt-8 animate-rs-fade-up [animation-delay:140ms]">
-            <div
-              aria-hidden
-              className="absolute -inset-4 -z-10 rounded-[2rem] bg-primary/12 blur-2xl animate-rs-glow"
-            />
-            <OfferBanner banners={banners} size="hero" />
-          </div>
-        </div>
-      </section>
+      <HomeHero />
 
       <SkillStrip />
 
