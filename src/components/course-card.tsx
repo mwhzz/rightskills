@@ -34,7 +34,7 @@ export function CourseCard({
       <Card className="h-full gap-0 overflow-hidden py-0 ring-foreground/8 transition-shadow group-hover:ring-foreground/20">
         <CourseCover
           course={course}
-          className={cn("aspect-16/10 rounded-none", compact ? "md:rounded-t-xl" : "rounded-t-xl")}
+          className={cn("aspect-16/10 w-full shrink-0 rounded-none", compact ? "md:rounded-t-xl" : "rounded-t-xl")}
         />
         <CardContent className="flex flex-1 flex-col gap-1.5 px-3 pt-3 sm:gap-2 sm:px-4 sm:pt-4">
           <div className="flex flex-wrap items-center gap-1.5">

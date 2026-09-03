@@ -172,7 +172,7 @@ export default async function HomePage() {
 
       {learning ? <ContinueStrip learning={learning} /> : null}
 
-      <section className="mx-auto w-full max-w-7xl space-y-10 overflow-x-clip px-4 py-8 sm:space-y-12 sm:px-6 sm:py-12 lg:py-16">
+      <section className="mx-auto w-full max-w-7xl space-y-10 px-4 py-8 sm:space-y-12 sm:px-6 sm:py-12 lg:py-16">
         <CourseRail
           title="Featured"
           description="The ones learners finish — then use on a job."
