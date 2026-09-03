@@ -5,11 +5,9 @@ import { BrandPortfolio } from "@/components/home/brand-portfolio";
 import { ContinueStrip } from "@/components/home/continue-strip";
 import { CourseRail } from "@/components/home/course-rail";
 import { HomeFaq } from "@/components/home/home-faq";
-import { HomeVideo } from "@/components/home/home-video";
 import { HowItWorks } from "@/components/home/how-it-works";
 import { Instructors } from "@/components/home/instructors";
 import { OfferBanner } from "@/components/home/offer-banner";
-import { PaymentPills } from "@/components/home/payment-pills";
 import { Reveal } from "@/components/home/reveal";
 import { Reviews } from "@/components/home/reviews";
 import { SkillStrip } from "@/components/home/skill-strip";
@@ -135,35 +133,9 @@ export default async function HomePage() {
                   aria-hidden
                   className="absolute -inset-4 -z-10 rounded-3xl bg-primary/12 blur-2xl animate-rs-glow"
                 />
-                <HomeVideo
-                  src={brand.heroVideo}
-                  label="Student learning at a desk"
-                  className="aspect-16/10 rounded-2xl border border-white/60 shadow-[0_18px_50px_-24px_rgba(180,70,20,0.35)]"
-                  overlay={
-                    <div className="absolute inset-x-0 bottom-0 z-10 p-3 sm:p-4">
-                      <div className="rounded-xl border border-white/15 bg-black/35 px-3 py-2.5 text-white backdrop-blur-md">
-                        <p className="text-[10px] tracking-[0.16em] text-white/70 uppercase">
-                          Now playing
-                        </p>
-                        <p className="mt-0.5 text-sm font-medium">
-                          Lesson 03 · Building a clean layout
-                        </p>
-                        <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/20">
-                          <div className="h-full rounded-full bg-primary animate-rs-progress" />
-                        </div>
-                      </div>
-                    </div>
-                  }
-                />
+                <OfferBanner banners={banners} size="hero" />
               </div>
             </div>
-          </div>
-
-          <div className="mt-6">
-            <PaymentPills />
-          </div>
-          <div className="mt-5">
-            <OfferBanner banners={banners} />
           </div>
         </div>
       </section>

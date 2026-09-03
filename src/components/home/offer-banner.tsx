@@ -7,7 +7,13 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { HomeBanner } from "@/lib/home-banners";
 
-export function OfferBanner({ banners }: { banners: HomeBanner[] }) {
+export function OfferBanner({
+  banners,
+  size = "default",
+}: {
+  banners: HomeBanner[];
+  size?: "default" | "hero";
+}) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const slide = banners[index];
@@ -40,7 +46,10 @@ export function OfferBanner({ banners }: { banners: HomeBanner[] }) {
             key={banner.id}
             aria-hidden={i !== index}
             className={cn(
-              "grid min-h-[9.5rem] grid-cols-[1fr_6.5rem] sm:min-h-[10.5rem] sm:grid-cols-[1.3fr_0.7fr]",
+              "grid grid-cols-[1fr_6.5rem] sm:grid-cols-[1.3fr_0.7fr]",
+              size === "hero"
+                ? "min-h-[16rem] sm:min-h-[18rem] lg:min-h-[20rem]"
+                : "min-h-[9.5rem] sm:min-h-[10.5rem]",
               i === index ? "grid" : "hidden"
             )}
           >
@@ -49,11 +58,19 @@ export function OfferBanner({ banners }: { banners: HomeBanner[] }) {
                 <p className="inline-flex rounded-full border border-primary/20 bg-primary/10 px-2.5 py-0.5 text-[10px] font-medium tracking-[0.16em] text-primary uppercase">
                   {banner.badge}
                 </p>
-                <h2 className="mt-2 font-heading text-lg font-semibold tracking-tight text-balance sm:text-xl">
+                <h2 className={cn(
+                  "mt-2 font-heading font-semibold tracking-tight text-balance",
+                  size === "hero" ? "text-xl sm:text-2xl lg:text-[1.65rem]" : "text-lg sm:text-xl"
+                )}>
                   {banner.title}
                 </h2>
                 {banner.subtitle ? (
-                  <p className="mt-1 line-clamp-1 max-w-lg text-sm text-muted-foreground">
+                  <p
+                    className={cn(
+                      "mt-1 max-w-lg text-sm text-muted-foreground",
+                      size === "hero" ? "line-clamp-2 sm:line-clamp-3" : "line-clamp-1"
+                    )}
+                  >
                     {banner.subtitle}
                   </p>
                 ) : null}
