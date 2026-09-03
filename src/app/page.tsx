@@ -83,59 +83,55 @@ export default async function HomePage() {
         </div>
 
         <div className="relative mx-auto w-full max-w-7xl px-4 pt-8 pb-8 sm:px-6 lg:pt-10 lg:pb-10">
-          <div className="grid items-center gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10">
-            <div className="animate-rs-fade-up">
-              <p className="text-sm font-medium tracking-[0.18em] text-primary uppercase">
-                {brand.name}
-              </p>
-              <h1 className="mt-3 font-heading text-4xl font-semibold leading-[1.08] tracking-tight text-balance sm:text-5xl lg:text-[3.35rem]">
-                Skills, taught{" "}
-                <span className="text-primary">with care.</span>
-              </h1>
-              <p className="mt-4 max-w-md text-base leading-7 text-muted-foreground sm:text-lg">
-                Cinematic lessons. Short paths. Pay by bKash or Nagad — access
-                unlocks after your TrxID is confirmed.
-              </p>
-              <div className="mt-6 flex flex-wrap gap-2.5">
-                <Link
-                  href="/courses"
-                  className={cn(buttonVariants({ size: "lg" }), "h-10 rounded-full px-5")}
-                >
-                  Browse courses
-                  <ArrowRight data-icon="inline-end" />
-                </Link>
-                <Link
-                  href={session ? "/account" : "#how-it-works"}
-                  className={cn(
-                    buttonVariants({ size: "lg", variant: "outline" }),
-                    "h-10 rounded-full bg-background/70 px-5 backdrop-blur-sm"
-                  )}
-                >
-                  <Play data-icon="inline-start" className="size-3.5 fill-current" />
-                  {session ? "My panel" : "How it works"}
-                </Link>
-              </div>
-              <dl className="mt-7 grid max-w-md grid-cols-3 gap-3">
-                {statItems.map((stat) => (
-                  <div key={stat.label}>
-                    <dt className="text-xs text-muted-foreground">{stat.label}</dt>
-                    <dd className="mt-0.5 font-heading text-2xl font-semibold tracking-tight">
-                      {stat.value}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
+          <div className="animate-rs-fade-up">
+            <p className="text-sm font-medium tracking-[0.18em] text-primary uppercase">
+              {brand.name}
+            </p>
+            <h1 className="mt-3 font-heading text-4xl font-semibold leading-[1.08] tracking-tight text-balance sm:text-5xl lg:text-[3.35rem]">
+              Skills, taught{" "}
+              <span className="text-primary">with care.</span>
+            </h1>
+            <p className="mt-4 max-w-md text-base leading-7 text-muted-foreground sm:text-lg">
+              Cinematic lessons. Short paths. Pay by bKash or Nagad — access
+              unlocks after your TrxID is confirmed.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-2.5">
+              <Link
+                href="/courses"
+                className={cn(buttonVariants({ size: "lg" }), "h-10 rounded-full px-5")}
+              >
+                Browse courses
+                <ArrowRight data-icon="inline-end" />
+              </Link>
+              <Link
+                href={session ? "/account" : "#how-it-works"}
+                className={cn(
+                  buttonVariants({ size: "lg", variant: "outline" }),
+                  "h-10 rounded-full bg-background/70 px-5 backdrop-blur-sm"
+                )}
+              >
+                <Play data-icon="inline-start" className="size-3.5 fill-current" />
+                {session ? "My panel" : "How it works"}
+              </Link>
             </div>
+            <dl className="mt-7 grid max-w-md grid-cols-3 gap-3">
+              {statItems.map((stat) => (
+                <div key={stat.label}>
+                  <dt className="text-xs text-muted-foreground">{stat.label}</dt>
+                  <dd className="mt-0.5 font-heading text-2xl font-semibold tracking-tight">
+                    {stat.value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
 
-            <div className="animate-rs-fade-up [animation-delay:140ms]">
-              <div className="relative">
-                <div
-                  aria-hidden
-                  className="absolute -inset-4 -z-10 rounded-3xl bg-primary/12 blur-2xl animate-rs-glow"
-                />
-                <OfferBanner banners={banners} size="hero" />
-              </div>
-            </div>
+          <div className="relative mt-8 animate-rs-fade-up [animation-delay:140ms]">
+            <div
+              aria-hidden
+              className="absolute -inset-4 -z-10 rounded-[2rem] bg-primary/12 blur-2xl animate-rs-glow"
+            />
+            <OfferBanner banners={banners} size="hero" />
           </div>
         </div>
       </section>
