@@ -59,7 +59,7 @@ jobs:
             open -u righwail --env-password ftp://198.54.116.49:21
             mkdir -fp /rightskills/.next || true
             mkdir -fp /rightskills/tmp || true
-            mirror -R --parallel=4 --delete .next /rightskills/.next
+            mirror -R --parallel=4 .next /rightskills/.next
             put tmp/deploy.flag -o /rightskills/tmp/deploy.flag
             put tmp/restart.txt -o /rightskills/tmp/restart.txt
             bye
