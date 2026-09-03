@@ -61,7 +61,7 @@ export default async function OrdersPage({
       <p className="text-sm font-medium tracking-[0.18em] text-primary uppercase">
         Payments
       </p>
-      <h1 className="mt-2 font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
+      <h1 className="mt-2 font-heading text-2xl font-semibold tracking-tight sm:text-4xl">
         My orders
       </h1>
       <p className="mt-3 max-w-2xl text-base text-muted-foreground">
@@ -107,18 +107,18 @@ export default async function OrdersPage({
         </p>
       ) : null}
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl border bg-card p-5">
-          <p className="text-sm text-muted-foreground">Open payments</p>
-          <p className="mt-2 font-heading text-2xl font-semibold">{open}</p>
+      <div className="mt-6 grid grid-cols-3 gap-2 sm:mt-8 sm:gap-4">
+        <div className="rounded-xl border bg-card p-3 sm:rounded-2xl sm:p-5">
+          <p className="text-[11px] text-muted-foreground sm:text-sm">Open</p>
+          <p className="mt-1 font-heading text-xl font-semibold sm:mt-2 sm:text-2xl">{open}</p>
         </div>
-        <div className="rounded-2xl border bg-card p-5">
-          <p className="text-sm text-muted-foreground">Paid</p>
-          <p className="mt-2 font-heading text-2xl font-semibold">{paid}</p>
+        <div className="rounded-xl border bg-card p-3 sm:rounded-2xl sm:p-5">
+          <p className="text-[11px] text-muted-foreground sm:text-sm">Paid</p>
+          <p className="mt-1 font-heading text-xl font-semibold sm:mt-2 sm:text-2xl">{paid}</p>
         </div>
-        <div className="rounded-2xl border bg-card p-5">
-          <p className="text-sm text-muted-foreground">All orders</p>
-          <p className="mt-2 font-heading text-2xl font-semibold">{allOrders.length}</p>
+        <div className="rounded-xl border bg-card p-3 sm:rounded-2xl sm:p-5">
+          <p className="text-[11px] text-muted-foreground sm:text-sm">All</p>
+          <p className="mt-1 font-heading text-xl font-semibold sm:mt-2 sm:text-2xl">{allOrders.length}</p>
         </div>
       </div>
 
@@ -133,13 +133,13 @@ export default async function OrdersPage({
         </p>
       ) : null}
 
-      <div className="mt-8 flex flex-wrap gap-2">
+      <div className="rail -mx-4 mt-8 flex gap-2 px-4 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
         {filters.map((item) => (
           <Link
             key={item.id}
             href={item.id === "all" ? "/account/orders" : `/account/orders?status=${item.id}`}
             className={cn(
-              "rounded-full border px-3 py-1.5 text-sm",
+              "shrink-0 rounded-full border px-3 py-1.5 text-sm",
               status === item.id
                 ? "border-primary bg-primary/10 text-primary"
                 : "text-muted-foreground hover:border-primary/40"

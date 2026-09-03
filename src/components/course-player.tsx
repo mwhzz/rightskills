@@ -89,7 +89,7 @@ export function CoursePlayer({
           <p className="text-sm text-muted-foreground">
             {course.instructor.name} · {course.level} · {course.language}
           </p>
-          <h1 className="mt-1 font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
+          <h1 className="mt-1 font-heading text-xl font-semibold tracking-tight sm:text-4xl">
             {course.title}
           </h1>
         </div>
@@ -103,7 +103,7 @@ export function CoursePlayer({
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <section className="min-w-0">
-          <div className="overflow-hidden rounded-2xl bg-zinc-950 shadow-sm">
+          <div className="-mx-4 overflow-hidden bg-zinc-950 shadow-sm sm:mx-0 sm:rounded-2xl">
             {active.videoPath ? (
               <video
                 key={active.id}
@@ -139,7 +139,7 @@ export function CoursePlayer({
                 <p className="text-xs font-medium tracking-[0.14em] text-muted-foreground uppercase">
                   {active.moduleTitle}
                 </p>
-                <h2 className="mt-1 font-heading text-2xl font-semibold">
+                <h2 className="mt-1 font-heading text-lg font-semibold sm:text-2xl">
                   {active.title}
                 </h2>
                 <p className="mt-1 text-sm text-muted-foreground">
@@ -157,7 +157,7 @@ export function CoursePlayer({
                       variant: activeDone ? "outline" : "default",
                       size: "lg",
                     }),
-                    "h-11"
+                    "h-11 w-full sm:h-11 sm:w-auto"
                   )}
                 >
                   {activeDone ? "Mark as not done" : "Mark complete"}
@@ -194,11 +194,11 @@ export function CoursePlayer({
               </div>
             ) : null}
 
-            <div className="mt-6 flex flex-wrap justify-between gap-2 border-t pt-4">
+            <div className="mt-6 flex flex-col gap-2 border-t pt-4 sm:flex-row sm:flex-wrap sm:justify-between">
               {prev ? (
                 <Link
                   href={`/learn/${course.slug}?lesson=${prev.id}`}
-                  className={cn(buttonVariants({ variant: "outline" }))}
+                  className={cn(buttonVariants({ variant: "outline" }), "h-11 w-full sm:w-auto")}
                 >
                   <ChevronLeft data-icon="inline-start" />
                   Previous
@@ -209,7 +209,7 @@ export function CoursePlayer({
               {next ? (
                 <Link
                   href={`/learn/${course.slug}?lesson=${next.id}`}
-                  className={cn(buttonVariants())}
+                  className={cn(buttonVariants(), "h-11 w-full sm:w-auto")}
                 >
                   Next lesson
                   <ChevronRight data-icon="inline-end" />
@@ -223,7 +223,7 @@ export function CoursePlayer({
           </div>
         </section>
 
-        <aside className="h-fit rounded-2xl border bg-card p-3 lg:sticky lg:top-24">
+        <aside className="h-fit rounded-2xl border bg-card p-3 max-h-[min(50vh,24rem)] overflow-y-auto lg:sticky lg:top-24 lg:max-h-none">
           <p className="px-2 pt-2 pb-3 text-xs font-medium tracking-[0.14em] text-muted-foreground uppercase">
             Curriculum
           </p>

@@ -84,7 +84,7 @@ export function CourseReviews({
 
   return (
     <section id="reviews" className="scroll-mt-28">
-      <h2 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
+      <h2 className="font-heading text-xl font-semibold tracking-tight sm:text-4xl">
         Student reviews
       </h2>
       <div className="mt-8 grid gap-10 lg:grid-cols-[220px_1fr]">

@@ -43,21 +43,21 @@ export default async function CoursesPage({
   return (
     <div>
       <section className="border-b bg-[linear-gradient(180deg,oklch(0.98_0.02_70),oklch(0.992_0.006_75))]">
-        <div className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 lg:py-16">
-          <p className="text-base font-medium tracking-[0.18em] text-primary uppercase">
+        <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:py-16">
+          <p className="text-xs font-medium tracking-[0.18em] text-primary uppercase sm:text-base">
             Catalogue
           </p>
-          <h1 className="mt-3 font-heading text-4xl font-semibold tracking-tight sm:text-5xl">
+          <h1 className="mt-2 font-heading text-2xl font-semibold tracking-tight sm:mt-3 sm:text-5xl">
             All courses
           </h1>
-          <p className="mt-3 max-w-2xl text-lg leading-8 text-muted-foreground">
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:mt-3 sm:text-lg sm:leading-8">
             Pick a path. Filter by topic or level. Every course is built to
             finish — then use on a job.
           </p>
         </div>
       </section>
 
-      <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6">
+      <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-10">
         <CourseCatalog
           courses={catalogue}
           query={params.q ?? ""}

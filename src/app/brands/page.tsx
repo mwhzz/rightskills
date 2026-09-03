@@ -17,15 +17,15 @@ export default function BrandsPage() {
   return (
     <div>
       <section className="border-b bg-[linear-gradient(180deg,oklch(0.98_0.02_70),oklch(0.992_0.006_75))]">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-12 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:py-16">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-8 sm:gap-6 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:py-16">
           <div>
-            <p className="text-base font-medium tracking-[0.18em] text-primary uppercase">
+            <p className="text-xs font-medium tracking-[0.18em] text-primary uppercase sm:text-base">
               Studio work
             </p>
-            <h1 className="mt-3 font-heading text-4xl font-semibold tracking-tight sm:text-5xl">
+            <h1 className="mt-2 font-heading text-2xl font-semibold tracking-tight sm:mt-3 sm:text-5xl">
               Brands we have built
             </h1>
-            <p className="mt-3 max-w-2xl text-lg leading-8 text-muted-foreground">
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:mt-3 sm:text-lg sm:leading-8">
               Identity work from the Right Skills branding desk. The same
               system we teach — packing, screens, rooms, and shops.
             </p>
@@ -34,7 +34,7 @@ export default function BrandsPage() {
             href="/courses/freelance-graphic-upwork"
             className={cn(
               buttonVariants({ size: "lg" }),
-              "h-12 shrink-0 px-6 text-base"
+              "h-11 w-full shrink-0 px-6 text-base sm:h-12 sm:w-auto"
             )}
           >
             Branding course
@@ -49,7 +49,7 @@ export default function BrandsPage() {
             href={`/brands/${featured.slug}`}
             className="group grid overflow-hidden rounded-[1.8rem] border bg-card lg:grid-cols-2"
           >
-            <div className="relative aspect-4/3 lg:aspect-auto lg:min-h-[28rem]">
+            <div className="relative aspect-[16/10] lg:aspect-auto lg:min-h-[28rem]">
               <img
                 src={featured.image}
                 alt={featured.name}
@@ -60,10 +60,10 @@ export default function BrandsPage() {
               <p className="text-sm tracking-[0.16em] text-primary uppercase">
                 {featured.category} · {featured.year}
               </p>
-              <h2 className="mt-3 font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
+              <h2 className="mt-2 font-heading text-2xl font-semibold tracking-tight sm:mt-3 sm:text-4xl">
                 {featured.name}
               </h2>
-              <p className="mt-4 text-lg leading-8 text-muted-foreground">
+              <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted-foreground sm:mt-4 sm:text-lg sm:leading-8">
                 {featured.summary}
               </p>
               <div className="mt-6 flex gap-2">

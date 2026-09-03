@@ -40,7 +40,7 @@ export function OfferBanner({ banners }: { banners: HomeBanner[] }) {
             key={banner.id}
             aria-hidden={i !== index}
             className={cn(
-              "grid min-h-[9.5rem] grid-cols-[1fr_6.5rem] sm:min-h-[10.5rem] sm:grid-cols-[1.3fr_0.7fr]",
+              "grid min-h-0 grid-cols-1 sm:min-h-[10.5rem] sm:grid-cols-[1.3fr_0.7fr]",
               i === index ? "grid" : "hidden"
             )}
           >
@@ -105,7 +105,7 @@ export function OfferBanner({ banners }: { banners: HomeBanner[] }) {
                 ) : null}
               </div>
             </div>
-            <div className="relative min-h-0 overflow-hidden">
+            <div className="relative order-first aspect-[16/10] min-h-0 overflow-hidden sm:order-none sm:aspect-auto">
               {banner.image ? (
                 <img
                   src={banner.image}

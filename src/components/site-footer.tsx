@@ -38,7 +38,7 @@ export function SiteFooter({
           aria-hidden
           className="pointer-events-none absolute -top-24 right-[-8%] h-64 w-64 rounded-full bg-primary/25 blur-3xl"
         />
-        <div className="relative mx-auto w-full max-w-7xl px-4 pt-16 pb-10 sm:px-6">
+        <div className="relative mx-auto w-full max-w-7xl px-4 pt-10 pb-8 sm:px-6 sm:pt-16 sm:pb-10">
           <div className="flex flex-col gap-10 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-md">
               <Link href="/" className="inline-flex items-center gap-2.5">
@@ -47,7 +47,7 @@ export function SiteFooter({
                   {brand.name}
                 </span>
               </Link>
-              <p className="mt-5 font-heading text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+              <p className="mt-4 font-heading text-2xl font-semibold tracking-tight text-balance sm:text-4xl">
                 Skills, taught with care.
               </p>
               <p className="mt-3 text-base leading-7 text-white/55">
@@ -59,7 +59,7 @@ export function SiteFooter({
             </p>
           </div>
 
-          <div className="mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-8 grid grid-cols-2 gap-6 sm:mt-14 sm:gap-10 lg:grid-cols-4">
             <FooterCol title="Learn" links={learn} />
             <div>
               <p className="text-xs font-medium tracking-[0.18em] text-white/40 uppercase">
@@ -118,7 +118,7 @@ export function SiteFooter({
         </div>
       </div>
       <div className="border-t border-white/10">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-4 py-5 text-xs text-white/40 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-4 py-5 pb-[max(4.75rem,calc(env(safe-area-inset-bottom)+3.25rem))] text-xs text-white/40 sm:flex-row sm:items-center sm:justify-between sm:px-6 md:pb-5">
           <p>
             © {new Date().getFullYear()} {brand.name}. All rights reserved.
           </p>

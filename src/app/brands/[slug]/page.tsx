@@ -54,10 +54,10 @@ export default async function BrandCasePage({
         <p className="mt-8 text-base font-medium tracking-[0.18em] text-primary uppercase">
           {work.category} · {work.year}
         </p>
-        <h1 className="mt-3 font-heading text-4xl font-semibold tracking-tight sm:text-6xl">
+        <h1 className="mt-2 font-heading text-3xl font-semibold tracking-tight sm:mt-3 sm:text-6xl">
           {work.name}
         </h1>
-        <p className="mt-4 max-w-2xl text-xl leading-8 text-muted-foreground">
+        <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground sm:mt-4 sm:text-xl sm:leading-8">
           {work.summary}
         </p>
 
@@ -85,7 +85,7 @@ export default async function BrandCasePage({
 
       <div className="mx-auto grid w-full max-w-7xl gap-12 px-4 py-14 sm:px-6 lg:grid-cols-[1.15fr_0.85fr] lg:py-20">
         <section>
-          <h2 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
+          <h2 className="font-heading text-xl font-semibold tracking-tight sm:text-4xl">
             The brief
           </h2>
           <p className="mt-5 text-lg leading-8 text-muted-foreground">
@@ -114,7 +114,7 @@ export default async function BrandCasePage({
 
       <div className="border-y bg-card">
         <div className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 lg:py-20">
-          <h2 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
+          <h2 className="font-heading text-xl font-semibold tracking-tight sm:text-4xl">
             How we worked
           </h2>
           <ol className="mt-10 grid gap-6 lg:grid-cols-3">
@@ -136,7 +136,7 @@ export default async function BrandCasePage({
       </div>
 
       <div className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 lg:py-20">
-        <h2 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
+          <h2 className="font-heading text-xl font-semibold tracking-tight sm:text-4xl">
           Visual system
         </h2>
         <div className="mt-10 grid gap-6 lg:grid-cols-3">
@@ -177,7 +177,7 @@ export default async function BrandCasePage({
       </div>
 
       <div className="mx-auto w-full max-w-7xl px-4 pb-6 sm:px-6">
-        <h2 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
+          <h2 className="font-heading text-xl font-semibold tracking-tight sm:text-4xl">
           Where it lives
         </h2>
         <div className="mt-10 grid gap-6 lg:grid-cols-3">

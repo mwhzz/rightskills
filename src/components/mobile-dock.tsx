@@ -10,6 +10,7 @@ function hideDock(pathname: string) {
   if (pathname.startsWith("/learn")) return true;
   if (pathname.startsWith("/account")) return true;
   if (pathname.startsWith("/checkout")) return true;
+  if (pathname === "/cart") return true;
   if (pathname === "/login" || pathname === "/register") return true;
   if (pathname.startsWith("/courses/") && pathname !== "/courses") return true;
   return false;

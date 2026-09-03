@@ -64,10 +64,10 @@ export function SiteHeader({
           : "border-b border-transparent bg-background/55 backdrop-blur-md"
       )}
     >
-      <div className="mx-auto flex h-16 w-full max-w-7xl items-center gap-3 px-4 sm:px-6">
-        <Link href="/" className="flex shrink-0 items-center gap-2">
+      <div className="mx-auto flex h-14 w-full min-w-0 max-w-7xl items-center gap-2 px-4 sm:h-16 sm:gap-3 sm:px-6">
+        <Link href="/" className="flex min-w-0 shrink-0 items-center gap-2">
           <BrandMark className="size-8 text-primary" />
-          <span className="font-heading text-[0.95rem] font-semibold tracking-tight">
+          <span className="hidden font-heading text-[0.95rem] font-semibold tracking-tight min-[380px]:inline">
             Right Skills
           </span>
         </Link>
@@ -198,7 +198,7 @@ export function SiteHeader({
             >
               <Menu />
             </SheetTrigger>
-            <SheetContent side="right" className="w-[20rem] p-0">
+            <SheetContent side="right" className="flex w-full max-w-[min(100vw,20rem)] flex-col p-0">
               <SheetHeader className="border-b px-5 py-5">
                 <SheetTitle className="flex items-center gap-2.5">
                   <BrandMark className="size-8 text-primary" />

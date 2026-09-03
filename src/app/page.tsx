@@ -84,68 +84,25 @@ export default async function HomePage() {
           <div className="absolute -bottom-20 left-[-10%] h-52 w-52 rounded-full bg-primary/10 blur-3xl animate-rs-float" />
         </div>
 
-        <div className="relative mx-auto w-full max-w-7xl px-4 pt-8 pb-8 sm:px-6 lg:pt-10 lg:pb-10">
-          <div className="grid items-center gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10">
-            <div className="animate-rs-fade-up">
-              <p className="text-sm font-medium tracking-[0.18em] text-primary uppercase">
-                {brand.name}
-              </p>
-              <h1 className="mt-3 font-heading text-4xl font-semibold leading-[1.08] tracking-tight text-balance sm:text-5xl lg:text-[3.35rem]">
-                Skills, taught{" "}
-                <span className="text-primary">with care.</span>
-              </h1>
-              <p className="mt-4 max-w-md text-base leading-7 text-muted-foreground sm:text-lg">
-                Cinematic lessons. Short paths. Pay by bKash or Nagad — access
-                unlocks after your TrxID is confirmed.
-              </p>
-              <div className="mt-6 flex flex-wrap gap-2.5">
-                <Link
-                  href="/courses"
-                  className={cn(buttonVariants({ size: "lg" }), "h-10 rounded-full px-5")}
-                >
-                  Browse courses
-                  <ArrowRight data-icon="inline-end" />
-                </Link>
-                <Link
-                  href={session ? "/account" : "#how-it-works"}
-                  className={cn(
-                    buttonVariants({ size: "lg", variant: "outline" }),
-                    "h-10 rounded-full bg-background/70 px-5 backdrop-blur-sm"
-                  )}
-                >
-                  <Play data-icon="inline-start" className="size-3.5 fill-current" />
-                  {session ? "My panel" : "How it works"}
-                </Link>
-              </div>
-              <dl className="mt-7 grid max-w-md grid-cols-3 gap-3">
-                {statItems.map((stat) => (
-                  <div key={stat.label}>
-                    <dt className="text-xs text-muted-foreground">{stat.label}</dt>
-                    <dd className="mt-0.5 font-heading text-2xl font-semibold tracking-tight">
-                      {stat.value}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
-
-            <div className="animate-rs-fade-up [animation-delay:140ms]">
+        <div className="relative mx-auto w-full max-w-7xl pt-5 pb-6 sm:px-6 sm:pt-8 sm:pb-8 lg:pt-10 lg:pb-10">
+          <div className="flex min-w-0 flex-col gap-5 px-4 sm:px-0 lg:grid lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-10">
+            <div className="order-1 min-w-0 -mx-4 sm:mx-0 lg:order-2">
               <div className="relative">
                 <div
                   aria-hidden
-                  className="absolute -inset-4 -z-10 rounded-3xl bg-primary/12 blur-2xl animate-rs-glow"
+                  className="absolute -inset-4 -z-10 hidden rounded-3xl bg-primary/12 blur-2xl animate-rs-glow sm:block"
                 />
                 <HomeVideo
                   src={brand.heroVideo}
                   label="Student learning at a desk"
-                  className="aspect-16/10 rounded-2xl border border-white/60 shadow-[0_18px_50px_-24px_rgba(180,70,20,0.35)]"
+                  className="aspect-16/10 rounded-none border-y border-white/60 sm:rounded-2xl sm:border sm:shadow-[0_18px_50px_-24px_rgba(180,70,20,0.35)]"
                   overlay={
                     <div className="absolute inset-x-0 bottom-0 z-10 p-3 sm:p-4">
-                      <div className="rounded-xl border border-white/15 bg-black/35 px-3 py-2.5 text-white backdrop-blur-md">
+                      <div className="rounded-xl border border-white/15 bg-black/35 px-3 py-2 text-white backdrop-blur-md sm:py-2.5">
                         <p className="text-[10px] tracking-[0.16em] text-white/70 uppercase">
                           Now playing
                         </p>
-                        <p className="mt-0.5 text-sm font-medium">
+                        <p className="mt-0.5 text-xs font-medium sm:text-sm">
                           Lesson 03 · Building a clean layout
                         </p>
                         <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/20">
@@ -156,6 +113,49 @@ export default async function HomePage() {
                   }
                 />
               </div>
+            </div>
+
+            <div className="order-2 min-w-0 animate-rs-fade-up lg:order-1">
+              <p className="text-[11px] font-medium tracking-[0.18em] text-primary uppercase sm:text-sm">
+                {brand.name}
+              </p>
+              <h1 className="mt-2 font-heading text-[1.75rem] font-semibold leading-[1.12] tracking-tight text-pretty sm:mt-3 sm:text-5xl lg:text-[3.35rem]">
+                Skills, taught{" "}
+                <span className="text-primary">with care.</span>
+              </h1>
+              <p className="mt-3 max-w-md text-sm leading-6 text-pretty text-muted-foreground sm:mt-4 sm:text-lg sm:leading-7">
+                Cinematic lessons. Short paths. Pay by bKash or Nagad — access
+                unlocks after your TrxID is confirmed.
+              </p>
+              <div className="mt-5 grid grid-cols-1 gap-2 sm:mt-6 sm:flex sm:flex-wrap sm:gap-2.5">
+                <Link
+                  href="/courses"
+                  className={cn(buttonVariants({ size: "lg" }), "h-11 w-full rounded-full px-5 sm:h-10 sm:w-auto")}
+                >
+                  Browse courses
+                  <ArrowRight data-icon="inline-end" />
+                </Link>
+                <Link
+                  href={session ? "/account" : "#how-it-works"}
+                  className={cn(
+                    buttonVariants({ size: "lg", variant: "outline" }),
+                    "h-11 w-full rounded-full bg-background/70 px-5 backdrop-blur-sm sm:h-10 sm:w-auto"
+                  )}
+                >
+                  <Play data-icon="inline-start" className="size-3.5 fill-current" />
+                  {session ? "My panel" : "How it works"}
+                </Link>
+              </div>
+              <dl className="mt-5 grid max-w-md grid-cols-3 gap-2 sm:mt-7 sm:gap-3">
+                {statItems.map((stat) => (
+                  <div key={stat.label} className="min-w-0 rounded-xl bg-background/60 px-2 py-2 sm:bg-transparent sm:px-0 sm:py-0">
+                    <dt className="text-[10px] text-muted-foreground sm:text-xs">{stat.label}</dt>
+                    <dd className="mt-0.5 font-heading text-lg font-semibold tracking-tight sm:text-2xl">
+                      {stat.value}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
             </div>
           </div>
 
@@ -172,7 +172,7 @@ export default async function HomePage() {
 
       {learning ? <ContinueStrip learning={learning} /> : null}
 
-      <section className="mx-auto w-full max-w-7xl space-y-12 px-4 py-12 sm:px-6 lg:py-16">
+      <section className="mx-auto w-full max-w-7xl space-y-10 overflow-x-clip px-4 py-8 sm:space-y-12 sm:px-6 sm:py-12 lg:py-16">
         <CourseRail
           title="Featured"
           description="The ones learners finish — then use on a job."
@@ -219,7 +219,7 @@ export default async function HomePage() {
             />
             <div className="relative px-6 py-12 sm:px-12 sm:py-16">
               <div className="max-w-2xl text-white">
-                <h2 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
+                <h2 className="font-heading text-2xl font-semibold tracking-tight sm:text-4xl">
                   {session
                     ? "Pick up where you left off."
                     : "Start with one course. Finish it."}

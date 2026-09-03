@@ -10,7 +10,7 @@ export function BrandPortfolio() {
           <p className="text-sm font-medium tracking-[0.18em] text-primary uppercase">
             Studio work
           </p>
-          <h2 className="mt-2 font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
+          <h2 className="mt-2 font-heading text-xl font-semibold tracking-tight sm:text-4xl">
             Brands we have built
           </h2>
         </div>

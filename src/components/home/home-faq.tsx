@@ -32,7 +32,7 @@ const faqs = [
 
 export function HomeFaq() {
   return (
-    <section className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 lg:py-16">
+    <section className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:py-16">
       <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:gap-14">
         <Reveal>
           <p className="text-sm font-medium tracking-[0.18em] text-primary uppercase">

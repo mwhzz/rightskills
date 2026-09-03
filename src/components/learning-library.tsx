@@ -83,7 +83,7 @@ export async function LearningLibrary({
       </p>
       <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
+          <h1 className="font-heading text-2xl font-semibold tracking-tight sm:text-4xl">
             {embedded ? "Your courses" : `Welcome back, ${firstName}`}
           </h1>
           <p className="mt-3 max-w-2xl text-base text-muted-foreground">
@@ -101,7 +101,7 @@ export async function LearningLibrary({
         )}
       </div>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-3">
+      <div className="mt-6 grid grid-cols-3 gap-2 sm:mt-8 sm:gap-4">
         <Stat
           icon={BookOpen}
           label="Unlocked"
@@ -204,15 +204,15 @@ export async function LearningLibrary({
               <div className="mt-3 overflow-hidden rounded-2xl border bg-card sm:flex">
                 <CourseCover
                   course={continueItem.course}
-                  className="h-44 w-full sm:h-auto sm:w-64"
+                  className="h-36 w-full sm:h-auto sm:w-64"
                 />
-                <div className="flex flex-1 flex-col justify-between gap-4 p-6">
+                <div className="flex flex-1 flex-col justify-between gap-3 p-4 sm:gap-4 sm:p-6">
                   <div>
                     <p className="text-sm text-muted-foreground">
                       {categoryLabel(continueItem.course.category)} ·{" "}
                       {continueItem.course.instructor.name}
                     </p>
-                    <h2 className="mt-1 font-heading text-2xl font-semibold tracking-tight">
+                    <h2 className="mt-1 font-heading text-lg font-semibold tracking-tight sm:text-2xl">
                       {continueItem.course.title}
                     </h2>
                     <p className="mt-2 text-sm text-muted-foreground">
@@ -235,7 +235,7 @@ export async function LearningLibrary({
                           ? `/learn/${continueItem.course.slug}?lesson=${continueItem.nextLesson.id}`
                           : `/learn/${continueItem.course.slug}`
                       }
-                      className={cn(buttonVariants({ size: "lg" }), "h-11")}
+                      className={cn(buttonVariants({ size: "lg" }), "h-11 w-full sm:w-auto")}
                     >
                       {continueItem.done === 0 ? "Start course" : "Continue"}
                     </Link>
@@ -243,7 +243,7 @@ export async function LearningLibrary({
                       href={`/courses/${continueItem.course.slug}`}
                       className={cn(
                         buttonVariants({ variant: "outline", size: "lg" }),
-                        "h-11"
+                        "h-11 w-full sm:w-auto"
                       )}
                     >
                       Course page
@@ -258,52 +258,61 @@ export async function LearningLibrary({
             <h2 className="font-heading text-2xl font-semibold tracking-tight">
               Your courses
             </h2>
-            <ul className="mt-5 grid gap-5 sm:grid-cols-2">
+            <ul className="mt-4 grid gap-3 sm:mt-5 sm:grid-cols-2 sm:gap-5">
               {items.map((item) => (
-                <li key={item.course.slug} className="overflow-hidden rounded-2xl border bg-card">
-                  <CourseCover course={item.course} className="h-36 w-full" />
-                  <div className="p-5">
+                <li
+                  key={item.course.slug}
+                  className="flex gap-3 overflow-hidden rounded-2xl border bg-card p-3 sm:block sm:p-0"
+                >
+                  <CourseCover
+                    course={item.course}
+                    className="h-20 w-20 shrink-0 rounded-xl sm:h-36 sm:w-full sm:rounded-none"
+                  />
+                  <div className="min-w-0 flex-1 sm:p-5">
                     <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <h3 className="font-heading text-lg font-semibold leading-snug">
+                      <div className="min-w-0">
+                        <h3 className="font-heading text-sm font-semibold leading-snug sm:text-lg">
                           {item.course.title}
                         </h3>
-                        <p className="mt-1 text-sm text-muted-foreground">
+                        <p className="mt-1 hidden text-sm text-muted-foreground sm:block">
                           Unlocked {formatAgo(item.enrolledAt)}
                         </p>
                       </div>
                       <span
                         className={cn(
-                          "shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium",
+                          "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium sm:px-2.5 sm:text-xs",
                           item.complete
                             ? "bg-primary/10 text-primary"
                             : "bg-muted text-muted-foreground"
                         )}
                       >
-                        {item.complete ? "Finished" : `${item.pct}%`}
+                        {item.complete ? "Done" : `${item.pct}%`}
                       </span>
                     </div>
                     <ProgressBar pct={item.pct} />
-                    <p className="mt-2 text-xs text-muted-foreground">
+                    <p className="mt-1 line-clamp-1 text-xs text-muted-foreground sm:mt-2">
                       {item.done} of {item.total} lessons
                       {item.nextLesson && !item.complete
                         ? ` · next: ${item.nextLesson.title}`
                         : ""}
                     </p>
-                    <div className="mt-4 flex flex-wrap gap-2">
+                    <div className="mt-3 flex flex-wrap gap-2">
                       <Link
                         href={
                           item.nextLesson
                             ? `/learn/${item.course.slug}?lesson=${item.nextLesson.id}`
                             : `/learn/${item.course.slug}`
                         }
-                        className={cn(buttonVariants())}
+                        className={cn(buttonVariants({ size: "sm" }), "h-8 sm:h-9")}
                       >
                         {item.complete ? "Rewatch" : item.done === 0 ? "Start" : "Continue"}
                       </Link>
                       <Link
                         href={`/learn/${item.course.slug}#review`}
-                        className={cn(buttonVariants({ variant: "outline" }))}
+                        className={cn(
+                          buttonVariants({ variant: "outline", size: "sm" }),
+                          "hidden h-8 sm:inline-flex sm:h-9"
+                        )}
                       >
                         {reviewed.has(item.courseId) ? "Edit review" : "Write a review"}
                       </Link>
@@ -329,7 +338,7 @@ function Stat({
   value: string;
 }) {
   return (
-    <div className="rounded-2xl border bg-card p-5">
+    <div className="rounded-xl border bg-card p-3 sm:rounded-2xl sm:p-5">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Icon className="size-4 text-primary" />
         {label}

@@ -84,22 +84,24 @@ export default async function AdminLayout({
       </aside>
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <header className="flex items-center justify-between border-b bg-card px-4 py-3 md:px-6">
-          <div className="flex min-w-0 items-center gap-3 overflow-x-auto md:hidden">
+          <div className="flex min-w-0 items-center gap-2 overflow-x-auto md:hidden">
             <BrandMark className="size-8 shrink-0 text-primary" />
             {links.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "shrink-0 text-sm font-medium",
-                  isActive(link.href) ? "text-foreground" : "text-muted-foreground"
+                  "shrink-0 rounded-full px-3 py-1 text-sm font-medium",
+                  isActive(link.href)
+                    ? "bg-muted text-foreground"
+                    : "text-muted-foreground"
                 )}
               >
                 {link.label}
               </Link>
             ))}
           </div>
-          <p className="ml-auto text-sm text-muted-foreground">
+          <p className="ml-auto hidden truncate text-sm text-muted-foreground sm:block">
             {user.name} · {user.role}
           </p>
         </header>
