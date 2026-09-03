@@ -13,8 +13,8 @@ export default async function RegisterPage({
   const checkout = next?.startsWith("/checkout");
 
   return (
-    <div className="mx-auto w-full max-w-md px-4 py-10 sm:px-6 sm:py-16">
-      <h1 className="font-heading text-2xl font-semibold tracking-tight sm:text-3xl">
+    <div className="mx-auto w-full max-w-md px-4 py-16 sm:px-6">
+      <h1 className="font-heading text-3xl font-semibold tracking-tight">
         Create account
       </h1>
       <p className="mt-2 text-sm text-muted-foreground">

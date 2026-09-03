@@ -32,22 +32,22 @@ export async function CartView() {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_320px] lg:gap-8">
-      <ul className="space-y-3 sm:space-y-4">
+    <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
+      <ul className="space-y-4">
         {items.map((course) => (
           <li
             key={course.slug}
-            className="flex gap-3 overflow-hidden rounded-xl border bg-card p-3 sm:p-0 sm:flex-row"
+            className="flex flex-col overflow-hidden rounded-xl border bg-card sm:flex-row"
           >
             <CourseCover
               course={course}
-              className="h-24 w-24 shrink-0 rounded-lg sm:h-auto sm:w-44 sm:rounded-none"
+              className="h-32 w-full sm:h-auto sm:w-44"
             />
-            <div className="flex min-w-0 flex-1 flex-col justify-between gap-2 p-0 sm:gap-3 sm:p-4">
+            <div className="flex flex-1 flex-col justify-between gap-3 p-4">
               <div>
                 <Link
                   href={`/courses/${course.slug}`}
-                  className="block min-w-0 truncate font-heading text-sm font-semibold hover:text-primary sm:text-base"
+                  className="font-heading font-semibold hover:text-primary"
                 >
                   {course.title}
                 </Link>
@@ -72,7 +72,7 @@ export async function CartView() {
           </li>
         ))}
       </ul>
-      <aside className="sticky bottom-0 z-20 -mx-4 border-t bg-background/95 px-4 py-4 backdrop-blur-md lg:static lg:mx-0 lg:rounded-xl lg:border lg:bg-card lg:px-5 lg:py-5 lg:backdrop-blur-none">
+      <aside className="h-fit rounded-xl border bg-card p-5">
         <h2 className="font-heading text-base font-semibold">Order summary</h2>
         <div className="mt-4 flex justify-between text-sm">
           <span className="text-muted-foreground">

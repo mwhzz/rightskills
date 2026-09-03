@@ -38,11 +38,11 @@ export default async function CheckoutPage({
   const authMode = auth === "login" ? "login" : "register";
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
+    <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
       <p className="text-sm font-medium tracking-[0.18em] text-primary uppercase">
         Checkout
       </p>
-      <h1 className="mt-2 font-heading text-2xl font-semibold tracking-tight sm:text-5xl">
+      <h1 className="mt-2 font-heading text-4xl font-semibold tracking-tight sm:text-5xl">
         {session ? "Place the order, then send money" : "Your courses are waiting"}
       </h1>
       <p className="mt-3 max-w-2xl text-base text-muted-foreground">
@@ -78,7 +78,7 @@ export default async function CheckoutPage({
           </div>
         </div>
       ) : (
-        <div className="mt-8 flex flex-col-reverse gap-6 lg:mt-10 lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-8">
+        <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
           {session ? (
             <CheckoutForm
               totalBdt={cartTotal}

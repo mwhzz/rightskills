@@ -39,7 +39,7 @@ export function CheckoutForm({
 
   return (
     <form action={checkoutAction} className="space-y-6">
-      <div className="rounded-2xl border bg-card p-4 sm:p-6">
+      <div className="rounded-2xl border bg-card p-6">
         <p className="text-xs font-medium tracking-[0.14em] text-primary uppercase">
           Step 1
         </p>
@@ -50,7 +50,7 @@ export function CheckoutForm({
           Placing the order does not charge you. Next you Send Money yourself,
           then paste the TrxID.
         </p>
-      <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-1 sm:gap-3">
+        <div className="mt-5 grid gap-3">
           {methods.map((item) => {
             const selected = method === item.id;
             const wallet = item.id === "nagad" ? nagadNumber : bkashNumber;
@@ -58,7 +58,7 @@ export function CheckoutForm({
               <label
                 key={item.id}
                 className={cn(
-                  "flex cursor-pointer flex-col gap-1 rounded-xl border p-3 text-sm transition-colors sm:flex-row sm:gap-3 sm:rounded-2xl sm:p-4",
+                  "flex cursor-pointer gap-3 rounded-2xl border p-4 text-sm transition-colors",
                   selected
                     ? "border-primary/50 bg-primary/5"
                     : "hover:bg-muted/60"
@@ -70,18 +70,18 @@ export function CheckoutForm({
                   value={item.id}
                   checked={selected}
                   onChange={() => setMethod(item.id)}
-                  className="mt-0.5 size-4 accent-primary"
+                  className="mt-1 accent-primary"
                 />
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center justify-between gap-2">
-                    <span className="font-heading text-base font-semibold sm:text-lg">
+                    <span className="font-heading text-lg font-semibold">
                       {item.name}
                     </span>
                     <span className="font-mono text-xs text-muted-foreground">
                       {wallet || "Number not set yet"}
                     </span>
                   </span>
-                  <span className="mt-1 hidden text-muted-foreground sm:block">
+                  <span className="mt-1 block text-muted-foreground">
                     {item.hint}
                   </span>
                 </span>

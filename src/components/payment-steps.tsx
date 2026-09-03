@@ -8,7 +8,7 @@ const steps = [
 
 export function PaymentSteps({ current }: { current: 1 | 2 | 3 }) {
   return (
-    <ol className="grid grid-cols-3 gap-1.5 sm:gap-2">
+    <ol className="grid gap-3 sm:grid-cols-3">
       {steps.map((step) => {
         const done = step.n < current;
         const active = step.n === current;
@@ -16,7 +16,7 @@ export function PaymentSteps({ current }: { current: 1 | 2 | 3 }) {
           <li
             key={step.n}
             className={cn(
-              "min-w-0 rounded-xl border px-2 py-2 sm:rounded-2xl sm:px-4 sm:py-3",
+              "rounded-2xl border px-4 py-3",
               active && "border-primary/40 bg-primary/5",
               done && "bg-card"
             )}

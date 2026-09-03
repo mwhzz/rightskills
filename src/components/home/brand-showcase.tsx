@@ -44,7 +44,7 @@ export function BrandShowcase({ brands }: { brands: StudioBrand[] }) {
             i === index ? "grid" : "hidden"
           )}
         >
-          <div className="relative aspect-[16/10] min-h-0 overflow-hidden lg:aspect-auto lg:min-h-[22rem]">
+          <div className="relative aspect-[16/10] lg:aspect-auto lg:min-h-[22rem]">
             {i === index ? (
               <img
                 src={item.image}
@@ -57,12 +57,12 @@ export function BrandShowcase({ brands }: { brands: StudioBrand[] }) {
               {String(i + 1).padStart(2, "0")} / {String(brands.length).padStart(2, "0")}
             </p>
           </div>
-          <div className="flex flex-col justify-between gap-4 p-4 sm:gap-6 sm:p-8">
+          <div className="flex flex-col justify-between gap-6 p-6 sm:p-8">
             <div>
               <p className="text-xs font-medium tracking-[0.16em] text-primary uppercase">
                 {item.category} · {item.year}
               </p>
-              <h3 className="mt-2 font-heading text-xl font-semibold tracking-tight sm:text-3xl">
+              <h3 className="mt-2 font-heading text-3xl font-semibold tracking-tight">
                 {item.name}
               </h3>
               <p className="mt-3 text-base leading-7 text-muted-foreground">

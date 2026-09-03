@@ -38,14 +38,14 @@ export default async function StudentPanelPage() {
       <p className="text-sm font-medium tracking-[0.18em] text-primary uppercase">
         Student panel
       </p>
-      <h1 className="mt-2 font-heading text-2xl font-semibold tracking-tight sm:text-4xl">
+      <h1 className="mt-2 font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
         Welcome back, {firstName}
       </h1>
       <p className="mt-2 max-w-xl text-sm text-muted-foreground sm:text-base">
         Your courses, payments, and progress — in one place.
       </p>
 
-      <div className="mt-6 grid grid-cols-2 gap-2.5 xl:grid-cols-4 xl:gap-3">
+      <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Stat label="Unlocked" value={String(learning.ownedSlugs.length)} />
         <Stat label="In progress" value={String(inProgress)} />
         <Stat label="Finished" value={String(finished)} />
@@ -153,9 +153,9 @@ export default async function StudentPanelPage() {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border bg-card px-3 py-3 sm:rounded-2xl sm:px-4 sm:py-4">
+    <div className="rounded-2xl border bg-card px-4 py-4">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="mt-1 font-heading text-xl font-semibold tracking-tight sm:text-2xl">{value}</p>
+      <p className="mt-1 font-heading text-2xl font-semibold tracking-tight">{value}</p>
     </div>
   );
 }

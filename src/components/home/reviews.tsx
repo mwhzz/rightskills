@@ -58,12 +58,12 @@ export async function Reviews() {
   const fromStudents = live.length > 0;
 
   return (
-    <section className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 sm:py-16 lg:py-20">
+    <section className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
       <Reveal>
         <p className="text-base font-medium tracking-[0.18em] text-primary uppercase">
           Reviews
         </p>
-        <h2 className="mt-2 font-heading text-xl font-semibold tracking-tight sm:text-5xl">
+        <h2 className="mt-3 font-heading text-4xl font-semibold tracking-tight sm:text-5xl">
           {fromStudents
             ? "From students who bought the course"
             : "From people who finished the work"}
@@ -75,7 +75,7 @@ export async function Reviews() {
           {items.map((item) => (
             <article
               key={`${item.name}-${item.quote.slice(0, 24)}`}
-              className="w-[min(85vw,20rem)] shrink-0 snap-start rounded-2xl border bg-card p-4 sm:w-[24rem] sm:p-5"
+              className="w-[min(100%,22rem)] shrink-0 snap-start rounded-2xl border bg-card p-5 sm:w-[24rem]"
             >
               <div className="flex items-center gap-3">
                 {item.photo ? (

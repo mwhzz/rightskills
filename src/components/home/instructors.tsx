@@ -39,14 +39,14 @@ const instructors = [
 export function Instructors() {
   return (
     <section id="instructors" className="border-y bg-card">
-      <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 sm:py-16 lg:py-20">
+      <div className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
         <Reveal>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-base font-medium tracking-[0.18em] text-primary uppercase">
                 Instructors
               </p>
-              <h2 className="mt-2 font-heading text-xl font-semibold tracking-tight sm:text-5xl">
+              <h2 className="mt-3 font-heading text-4xl font-semibold tracking-tight sm:text-5xl">
                 Taught by people who still do the work
               </h2>
             </div>
@@ -65,7 +65,7 @@ export function Instructors() {
               <Link
                 key={person.name}
                 href={`/instructors/${instructorSlug(person.name)}`}
-              className="flex w-[min(85vw,20rem)] max-w-none shrink-0 snap-start items-center gap-3 rounded-full border bg-background py-2 pr-5 pl-2 hover:border-primary/40 sm:w-max sm:max-w-[22rem]"
+                className="flex w-max max-w-[22rem] shrink-0 snap-start items-center gap-3 rounded-full border bg-background py-2 pr-5 pl-2 hover:border-primary/40"
               >
                 <img
                   src={person.photo}

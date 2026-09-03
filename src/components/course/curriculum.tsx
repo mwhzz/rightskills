@@ -34,7 +34,7 @@ export function CourseCurriculum({ modules }: { modules: Module[] }) {
     <section id="curriculum" className="scroll-mt-28">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="font-heading text-xl font-semibold tracking-tight sm:text-4xl">
+          <h2 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
             Course content
           </h2>
           <p className="mt-2 text-base text-muted-foreground">
@@ -63,7 +63,7 @@ export function CourseCurriculum({ modules }: { modules: Module[] }) {
               <button
                 type="button"
                 onClick={() => toggle(module.id)}
-                className="flex w-full items-center gap-3 px-3 py-3 text-left hover:bg-muted/50 sm:px-5 sm:py-4"
+                className="flex w-full items-center gap-3 px-5 py-4 text-left hover:bg-muted/50"
                 aria-expanded={open}
               >
                 <ChevronDown
@@ -72,7 +72,7 @@ export function CourseCurriculum({ modules }: { modules: Module[] }) {
                     open && "rotate-180"
                   )}
                 />
-                <span className="flex-1 font-heading text-sm font-semibold sm:text-lg">
+                <span className="flex-1 font-heading text-lg font-semibold">
                   {module.title}
                 </span>
                 <span className="hidden text-sm text-muted-foreground sm:inline">
@@ -84,14 +84,14 @@ export function CourseCurriculum({ modules }: { modules: Module[] }) {
                   {module.lessons.map((lesson) => (
                     <li
                       key={lesson.id}
-                      className="flex items-center gap-3 border-b px-3 py-2.5 last:border-b-0 sm:px-5 sm:py-3.5"
+                      className="flex items-center gap-3 border-b px-5 py-3.5 last:border-b-0"
                     >
                       {lesson.preview ? (
                         <PlayCircle className="size-5 shrink-0 text-primary" />
                       ) : (
                         <Lock className="size-5 shrink-0 text-muted-foreground" />
                       )}
-                      <span className="min-w-0 flex-1 text-sm sm:text-base">
+                      <span className="min-w-0 flex-1 text-base">
                         {lesson.title}
                         {lesson.preview ? (
                           <a

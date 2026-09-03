@@ -81,8 +81,8 @@ export function CourseCatalog({
   if (activeSort === "popular") sorted.sort((a, b) => b.students - a.students);
 
   return (
-    <div className="space-y-6 sm:space-y-8">
-      <div className="rail -mx-4 flex gap-2 px-4 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
+    <div className="space-y-8">
+      <div className="flex flex-wrap gap-2">
         <Link
           href={catalogHref({
             q: query,
@@ -91,7 +91,7 @@ export function CourseCatalog({
             sort: activeSort,
           })}
           className={cn(
-            "shrink-0 rounded-full border px-3 py-1.5 text-sm transition sm:px-4 sm:py-2 sm:text-base",
+            "rounded-full border px-4 py-2 text-base transition",
             activeCategory === "all"
               ? "border-primary bg-primary text-primary-foreground"
               : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
@@ -109,7 +109,7 @@ export function CourseCatalog({
               sort: activeSort,
             })}
             className={cn(
-              "shrink-0 rounded-full border px-3 py-1.5 text-sm transition sm:px-4 sm:py-2 sm:text-base",
+              "rounded-full border px-4 py-2 text-base transition",
               activeCategory === item.id
                 ? "border-primary bg-primary text-primary-foreground"
                 : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
@@ -123,36 +123,36 @@ export function CourseCatalog({
       <form
         action="/courses"
         method="get"
-        className="flex flex-col gap-3 rounded-2xl border bg-card p-3 sm:gap-4 sm:p-5"
+        className="flex flex-col gap-4 rounded-2xl border bg-card p-4 sm:p-5"
       >
         {activeCategory !== "all" ? (
           <input type="hidden" name="category" value={activeCategory} />
         ) : null}
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-3 sm:flex-row">
           <div className="relative min-w-0 flex-1">
-            <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground sm:size-5" />
+            <Search className="pointer-events-none absolute top-1/2 left-3.5 size-5 -translate-y-1/2 text-muted-foreground" />
             <input
               name="q"
               defaultValue={query}
-              placeholder="Search courses…"
-              className="h-11 w-full rounded-xl border border-input bg-transparent pr-3 pl-10 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 sm:h-12 sm:pl-11 sm:text-base"
+              placeholder="Search courses or instructors…"
+              className="h-12 w-full rounded-xl border border-input bg-transparent pr-4 pl-11 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
               aria-label="Search courses"
             />
           </div>
           <button
             type="submit"
-            className={cn(buttonVariants({ size: "lg" }), "h-11 shrink-0 px-4 text-sm sm:h-12 sm:px-6 sm:text-base")}
+            className={cn(buttonVariants({ size: "lg" }), "h-12 px-6 text-base")}
           >
             Search
           </button>
         </div>
-        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
-          <label className="flex min-w-0 items-center gap-2 text-sm sm:text-base">
-            <span className="hidden text-muted-foreground sm:inline">Level</span>
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+          <label className="flex items-center gap-2 text-base">
+            <span className="text-muted-foreground">Level</span>
             <select
               name="level"
               defaultValue={activeLevel === "all" ? "all" : activeLevel}
-              className="h-10 min-w-0 flex-1 rounded-xl border border-input bg-transparent px-2 text-sm sm:h-11 sm:px-3 sm:text-base"
+              className="h-11 rounded-xl border border-input bg-transparent px-3 text-base"
             >
               <option value="all">All levels</option>
               {levels.map((item) => (
@@ -162,12 +162,12 @@ export function CourseCatalog({
               ))}
             </select>
           </label>
-          <label className="flex min-w-0 items-center gap-2 text-sm sm:text-base">
-            <span className="hidden text-muted-foreground sm:inline">Sort</span>
+          <label className="flex items-center gap-2 text-base">
+            <span className="text-muted-foreground">Sort</span>
             <select
               name="sort"
               defaultValue={activeSort}
-              className="h-10 min-w-0 flex-1 rounded-xl border border-input bg-transparent px-2 text-sm sm:h-11 sm:px-3 sm:text-base"
+              className="h-11 rounded-xl border border-input bg-transparent px-3 text-base"
             >
               <option value="popular">Most learners</option>
               <option value="rating">Highest rated</option>
@@ -177,10 +177,7 @@ export function CourseCatalog({
           </label>
           <Link
             href="/courses"
-            className={cn(
-              buttonVariants({ variant: "ghost", size: "lg" }),
-              "col-span-2 h-10 text-sm sm:col-span-1 sm:h-11 sm:text-base"
-            )}
+            className={cn(buttonVariants({ variant: "ghost", size: "lg" }), "h-11 text-base")}
           >
             Reset
           </Link>
@@ -205,7 +202,7 @@ export function CourseCatalog({
           <p className="text-base text-muted-foreground">
             {sorted.length} course{sorted.length === 1 ? "" : "s"}
           </p>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {sorted.map((course) => {
               const owned = ownedSlugs?.includes(course.slug) ?? false;
               return (

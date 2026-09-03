@@ -24,41 +24,41 @@ export default async function InstructorsPage() {
   const people = buildInstructors(catalogue);
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:py-16">
-      <p className="text-xs font-medium tracking-[0.18em] text-primary uppercase sm:text-base">
+    <div className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 lg:py-16">
+      <p className="text-base font-medium tracking-[0.18em] text-primary uppercase">
         Instructors
       </p>
-      <h1 className="mt-2 font-heading text-2xl font-semibold tracking-tight sm:mt-3 sm:text-5xl">
+      <h1 className="mt-3 font-heading text-4xl font-semibold tracking-tight sm:text-5xl">
         The people who teach
       </h1>
-      <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:mt-3 sm:text-lg sm:leading-8">
+      <p className="mt-3 max-w-2xl text-lg leading-8 text-muted-foreground">
         Practitioners first. Each course is led by someone still doing the work.
       </p>
 
-      <div className="mt-8 grid gap-3 sm:mt-10 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
+      <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {people.map((person) => (
           <Link
             key={person.slug}
             href={`/instructors/${person.slug}`}
-            className="group flex items-center gap-3 overflow-hidden rounded-2xl border bg-card p-3 transition hover:border-primary/40 sm:flex-col sm:items-stretch sm:rounded-3xl sm:p-0"
+            className="group overflow-hidden rounded-3xl border bg-card transition hover:border-primary/40"
           >
             {person.photo ? (
               <img
                 src={person.photo}
                 alt={person.name}
-                className="size-16 shrink-0 rounded-xl object-cover object-top sm:aspect-4/5 sm:size-auto sm:w-full sm:rounded-none"
+                className="aspect-4/5 w-full object-cover object-top"
               />
             ) : (
-              <div className="flex size-16 shrink-0 items-center justify-center rounded-xl bg-primary font-heading text-xl font-semibold text-primary-foreground sm:aspect-4/5 sm:size-auto sm:w-full sm:rounded-none sm:text-5xl">
+              <div className="flex aspect-4/5 items-center justify-center bg-primary font-heading text-5xl font-semibold text-primary-foreground">
                 {person.initials}
               </div>
             )}
-            <div className="min-w-0 p-0 sm:p-6">
-              <h2 className="font-heading text-lg font-semibold tracking-tight group-hover:text-primary sm:text-2xl">
+            <div className="p-6">
+              <h2 className="font-heading text-2xl font-semibold tracking-tight group-hover:text-primary">
                 {person.name}
               </h2>
-              <p className="mt-0.5 truncate text-sm text-muted-foreground sm:mt-1 sm:text-base">{person.title}</p>
-              <p className="mt-1 text-sm text-muted-foreground sm:mt-3 sm:text-base">
+              <p className="mt-1 text-base text-muted-foreground">{person.title}</p>
+              <p className="mt-3 text-base text-muted-foreground">
                 {person.courses.length} course
                 {person.courses.length === 1 ? "" : "s"}
               </p>

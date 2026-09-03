@@ -27,7 +27,7 @@ export function CourseCover({
     >
       <div className={cn("absolute inset-0", patterns[course.cover.pattern])} />
       <div className="absolute inset-0 bg-black/10" />
-      <div className="relative flex h-full min-h-0 flex-col justify-between p-3 sm:p-4">
+      <div className="relative flex h-full min-h-36 flex-col justify-between p-4">
         <p className="text-[11px] font-medium tracking-[0.18em] text-white/80 uppercase">
           Right Skills
         </p>

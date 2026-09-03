@@ -58,7 +58,7 @@ export default async function LearnCoursePage({
   const flash = review ? reviewCopy[review] : undefined;
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 sm:py-8">
+    <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
       <p className="mb-6 text-sm text-muted-foreground">
         <Link href="/learn" className="hover:text-foreground">
           My learning

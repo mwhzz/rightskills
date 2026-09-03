@@ -26,26 +26,26 @@ export function MediaSlider({
     <div className={cn("relative", className)}>
       <div
         ref={scroller}
-        className="flex gap-3 overflow-x-auto scroll-smooth pb-1 [-ms-overflow-style:none] [scrollbar-width:none] snap-x snap-mandatory [&::-webkit-scrollbar]:hidden sm:gap-4"
+        className="flex gap-4 overflow-x-auto scroll-smooth pb-1 [-ms-overflow-style:none] [scrollbar-width:none] snap-x snap-mandatory [&::-webkit-scrollbar]:hidden"
       >
         {children}
       </div>
-      <div className="mt-3 flex gap-2 sm:mt-5">
+      <div className="mt-5 flex gap-2">
         <button
           type="button"
           onClick={() => move(-1)}
-          className="inline-flex size-8 items-center justify-center rounded-full border bg-background text-foreground transition hover:border-primary hover:text-primary sm:size-11"
+          className="inline-flex size-11 items-center justify-center rounded-full border bg-background text-foreground transition hover:border-primary hover:text-primary"
           aria-label="Previous"
         >
-          <ChevronLeft className="size-4 sm:size-5" />
+          <ChevronLeft className="size-5" />
         </button>
         <button
           type="button"
           onClick={() => move(1)}
-          className="inline-flex size-8 items-center justify-center rounded-full border bg-background text-foreground transition hover:border-primary hover:text-primary sm:size-11"
+          className="inline-flex size-11 items-center justify-center rounded-full border bg-background text-foreground transition hover:border-primary hover:text-primary"
           aria-label="Next"
         >
-          <ChevronRight className="size-4 sm:size-5" />
+          <ChevronRight className="size-5" />
         </button>
       </div>
     </div>

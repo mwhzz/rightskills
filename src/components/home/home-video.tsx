@@ -40,7 +40,7 @@ export function HomeVideo({
   }
 
   return (
-    <div className={cn("relative min-w-0 overflow-hidden bg-muted", className)}>
+    <div className={cn("relative overflow-hidden bg-muted", className)}>
       <video
         ref={videoRef}
         className={cn(
