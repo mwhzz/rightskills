@@ -64,7 +64,8 @@ jobs:
             set ftp:passive-mode true
             open -u righwail --env-password ftp://198.54.116.49:21
             mkdir -fp /rightskills/tmp || true
-            put tmp/next-linux.tgz -o /rightskills/tmp/next-linux.tgz
+            put tmp/next-linux.tgz -o /rightskills/tmp/next-linux.tgz.uploading
+            mv /rightskills/tmp/next-linux.tgz.uploading /rightskills/tmp/next-linux.tgz
             put tmp/deploy.flag -o /rightskills/tmp/deploy.flag
             put tmp/restart.txt -o /rightskills/tmp/restart.txt
             bye

@@ -1,6 +1,6 @@
 #!/bin/bash
 # Atomically install the Linux .next tarball uploaded by GitHub Actions.
-# Safe to call whenever tmp/next-linux.tgz exists. No-op otherwise.
+# Incomplete FTP uploads are ignored so the live site stays up.
 
 set -euo pipefail
 
@@ -13,15 +13,23 @@ if [[ ! -f "$TGZ" ]]; then
   exit 0
 fi
 
+if ! gzip -t "$TGZ" 2>/dev/null; then
+  echo "tarball incomplete; waiting for FTP to finish"
+  exit 0
+fi
+
 STAGE=$(mktemp -d "$APP/tmp/next-stage.XXXXXX")
 cleanup() { rm -rf "$STAGE"; }
 trap cleanup EXIT
 
 echo "Extracting Linux .next tarball"
-tar -xzf "$TGZ" -C "$STAGE"
+if ! tar -xzf "$TGZ" -C "$STAGE"; then
+  echo "extract failed; leaving live .next in place"
+  exit 0
+fi
 if [[ ! -f "$STAGE/.next/BUILD_ID" ]]; then
-  echo "tarball did not contain .next/BUILD_ID" >&2
-  exit 1
+  echo "tarball did not contain .next/BUILD_ID; leaving live .next in place"
+  exit 0
 fi
 
 if [[ -f scripts/rewrite-next-paths.py ]]; then
