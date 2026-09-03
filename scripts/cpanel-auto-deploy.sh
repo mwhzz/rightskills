@@ -38,14 +38,40 @@ trap 'rmdir "$LOCKDIR" 2>/dev/null || true' EXIT
   cd "$APP"
   mkdir -p uploads/lessons tmp
 
-  # Replace webpack output atomically. Never merge two Next builds.
-  if [[ -f tmp/next-linux.tgz ]]; then
+  extract_next_tarball() {
+    if [[ ! -f tmp/next-linux.tgz ]]; then
+      return 0
+    fi
     echo "Extracting Linux .next tarball"
     rm -rf .next
     tar -xzf tmp/next-linux.tgz
     rm -f tmp/next-linux.tgz
     echo "BUILD_ID=$(cat .next/BUILD_ID 2>/dev/null || echo missing)"
-  fi
+    python3 - <<'PY' || true
+from pathlib import Path
+root = Path(".next")
+replacements = [
+    (b"/home/runner/work/rightskills/rightskills", b"/home/righwail/rightskills"),
+    (b"C:\\\\Users\\\\tp\\\\Documents\\\\zawad\\\\rightskills\\\\skills-bangladesh", b"/home/righwail/rightskills"),
+]
+changed = 0
+for path in root.rglob("*"):
+    if not path.is_file() or path.stat().st_size > 12_000_000:
+        continue
+    data = path.read_bytes()
+    orig = data
+    for old, new in replacements:
+        if old in data:
+            data = data.replace(old, new)
+    if data != orig:
+        path.write_bytes(data)
+        changed += 1
+print(f"rewrote {changed} files")
+PY
+  }
+
+  # Replace webpack output atomically. Never merge two Next builds.
+  extract_next_tarball
 
   # Pick up the GitHub-uploaded .next even if git/npm fail later.
   touch tmp/restart.txt
@@ -54,13 +80,7 @@ trap 'rmdir "$LOCKDIR" 2>/dev/null || true' EXIT
   git reset --hard origin/main
 
   # Extract again after pull in case the tarball landed during git/npm.
-  if [[ -f tmp/next-linux.tgz ]]; then
-    echo "Extracting Linux .next tarball"
-    rm -rf .next
-    tar -xzf tmp/next-linux.tgz
-    rm -f tmp/next-linux.tgz
-    echo "BUILD_ID=$(cat .next/BUILD_ID 2>/dev/null || echo missing)"
-  fi
+  extract_next_tarball
 
   npm install
   npx prisma generate

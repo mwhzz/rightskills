@@ -36,6 +36,25 @@ jobs:
           DATABASE_URL: mysql://build:build@127.0.0.1:3306/build
           SESSION_SECRET: github-actions-build-secret-please-override
 
+      - name: Point RSC manifests at the cPanel app path
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          root = Path(".next")
+          old = b"/home/runner/work/rightskills/rightskills"
+          new = b"/home/righwail/rightskills"
+          changed = 0
+          for path in root.rglob("*"):
+              if not path.is_file() or path.stat().st_size > 12_000_000:
+                  continue
+              data = path.read_bytes()
+              if old not in data:
+                  continue
+              path.write_bytes(data.replace(old, new))
+              changed += 1
+          print(f"rewrote {changed} files")
+          PY
+
       - name: Upload Linux .next tarball and trigger flag over FTP
         env:
           LFTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
