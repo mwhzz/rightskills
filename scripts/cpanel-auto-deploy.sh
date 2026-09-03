@@ -38,11 +38,29 @@ trap 'rmdir "$LOCKDIR" 2>/dev/null || true' EXIT
   cd "$APP"
   mkdir -p uploads/lessons tmp
 
+  # Replace webpack output atomically. Never merge two Next builds.
+  if [[ -f tmp/next-linux.tgz ]]; then
+    echo "Extracting Linux .next tarball"
+    rm -rf .next
+    tar -xzf tmp/next-linux.tgz
+    rm -f tmp/next-linux.tgz
+    echo "BUILD_ID=$(cat .next/BUILD_ID 2>/dev/null || echo missing)"
+  fi
+
   # Pick up the GitHub-uploaded .next even if git/npm fail later.
   touch tmp/restart.txt
 
   git fetch origin main
   git reset --hard origin/main
+
+  # Extract again after pull in case the tarball landed during git/npm.
+  if [[ -f tmp/next-linux.tgz ]]; then
+    echo "Extracting Linux .next tarball"
+    rm -rf .next
+    tar -xzf tmp/next-linux.tgz
+    rm -f tmp/next-linux.tgz
+    echo "BUILD_ID=$(cat .next/BUILD_ID 2>/dev/null || echo missing)"
+  fi
 
   npm install
   npx prisma generate
