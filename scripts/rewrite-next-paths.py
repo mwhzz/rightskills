@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """Rewrite Next.js absolute build-machine paths so the cPanel host can load RSC."""
 
-from __future__ import annotations
-
 import sys
 from pathlib import Path
 
