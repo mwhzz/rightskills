@@ -10,6 +10,11 @@ export type HomeBannerSet = {
   mobile: HomeBanner[];
 };
 
+export const BANNER_RECOMMENDED = {
+  desktop: { width: 1920, height: 640, label: "1920 × 640 px" },
+  mobile: { width: 1080, height: 720, label: "1080 × 720 px" },
+} as const;
+
 const defaultSlide = (
   id: string,
   image: string,

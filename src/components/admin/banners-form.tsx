@@ -6,7 +6,7 @@ import { saveHomeBannersAction } from "@/app/actions";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { bannerImageSrc, type HomeBanner, type HomeBannerSet } from "@/lib/home-banners";
+import { bannerImageSrc, BANNER_RECOMMENDED, type HomeBanner, type HomeBannerSet } from "@/lib/home-banners";
 import { IMAGE_MAX_BYTES } from "@/lib/upload-limits";
 import { formatBytes } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -36,6 +36,9 @@ export function BannersForm({
     banners.mobile.length ? banners.mobile : [blankBanner("mob")]
   );
   const [previews, setPreviews] = useState<Record<string, string>>({});
+  const [fileSizes, setFileSizes] = useState<
+    Record<string, { width: number; height: number }>
+  >({});
 
   return (
     <form action={saveHomeBannersAction} className="space-y-8">
@@ -67,21 +70,25 @@ export function BannersForm({
 
       <BannerGroup
         title="Desktop banners"
-        description="Wide images for laptop and tablet. Recommended 1920×640. No text is drawn on top — put any copy in the image itself."
+        description="Shown on laptop and tablet. Upload the exact size below so text on the edges stays visible."
         device="desktop"
         items={desktop}
         setItems={setDesktop}
         previews={previews}
         setPreviews={setPreviews}
+        fileSizes={fileSizes}
+        setFileSizes={setFileSizes}
       />
       <BannerGroup
         title="Mobile banners"
-        description="Taller crop for phones. Recommended 1080×720. Phones only see this set."
+        description="Phones only. Upload a separate, taller image for this set."
         device="mobile"
         items={mobile}
         setItems={setMobile}
         previews={previews}
         setPreviews={setPreviews}
+        fileSizes={fileSizes}
+        setFileSizes={setFileSizes}
       />
 
       <button type="submit" className={cn(buttonVariants({ size: "lg" }), "h-11")}>
@@ -99,6 +106,8 @@ function BannerGroup({
   setItems,
   previews,
   setPreviews,
+  fileSizes,
+  setFileSizes,
 }: {
   title: string;
   description: string;
@@ -107,7 +116,13 @@ function BannerGroup({
   setItems: React.Dispatch<React.SetStateAction<HomeBanner[]>>;
   previews: Record<string, string>;
   setPreviews: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  fileSizes: Record<string, { width: number; height: number }>;
+  setFileSizes: React.Dispatch<
+    React.SetStateAction<Record<string, { width: number; height: number }>>
+  >;
 }) {
+  const recommended = BANNER_RECOMMENDED[device];
+
   function update(index: number, patch: Partial<HomeBanner>) {
     setItems((current) =>
       current.map((item, i) => (i === index ? { ...item, ...patch } : item))
@@ -167,22 +182,27 @@ function BannerGroup({
                 </button>
               </div>
             </div>
-            <div
-              className={cn(
-                "mt-4 overflow-hidden rounded-xl bg-muted",
-                device === "mobile" ? "aspect-[3/2]" : "aspect-[3/1]"
-              )}
-            >
+            <div className="mt-4 overflow-hidden rounded-xl bg-muted">
               {previews[item.id] || item.image ? (
                 <img
                   src={previews[item.id] || bannerImageSrc(item.image)}
                   alt=""
-                  className="h-full w-full object-cover"
+                  className="block h-auto w-full"
                 />
-              ) : null}
+              ) : (
+                <div className="flex min-h-28 items-center justify-center px-4 py-8 text-center text-sm text-muted-foreground">
+                  Upload {recommended.label}
+                </div>
+              )}
             </div>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <Field label="Image" className="sm:col-span-2">
+                <p className="mb-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-sm">
+                  Recommended size:{" "}
+                  <span className="font-medium text-foreground">
+                    {recommended.label}
+                  </span>
+                </p>
                 <input
                   type="file"
                   name={`file-${device}-${item.id}`}
@@ -195,16 +215,45 @@ function BannerGroup({
                       event.target.value = "";
                       return;
                     }
+                    const url = URL.createObjectURL(file);
                     setPreviews((current) => ({
                       ...current,
-                      [item.id]: URL.createObjectURL(file),
+                      [item.id]: url,
                     }));
+                    const probe = new Image();
+                    probe.onload = () => {
+                      setFileSizes((current) => ({
+                        ...current,
+                        [item.id]: {
+                          width: probe.naturalWidth,
+                          height: probe.naturalHeight,
+                        },
+                      }));
+                    };
+                    probe.src = url;
                   }}
                 />
-                <p className="mt-1 text-xs text-muted-foreground">
-                  JPG, PNG, WEBP, or GIF · up to {formatBytes(IMAGE_MAX_BYTES)}.
-                  Leave empty to keep the current image.
-                </p>
+                {fileSizes[item.id] ? (
+                  <p
+                    className={cn(
+                      "mt-1 text-xs",
+                      fileSizes[item.id].width === recommended.width &&
+                        fileSizes[item.id].height === recommended.height
+                        ? "text-muted-foreground"
+                        : "text-foreground"
+                    )}
+                  >
+                    This file is {fileSizes[item.id].width} ×{" "}
+                    {fileSizes[item.id].height} px. Recommended {recommended.label}.
+                    The homepage still shows the full picture.
+                  </p>
+                ) : (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    JPG, PNG, WEBP, or GIF · up to {formatBytes(IMAGE_MAX_BYTES)}.
+                    Homepage shows the full image, not a crop. Leave empty to keep
+                    the current file.
+                  </p>
+                )}
               </Field>
               <Field label="Seconds on screen">
                 <Input

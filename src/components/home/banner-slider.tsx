@@ -49,32 +49,24 @@ export function BannerSlider({
             : "rounded-[1.4rem]"
         )}
       >
-        <div
-          className={cn(
-            "relative w-full",
-            variant === "mobile" ? "aspect-[3/2]" : "aspect-[3/1]"
-          )}
-        >
+        <div className="relative w-full">
           {slides.map((banner, i) => {
             const src = bannerImageSrc(banner.image);
             const image = (
-              <img
-                src={src}
-                alt=""
-                className="absolute inset-0 h-full w-full object-cover"
-              />
+              <img src={src} alt="" className="block h-auto w-full" />
             );
             return (
               <article
                 key={banner.id}
                 aria-hidden={i !== index}
                 className={cn(
-                  "absolute inset-0",
-                  i === index ? "opacity-100" : "pointer-events-none opacity-0"
+                  i === index
+                    ? "relative"
+                    : "pointer-events-none absolute inset-0 opacity-0"
                 )}
               >
                 {banner.href ? (
-                  <Link href={banner.href} className="absolute inset-0 block">
+                  <Link href={banner.href} className="block">
                     {image}
                     <span className="sr-only">Open banner</span>
                   </Link>

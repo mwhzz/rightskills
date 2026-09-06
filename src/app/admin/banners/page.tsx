@@ -26,9 +26,8 @@ export default async function AdminBannersPage({
         Homepage banners
       </h1>
       <p className="mt-2 max-w-2xl text-base text-muted-foreground">
-        Image-only slides. No text is drawn on top — put any copy inside the
-        image. Desktop and mobile are separate. Set how many seconds each slide
-        stays on screen.
+        Image-only slides. The homepage shows the whole file — sides are not
+        cropped. Put any copy inside the image. Desktop and mobile are separate.
       </p>
       <div className="mt-8">
         <BannersForm
