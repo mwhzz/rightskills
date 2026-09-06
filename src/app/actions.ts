@@ -23,8 +23,11 @@ import {
 } from "@/lib/queries";
 import { makeOrderId, type PaymentMethod } from "@/lib/store";
 import {
+  assertImageFile,
   isUploadFile,
+  removeInstructorPhoto,
   removeUpload,
+  saveInstructorPhoto,
   saveLessonResource,
   saveLessonVideo,
 } from "@/lib/uploads";
@@ -433,6 +436,7 @@ export async function saveCourseAction(
   const title = String(formData.get("title") ?? "").trim();
   const banglaTitle = String(formData.get("banglaTitle") ?? "").trim();
   const subtitle = String(formData.get("subtitle") ?? "").trim();
+  const purchaseNote = String(formData.get("purchaseNote") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const category = String(formData.get("category") ?? "development");
   const level = String(formData.get("level") ?? "Beginner");
@@ -451,6 +455,13 @@ export async function saveCourseAction(
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean);
+  const includes = String(formData.get("includes") ?? "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, 20);
+  const photoFile = formData.get("instructorPhoto");
+  const removePhoto = formData.get("removeInstructorPhoto") === "on";
   let slug = slugify(String(formData.get("slug") ?? title));
 
   if (title.length < 3) return { error: "Give the course a title of at least 3 characters." };
@@ -477,11 +488,24 @@ export async function saveCourseAction(
     if (outcomes.length === 0) return { error: "Add at least one outcome before publishing." };
     if (!instructorName) return { error: "Add an instructor before publishing." };
   }
+  if (isUploadFile(photoFile)) {
+    try {
+      assertImageFile(photoFile);
+    } catch (error) {
+      return {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Could not use that instructor photo.",
+      };
+    }
+  }
 
   const data = {
     title,
     banglaTitle: banglaTitle || title,
     subtitle,
+    purchaseNote: purchaseNote.slice(0, 600),
     description,
     category,
     level,
@@ -491,6 +515,7 @@ export async function saveCourseAction(
     featured,
     published,
     outcomes,
+    includes,
     instructorName: instructorName || user.name,
     instructorTitle: instructorTitle || "Instructor",
     instructorBio,
@@ -507,9 +532,16 @@ export async function saveCourseAction(
     if (user.role === "teacher" && existing.teacherId !== user.id) {
       return { error: "You can only edit your own courses." };
     }
+    let instructorPhoto = existing.instructorPhoto;
+    if (isUploadFile(photoFile)) {
+      instructorPhoto = await saveInstructorPhoto(id, photoFile);
+    } else if (removePhoto) {
+      await removeInstructorPhoto(id);
+      instructorPhoto = null;
+    }
     await prisma.course.update({
       where: { id },
-      data: { ...data, slug: existing.slug },
+      data: { ...data, instructorPhoto, slug: existing.slug },
     });
     clearPublicCache();
     redirect(`/admin/courses/${id}`);
@@ -520,6 +552,23 @@ export async function saveCourseAction(
   const created = await prisma.course.create({
     data: { ...data, slug },
   });
+  if (isUploadFile(photoFile)) {
+    try {
+      const instructorPhoto = await saveInstructorPhoto(created.id, photoFile);
+      await prisma.course.update({
+        where: { id: created.id },
+        data: { instructorPhoto },
+      });
+    } catch (error) {
+      clearPublicCache();
+      return {
+        error:
+          error instanceof Error
+            ? `Course saved, but the photo failed: ${error.message}`
+            : "Course saved, but the photo failed. Try again.",
+      };
+    }
+  }
   clearPublicCache();
   redirect(`/admin/courses/${created.id}`);
 }

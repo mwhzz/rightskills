@@ -55,6 +55,9 @@ model Course {
   language           String
   priceBdt           Int
   originalPriceBdt   Int?
+  purchaseNote       String       @default("") @db.Text
+  includes           Json?
+  instructorPhoto    String?
   rating             Float        @default(0)
   reviewCount        Int          @default(0)
   students           Int          @default(0)

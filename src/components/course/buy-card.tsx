@@ -2,7 +2,7 @@ import { Check, Infinity, Languages, MonitorPlay, Smartphone } from "lucide-reac
 import { AddToCartButton, BuyNowButton } from "@/components/add-to-cart-button";
 import { HomeVideo } from "@/components/home/home-video";
 import { brand } from "@/lib/brand";
-import { courseHours, lessonCount, type Course } from "@/lib/courses";
+import { courseHours, lessonCount, DEFAULT_PURCHASE_NOTE, type Course } from "@/lib/courses";
 import { formatBdt } from "@/lib/format";
 
 export function CourseBuyCard({
@@ -55,8 +55,7 @@ export function CourseBuyCard({
           ) : null}
         </div>
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          One-time payment. Add to cart without an account — you log in when
-          you place the order. The course unlocks after we confirm your TrxID.
+          {course.purchaseNote?.trim() || DEFAULT_PURCHASE_NOTE}
         </p>
         <div className="mt-5 space-y-2.5">
           <AddToCartButton slug={course.slug} owned={owned} inCart={inCart} />

@@ -20,13 +20,14 @@ import { listReviewsForSlug } from "@/lib/reviews";
 import {
   categoryLabel,
   courseHours,
+  courseIncludes,
   courses,
   getCourse,
   lessonCount,
   type Course,
 } from "@/lib/courses";
-import { instructorPhotos } from "@/lib/instructor-photos";
 import { getCart } from "@/lib/session";
+import { instructorPhotoSrc } from "@/lib/instructor-photos";
 import { getSession } from "@/lib/auth";
 import {
   getHomepageLearning,
@@ -128,7 +129,10 @@ export default async function CourseDetailPage({
 
   const inCart = cart.includes(course.slug);
   const related = await loadRelated(course);
-  const photo = instructorPhotos[course.instructor.name];
+  const photo = instructorPhotoSrc(
+    course.instructor.name,
+    course.instructor.photo
+  );
   let liveReviews: Awaited<ReturnType<typeof listReviewsForSlug>> = [];
   try {
     liveReviews = await listReviewsForSlug(slug);
@@ -254,14 +258,7 @@ export default async function CourseDetailPage({
               This course includes
             </h2>
             <ul className="mt-6 grid gap-3 sm:grid-cols-2">
-              {[
-                `${hours} hours of on-demand video`,
-                `${lessons} lectures you can watch at your pace`,
-                `Taught in ${course.language}`,
-                "Assignments that look like real work",
-                "Lifetime access on your account",
-                "Watch on desktop or phone",
-              ].map((item) => (
+              {courseIncludes(course).map((item) => (
                 <li
                   key={item}
                   className="flex items-center gap-3 text-base leading-7"

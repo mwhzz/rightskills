@@ -44,17 +44,20 @@ export type Course = {
   language: CourseLanguage;
   priceBdt: number;
   originalPriceBdt?: number;
+  purchaseNote?: string;
   rating: number;
   reviewCount: number;
   students: number;
   featured?: boolean;
   outcomes: string[];
+  includes?: string[];
   modules: Module[];
   instructor: {
     name: string;
     title: string;
     bio: string;
     initials: string;
+    photo?: string;
   };
   cover: {
     from: string;
@@ -62,6 +65,9 @@ export type Course = {
     pattern: "grid" | "dots" | "waves";
   };
 };
+
+export const DEFAULT_PURCHASE_NOTE =
+  "One-time payment. Add to cart without an account — you log in when you place the order. The course unlocks after we confirm your TrxID.";
 
 function lesson(
   id: string,
@@ -600,6 +606,22 @@ export function courseHours(course: Course) {
 
 export function lessonCount(course: Course) {
   return course.modules.reduce((sum, module) => sum + module.lessons.length, 0);
+}
+
+export function defaultCourseIncludes(course: Course) {
+  return [
+    `${courseHours(course)} hours of on-demand video`,
+    `${lessonCount(course)} lectures you can watch at your pace`,
+    `Taught in ${course.language}`,
+    "Assignments that look like real work",
+    "Lifetime access on your account",
+    "Watch on desktop or phone",
+  ];
+}
+
+export function courseIncludes(course: Course) {
+  const custom = (course.includes ?? []).map((item) => item.trim()).filter(Boolean);
+  return custom.length > 0 ? custom : defaultCourseIncludes(course);
 }
 
 export function categoryLabel(id: CategoryId) {

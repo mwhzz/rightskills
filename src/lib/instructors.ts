@@ -1,5 +1,5 @@
-import { instructorPhotos } from "@/lib/instructor-photos";
 import type { Course } from "@/lib/courses";
+import { instructorPhotoSrc } from "@/lib/instructor-photos";
 
 export function instructorSlug(name: string) {
   return name
@@ -26,6 +26,9 @@ export function buildInstructors(courseList: Course[]): InstructorProfile[] {
     const existing = map.get(slug);
     if (existing) {
       existing.courses.push(course);
+      if (!existing.photo && course.instructor.photo) {
+        existing.photo = course.instructor.photo;
+      }
       continue;
     }
     map.set(slug, {
@@ -34,7 +37,10 @@ export function buildInstructors(courseList: Course[]): InstructorProfile[] {
       title: course.instructor.title,
       bio: course.instructor.bio,
       initials: course.instructor.initials,
-      photo: instructorPhotos[course.instructor.name],
+      photo: instructorPhotoSrc(
+        course.instructor.name,
+        course.instructor.photo
+      ),
       courses: [course],
     });
   }

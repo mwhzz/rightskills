@@ -16,8 +16,10 @@ import {
   levels,
   type CategoryId,
 } from "@/lib/courses";
-import { formatBdt } from "@/lib/format";
+import { formatBdt, formatBytes } from "@/lib/format";
+import { instructorPhotoSrc } from "@/lib/instructor-photos";
 import { slugify } from "@/lib/slug";
+import { IMAGE_MAX_BYTES } from "@/lib/upload-limits";
 import { cn } from "@/lib/utils";
 import type { Course } from "@prisma/client";
 
@@ -73,6 +75,59 @@ function Section({
   );
 }
 
+function LineList({
+  items,
+  onChange,
+  placeholder,
+  addLabel,
+}: {
+  items: string[];
+  onChange: (next: string[]) => void;
+  placeholder: string;
+  addLabel: string;
+}) {
+  return (
+    <>
+      <ul className="space-y-2">
+        {items.map((item, index) => (
+          <li key={index} className="flex gap-2">
+            <Input
+              value={item}
+              onValueChange={(value) => {
+                const next = [...items];
+                next[index] = value;
+                onChange(next);
+              }}
+              placeholder={placeholder}
+              className={fieldClass}
+            />
+            {items.length > 1 ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="size-11 shrink-0"
+                onClick={() => onChange(items.filter((_, i) => i !== index))}
+                aria-label="Remove line"
+              >
+                <Trash2 />
+              </Button>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => onChange([...items, ""])}
+      >
+        <Plus data-icon="inline-start" />
+        {addLabel}
+      </Button>
+    </>
+  );
+}
+
 export function CourseEditorForm({
   course,
 }: {
@@ -80,6 +135,9 @@ export function CourseEditorForm({
 }) {
   const existingOutcomes = Array.isArray(course?.outcomes)
     ? (course.outcomes as string[])
+    : [];
+  const existingIncludes = Array.isArray(course?.includes)
+    ? (course.includes as string[])
     : [];
   const [title, setTitle] = useState(course?.title ?? "");
   const [slug, setSlug] = useState(course?.slug ?? "");
@@ -99,6 +157,12 @@ export function CourseEditorForm({
   const [outcomes, setOutcomes] = useState(
     existingOutcomes.length > 0 ? existingOutcomes : [""]
   );
+  const [includes, setIncludes] = useState(
+    existingIncludes.length > 0 ? existingIncludes : [""]
+  );
+  const [photoLabel, setPhotoLabel] = useState("");
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [removePhoto, setRemovePhoto] = useState(false);
   const [state, formAction, pending] = useActionState<SaveCourseState, FormData>(
     saveCourseAction,
     null
@@ -111,6 +175,10 @@ export function CourseEditorForm({
     original && Number.isFinite(original) && Number.isFinite(price) && original > price
       ? Math.round((1 - price / original) * 100)
       : null;
+  const existingPhoto = course
+    ? instructorPhotoSrc(course.instructorName, course.instructorPhoto)
+    : undefined;
+  const shownPhoto = removePhoto ? null : photoPreview || existingPhoto;
 
   const preview = useMemo(
     () => ({
@@ -131,6 +199,7 @@ export function CourseEditorForm({
       {course ? <input type="hidden" name="id" value={course.id} /> : null}
       <input type="hidden" name="slug" value={liveSlug} />
       <input type="hidden" name="outcomes" value={outcomes.join("\n")} />
+      <input type="hidden" name="includes" value={includes.join("\n")} />
       <input type="hidden" name="coverFrom" value={coverFrom} />
       <input type="hidden" name="coverTo" value={coverTo} />
       <input type="hidden" name="coverPattern" value={coverPattern} />
@@ -306,63 +375,120 @@ export function CourseEditorForm({
             </span>
             {discount ? ` · ${discount}% off` : null}
           </p>
+          <Field
+            label="Note under the price"
+            htmlFor="purchaseNote"
+            hint="Shown on the course page between the price and Add to cart. Leave blank to use the default payment text."
+          >
+            <Textarea
+              id="purchaseNote"
+              name="purchaseNote"
+              rows={3}
+              maxLength={600}
+              defaultValue={course?.purchaseNote ?? ""}
+              placeholder="One-time payment. Add to cart without an account — you log in when you place the order. The course unlocks after we confirm your TrxID."
+              className="min-h-24 rounded-lg border border-input bg-background px-3 py-2 text-base md:text-sm"
+            />
+          </Field>
         </Section>
 
         <Section
-          title="What they will walk away with"
-          description="One outcome per line. These show on the course page. At least one is required to publish."
+          title="What you will learn"
+          description="These cards show on the course page. One line per outcome. At least one is required to publish."
         >
-          <ul className="space-y-2">
-            {outcomes.map((item, index) => (
-              <li key={index} className="flex gap-2">
-                <Input
-                  value={item}
-                  onValueChange={(value) => {
-                    const next = [...outcomes];
-                    next[index] = value;
-                    setOutcomes(next);
-                  }}
-                  placeholder="Build and deploy a multi-page Next.js site"
-                  className={fieldClass}
-                />
-                {outcomes.length > 1 ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="size-11 shrink-0"
-                    onClick={() =>
-                      setOutcomes(outcomes.filter((_, i) => i !== index))
-                    }
-                    aria-label="Remove outcome"
-                  >
-                    <Trash2 />
-                  </Button>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setOutcomes([...outcomes, ""])}
-          >
-            <Plus data-icon="inline-start" />
-            Add outcome
-          </Button>
+          <LineList
+            items={outcomes}
+            onChange={setOutcomes}
+            placeholder="Build a sales tracker with SUMIFS and data validation"
+            addLabel="Add outcome"
+          />
+        </Section>
+
+        <Section
+          title="This course includes"
+          description="Shown under What you will learn. Leave blank to keep the default list (hours, lectures, language, lifetime access)."
+        >
+          <LineList
+            items={includes}
+            onChange={setIncludes}
+            placeholder="Lifetime access on your account"
+            addLabel="Add item"
+          />
         </Section>
 
         <Section
           title="Instructor"
-          description="Shown on the course page under the curriculum."
+          description="Name, title, bio, and photo on the course page. Students see this under the curriculum."
         >
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+            <div className="shrink-0">
+              {shownPhoto ? (
+                <img
+                  src={shownPhoto}
+                  alt=""
+                  className="size-28 rounded-2xl object-cover"
+                />
+              ) : (
+                <div className="flex size-28 items-center justify-center rounded-2xl bg-primary font-heading text-3xl font-semibold text-primary-foreground">
+                  {(course?.instructorInitials || "RS").slice(0, 2)}
+                </div>
+              )}
+            </div>
+            <div className="min-w-0 flex-1 space-y-3">
+              <Field
+                label="Photo"
+                htmlFor="instructorPhoto"
+                hint="JPG, PNG, WEBP, or GIF · up to 5MB. If you skip this, we use a photo that already matches the name — or initials."
+              >
+                <input
+                  id="instructorPhoto"
+                  type="file"
+                  name="instructorPhoto"
+                  accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
+                  className="text-sm file:mr-2 file:rounded-md file:border-0 file:bg-muted file:px-2 file:py-1"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (!file) {
+                      setPhotoLabel("");
+                      setPhotoPreview(null);
+                      return;
+                    }
+                    if (file.size > IMAGE_MAX_BYTES) {
+                      setPhotoLabel("Photo must be 5MB or smaller.");
+                      event.target.value = "";
+                      setPhotoPreview(null);
+                      return;
+                    }
+                    setRemovePhoto(false);
+                    setPhotoLabel(`${file.name} · ${formatBytes(file.size)}`);
+                    setPhotoPreview(URL.createObjectURL(file));
+                  }}
+                />
+              </Field>
+              {photoLabel ? (
+                <p className="text-xs text-muted-foreground">{photoLabel}</p>
+              ) : null}
+              {course?.instructorPhoto && !photoPreview ? (
+                <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    name="removeInstructorPhoto"
+                    checked={removePhoto}
+                    onChange={(event) => setRemovePhoto(event.target.checked)}
+                    className="size-4 rounded border"
+                  />
+                  Remove uploaded photo
+                </label>
+              ) : null}
+            </div>
+          </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Name" htmlFor="instructorName">
               <Input
                 id="instructorName"
                 name="instructorName"
                 defaultValue={course?.instructorName ?? ""}
-                placeholder="Rafiul Hasan"
+                placeholder="Mahmudul Islam"
                 className={fieldClass}
               />
             </Field>
@@ -371,7 +497,7 @@ export function CourseEditorForm({
                 id="instructorTitle"
                 name="instructorTitle"
                 defaultValue={course?.instructorTitle ?? ""}
-                placeholder="Senior frontend engineer"
+                placeholder="MIS lead, RMG buying office"
                 className={fieldClass}
               />
             </Field>

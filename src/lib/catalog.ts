@@ -11,6 +11,7 @@ import {
   courseHours,
   lessonCount,
 } from "@/lib/courses";
+import { instructorPhotoSrc } from "@/lib/instructor-photos";
 
 export type CourseRecord = DbCourse & {
   modules: (DbModule & {
@@ -31,16 +32,19 @@ export function mapCourse(row: CourseRecord): Course {
     language: row.language as CourseLanguage,
     priceBdt: row.priceBdt,
     originalPriceBdt: row.originalPriceBdt ?? undefined,
+    purchaseNote: row.purchaseNote?.trim() || undefined,
     rating: row.rating,
     reviewCount: row.reviewCount,
     students: row.students,
     featured: row.featured,
     outcomes: Array.isArray(row.outcomes) ? (row.outcomes as string[]) : [],
+    includes: Array.isArray(row.includes) ? (row.includes as string[]) : [],
     instructor: {
       name: row.instructorName,
       title: row.instructorTitle,
       bio: row.instructorBio,
       initials: row.instructorInitials,
+      photo: instructorPhotoSrc(row.instructorName, row.instructorPhoto),
     },
     cover: {
       from: row.coverFrom,

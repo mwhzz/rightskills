@@ -2,11 +2,16 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import { randomBytes } from "node:crypto";
 import {
+  IMAGE_MAX_BYTES,
   RESOURCE_MAX_BYTES,
   VIDEO_MAX_BYTES,
 } from "@/lib/upload-limits";
 
-export { RESOURCE_MAX_BYTES, VIDEO_MAX_BYTES } from "@/lib/upload-limits";
+export {
+  IMAGE_MAX_BYTES,
+  RESOURCE_MAX_BYTES,
+  VIDEO_MAX_BYTES,
+} from "@/lib/upload-limits";
 
 const VIDEO_EXTS = [".mp4", ".webm", ".mov", ".m4v"];
 const VIDEO_TYPES = new Set([
@@ -138,4 +143,62 @@ export async function saveLessonResource(lessonId: string, file: File) {
 
 export function isUploadFile(value: FormDataEntryValue | null): value is File {
   return value instanceof File && value.size > 0 && Boolean(value.name);
+}
+
+const IMAGE_EXTS = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
+const IMAGE_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+]);
+
+const IMAGE_MIME: Record<string, string> = {
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".png": "image/png",
+  ".webp": "image/webp",
+  ".gif": "image/gif",
+};
+
+export function imageContentType(filePath: string) {
+  return IMAGE_MIME[extOf(filePath)] ?? "image/jpeg";
+}
+
+export function assertImageFile(file: File) {
+  const ext = extOf(file.name);
+  const okType = IMAGE_TYPES.has(file.type) || IMAGE_EXTS.includes(ext);
+  if (!okType) {
+    throw new Error("Photo must be JPG, PNG, WEBP, or GIF.");
+  }
+  if (file.size > IMAGE_MAX_BYTES) {
+    throw new Error("Photo must be 5MB or smaller.");
+  }
+}
+
+async function removeInstructorPhotoFiles(courseId: string) {
+  const dir = path.join(uploadsRoot(), "instructors");
+  await Promise.all(
+    IMAGE_EXTS.map((ext) =>
+      fs.unlink(path.join(dir, `${courseId}${ext}`)).catch(() => undefined)
+    )
+  );
+}
+
+export async function saveInstructorPhoto(courseId: string, file: File) {
+  assertImageFile(file);
+  const ext = extOf(file.name);
+  const safeExt = IMAGE_EXTS.includes(ext)
+    ? ext === ".jpeg"
+      ? ".jpg"
+      : ext
+    : ".jpg";
+  await removeInstructorPhotoFiles(courseId);
+  const relative = path.posix.join("instructors", `${courseId}${safeExt}`);
+  await writeFile(absoluteUploadPath(relative), file);
+  return relative;
+}
+
+export async function removeInstructorPhoto(courseId: string) {
+  await removeInstructorPhotoFiles(courseId);
 }
