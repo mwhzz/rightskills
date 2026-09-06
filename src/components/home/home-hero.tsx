@@ -23,7 +23,7 @@ export function HomeHero() {
           className="pointer-events-none absolute -left-24 top-[-40%] h-[140%] w-[55%] rounded-full bg-primary/25 blur-3xl"
         />
 
-        <div className="relative flex min-h-[16.5rem] items-center px-5 py-7 sm:min-h-[18rem] sm:px-8 lg:min-h-[19.5rem] lg:px-10 lg:py-8">
+        <div className="relative flex min-h-[20.5rem] items-center px-5 py-8 sm:min-h-[23rem] sm:px-8 lg:min-h-[26rem] lg:px-10 lg:py-10">
           <div className="max-w-xl">
             <h1 className="font-heading text-[2.15rem] font-semibold leading-[1.02] tracking-tight text-white sm:text-4xl lg:text-[2.85rem]">
               Learn skills you can use.
