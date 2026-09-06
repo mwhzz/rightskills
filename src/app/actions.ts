@@ -44,11 +44,13 @@ function authFail(mode: "login" | "register", code: string, next: string): never
 export async function registerAction(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const phone = normalizePhone(String(formData.get("phone") ?? ""));
+  const profession = String(formData.get("profession") ?? "").trim();
   const pin = normalizePin(String(formData.get("pin") ?? formData.get("password") ?? ""));
   const next = String(formData.get("next") ?? "/account");
 
-  if (name.length < 3) authFail("register", "name", next);
+  if (name.length < 2) authFail("register", "name", next);
   if (!phone) authFail("register", "phone", next);
+  if (profession.length < 2) authFail("register", "profession", next);
   if (!pin) authFail("register", "pin", next);
 
   const exists = await prisma.user.findUnique({ where: { phone } });
@@ -58,6 +60,7 @@ export async function registerAction(formData: FormData) {
     data: {
       name,
       phone,
+      profession,
       passwordHash: await bcrypt.hash(pin, 12),
       role: Role.student,
     },

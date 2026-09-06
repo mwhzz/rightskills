@@ -53,6 +53,7 @@ export default async function AdminUsersPage({
             <tr>
               <th className="px-3 py-2">Name</th>
               <th className="px-3 py-2">Phone</th>
+              <th className="px-3 py-2">Profession</th>
               <th className="px-3 py-2">Role</th>
             </tr>
           </thead>
@@ -61,6 +62,7 @@ export default async function AdminUsersPage({
               <tr key={row.id} className="border-b last:border-0">
                 <td className="px-3 py-2">{row.name}</td>
                 <td className="px-3 py-2 font-mono text-xs">{row.phone}</td>
+                <td className="px-3 py-2">{row.profession || "—"}</td>
                 <td className="px-3 py-2">{row.role}</td>
               </tr>
             ))}

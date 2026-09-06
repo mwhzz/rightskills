@@ -4,8 +4,9 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const errors: Record<string, string> = {
-  name: "Enter your full name.",
+  name: "Enter your name.",
   phone: "Enter an 11-digit Bangladeshi mobile number (01XXXXXXXXX).",
+  profession: "Enter your profession.",
   pin: "Enter a 4-digit PIN.",
   taken: "That mobile number already has an account. Log in instead.",
   invalid: "Mobile number or PIN is wrong.",
@@ -34,20 +35,21 @@ export function AuthForm({
       {mode === "register" ? (
         <div className="space-y-1.5">
           <label htmlFor="name" className="text-sm font-medium">
-            Full name
+            Name <span className="text-destructive">*</span>
           </label>
           <input
             id="name"
             name="name"
             required
-            minLength={3}
+            minLength={2}
+            autoComplete="name"
             className="h-10 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
           />
         </div>
       ) : null}
       <div className="space-y-1.5">
         <label htmlFor="phone" className="text-sm font-medium">
-          Mobile
+          Phone {mode === "register" ? <span className="text-destructive">*</span> : null}
         </label>
         <input
           id="phone"
@@ -59,6 +61,22 @@ export function AuthForm({
           className="h-10 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
         />
       </div>
+      {mode === "register" ? (
+        <div className="space-y-1.5">
+          <label htmlFor="profession" className="text-sm font-medium">
+            Profession <span className="text-destructive">*</span>
+          </label>
+          <input
+            id="profession"
+            name="profession"
+            required
+            minLength={2}
+            placeholder="Student, teacher, designer…"
+            autoComplete="organization-title"
+            className="h-10 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          />
+        </div>
+      ) : null}
       <div className="space-y-1.5">
         <label htmlFor="pin" className="text-sm font-medium">
           4-digit PIN

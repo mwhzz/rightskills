@@ -20,7 +20,7 @@ export default async function RegisterPage({
       <p className="mt-2 text-sm text-muted-foreground">
         {checkout
           ? "Your cart is saved. Create an account to place the order."
-          : "Students sign up with a mobile number and a 4-digit PIN. Teachers are added by an admin."}
+          : "Students sign up with name, phone, profession, and a 4-digit PIN. Teachers are added by an admin."}
       </p>
       <AuthForm mode="register" error={error} next={next} />
     </div>
