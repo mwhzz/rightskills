@@ -67,7 +67,7 @@ export function BannersForm({
 
       <BannerGroup
         title="Desktop banners"
-        description="Wide images for laptop and tablet. Recommended 1920×960. No text is drawn on top — put any copy in the image itself."
+        description="Wide images for laptop and tablet. Recommended 1920×640. No text is drawn on top — put any copy in the image itself."
         device="desktop"
         items={desktop}
         setItems={setDesktop}
@@ -76,7 +76,7 @@ export function BannersForm({
       />
       <BannerGroup
         title="Mobile banners"
-        description="Taller crop for phones. Recommended 1080×810. Phones only see this set."
+        description="Taller crop for phones. Recommended 1080×720. Phones only see this set."
         device="mobile"
         items={mobile}
         setItems={setMobile}
@@ -170,7 +170,7 @@ function BannerGroup({
             <div
               className={cn(
                 "mt-4 overflow-hidden rounded-xl bg-muted",
-                device === "mobile" ? "aspect-[4/3]" : "aspect-[2/1]"
+                device === "mobile" ? "aspect-[3/2]" : "aspect-[3/1]"
               )}
             >
               {previews[item.id] || item.image ? (

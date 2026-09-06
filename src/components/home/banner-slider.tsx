@@ -52,7 +52,7 @@ export function BannerSlider({
         <div
           className={cn(
             "relative w-full",
-            variant === "mobile" ? "aspect-[4/3]" : "aspect-[2/1]"
+            variant === "mobile" ? "aspect-[3/2]" : "aspect-[3/1]"
           )}
         >
           {slides.map((banner, i) => {
