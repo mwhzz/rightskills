@@ -61,6 +61,8 @@ export function bannersForViewport(
   if (customDesktop.length) return customDesktop;
   return banners.mobile.length ? banners.mobile : banners.desktop;
 }
+
+export function bannerImageSrc(image: string) {
   const path = image.trim();
   if (!path) return "";
   if (path.startsWith("/") || path.startsWith("https://")) return path;
