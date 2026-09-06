@@ -9,10 +9,12 @@ import { getSession } from "@/lib/auth";
 import { courses as fallbackCourses, getFeaturedCourses } from "@/lib/courses";
 import {
   getHomepageLearning,
+  getHomeBanners,
   listFeaturedCourses,
   listNewestCourses,
   listPopularCourses,
 } from "@/lib/queries";
+import { defaultHomeBanners } from "@/lib/home-banners";
 
 export const dynamic = "force-dynamic";
 
@@ -36,9 +38,10 @@ async function loadHome() {
 
 export default async function HomePage() {
   const session = await getSession();
-  const [{ featured, newest, popular }, learning] = await Promise.all([
+  const [{ featured, newest, popular }, learning, banners] = await Promise.all([
     loadHome(),
     session ? getHomepageLearning(session.id).catch(() => null) : null,
+    getHomeBanners().catch(() => defaultHomeBanners),
   ]);
 
   const ownedSlugs = learning?.ownedSlugs;
@@ -46,7 +49,7 @@ export default async function HomePage() {
 
   return (
     <div className="overflow-x-hidden">
-      <HomeHero />
+      <HomeHero banners={banners} />
 
       <SkillStrip />
 

@@ -14,7 +14,7 @@ export async function GET(
   const relative = parts.join("/");
   if (
     parts.length < 2 ||
-    parts[0] !== "instructors" ||
+    !["instructors", "banners"].includes(parts[0] ?? "") ||
     relative.includes("..")
   ) {
     return new NextResponse("Not found", { status: 404 });

@@ -26,10 +26,9 @@ export default async function AdminBannersPage({
         Homepage banners
       </h1>
       <p className="mt-2 max-w-2xl text-base text-muted-foreground">
-        These slides sit under the hero. Left side is the offer copy; the
-        right side is the image. Use a path like{" "}
-        <span className="font-mono text-foreground">/brands/saffron.jpg</span>{" "}
-        or a full https URL.
+        Image-only slides. No text is drawn on top — put any copy inside the
+        image. Desktop and mobile are separate. Set how many seconds each slide
+        stays on screen.
       </p>
       <div className="mt-8">
         <BannersForm

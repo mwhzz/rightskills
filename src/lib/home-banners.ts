@@ -1,85 +1,104 @@
 export type HomeBanner = {
   id: string;
-  badge: string;
-  title: string;
-  subtitle: string;
-  cta: string;
-  href: string;
-  from: string;
-  to: string;
   image: string;
+  href: string;
+  durationSec: number;
 };
 
-export const defaultHomeBanners: HomeBanner[] = [
-  {
-    id: "offer-start",
-    badge: "Offer",
-    title: "Start this week with one focused course",
-    subtitle:
-      "Pay by bKash or Nagad. Lessons unlock after we confirm the TrxID — not before.",
-    cta: "Browse courses",
-    href: "/courses",
-    from: "#ea580c",
-    to: "#7c2d12",
-    image: "/brands/saffron.jpg",
-  },
-  {
-    id: "web-path",
-    badge: "Featured",
-    title: "Full-Stack Web with Next.js",
-    subtitle:
-      "A short path from first layout to a site you can actually show a client.",
-    cta: "View course",
-    href: "/courses/fullstack-web-nextjs",
-    from: "#c2410c",
-    to: "#1c1917",
-    image: "/brands/lumen.jpg",
-  },
-  {
-    id: "english",
-    badge: "Language",
-    title: "Spoken English for work",
-    subtitle:
-      "Short lessons you can finish after office — then use in the next meeting.",
-    cta: "See the path",
-    href: "/courses/spoken-english-job",
-    from: "#9a3412",
-    to: "#431407",
-    image: "/instructors/shaila.jpg",
-  },
-];
+export type HomeBannerSet = {
+  desktop: HomeBanner[];
+  mobile: HomeBanner[];
+};
 
-export function parseHomeBanners(raw: string | null | undefined): HomeBanner[] {
+const defaultSlide = (
+  id: string,
+  image: string,
+  href: string,
+  durationSec = 5
+): HomeBanner => ({ id, image, href, durationSec });
+
+export const defaultHomeBanners: HomeBannerSet = {
+  desktop: [
+    defaultSlide("desk-1", "/brands/saffron.jpg", "/courses"),
+    defaultSlide("desk-2", "/brands/lumen.jpg", "/courses/fullstack-web-nextjs"),
+    defaultSlide("desk-3", "/instructors/shaila.jpg", "/courses"),
+  ],
+  mobile: [
+    defaultSlide("mob-1", "/brands/saffron.jpg", "/courses"),
+    defaultSlide("mob-2", "/brands/lumen.jpg", "/courses/fullstack-web-nextjs"),
+    defaultSlide("mob-3", "/instructors/shaila.jpg", "/courses"),
+  ],
+};
+
+export function bannerImageSrc(image: string) {
+  const path = image.trim();
+  if (!path) return "";
+  if (path.startsWith("/") || path.startsWith("https://")) return path;
+  return `/api/media/${path}`;
+}
+
+export function clampBannerDuration(value: unknown) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 5;
+  return Math.min(30, Math.max(2, Math.round(n)));
+}
+
+export function parseHomeBanners(raw: string | null | undefined): HomeBannerSet {
   if (!raw || !raw.trim() || raw.trim() === "[]") return defaultHomeBanners;
   try {
     const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return defaultHomeBanners;
-    const banners = parsed
-      .map((item, index) => normalizeBanner(item, index))
-      .filter((item): item is HomeBanner => item !== null);
-    return banners.length > 0 ? banners : defaultHomeBanners;
+    if (Array.isArray(parsed)) {
+      const list = parsed
+        .map((item, index) => normalizeBanner(item, `legacy-${index}`))
+        .filter((item): item is HomeBanner => item !== null);
+      if (list.length === 0) return defaultHomeBanners;
+      return { desktop: list, mobile: list };
+    }
+    if (!parsed || typeof parsed !== "object") return defaultHomeBanners;
+    const row = parsed as Record<string, unknown>;
+    const desktop = listFrom(row.desktop, "desk");
+    const mobile = listFrom(row.mobile, "mob");
+    if (desktop.length === 0 && mobile.length === 0) return defaultHomeBanners;
+    return {
+      desktop: desktop.length ? desktop : mobile,
+      mobile: mobile.length ? mobile : desktop,
+    };
   } catch {
     return defaultHomeBanners;
   }
 }
 
-function normalizeBanner(item: unknown, index: number): HomeBanner | null {
+function listFrom(value: unknown, prefix: string) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item, index) => normalizeBanner(item, `${prefix}-${index}`))
+    .filter((item): item is HomeBanner => item !== null);
+}
+
+function normalizeBanner(item: unknown, fallbackId: string): HomeBanner | null {
   if (!item || typeof item !== "object") return null;
   const row = item as Record<string, unknown>;
-  const title = String(row.title ?? "").trim();
-  const href = String(row.href ?? "").trim();
-  if (!title || !href) return null;
-  const image = String(row.image ?? "").trim();
+  const image = sanitizeBannerImage(String(row.image ?? ""));
+  if (!image) return null;
+  const hrefRaw = String(row.href ?? "").trim();
+  const href =
+    hrefRaw.startsWith("/") || hrefRaw.startsWith("https://") ? hrefRaw : "";
   return {
-    id: String(row.id ?? `banner-${index}`),
-    badge: String(row.badge ?? "Offer").trim() || "Offer",
-    title,
-    subtitle: String(row.subtitle ?? "").trim(),
-    cta: String(row.cta ?? "Learn more").trim() || "Learn more",
+    id: String(row.id ?? fallbackId).slice(0, 40),
+    image,
     href,
-    from: String(row.from ?? "#ea580c"),
-    to: String(row.to ?? "#7c2d12"),
-    image:
-      image.startsWith("/") || image.startsWith("https://") ? image : "",
+    durationSec: clampBannerDuration(row.durationSec),
   };
+}
+
+export function sanitizeBannerImage(value: string) {
+  const image = value.trim();
+  if (
+    image.startsWith("/") ||
+    image.startsWith("https://") ||
+    image.startsWith("banners/")
+  ) {
+    return image.slice(0, 240);
+  }
+  return "";
 }

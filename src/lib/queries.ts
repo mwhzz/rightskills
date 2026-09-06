@@ -1,5 +1,5 @@
 import { cache } from "react";
-import { parseHomeBanners, type HomeBanner } from "@/lib/home-banners";
+import { parseHomeBanners, type HomeBannerSet } from "@/lib/home-banners";
 import { prisma } from "@/lib/db";
 import { mapCourse, type CourseRecord } from "@/lib/catalog";
 import type { Course } from "@/lib/courses";
@@ -239,7 +239,7 @@ export async function getOwnedSlugsForUser(userId: string) {
   return rows.map((row) => row.course.slug);
 }
 
-export async function getHomeBanners(): Promise<HomeBanner[]> {
+export async function getHomeBanners(): Promise<HomeBannerSet> {
   try {
     const settings = await getSettings();
     return parseHomeBanners(settings.homeBanners);

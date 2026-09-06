@@ -28,10 +28,16 @@ import {
   removeInstructorPhoto,
   removeUpload,
   saveInstructorPhoto,
+  saveBannerImage,
   saveLessonResource,
   saveLessonVideo,
 } from "@/lib/uploads";
 import { initialsFromName, slugify } from "@/lib/slug";
+import {
+  clampBannerDuration,
+  sanitizeBannerImage,
+  type HomeBanner,
+} from "@/lib/home-banners";
 import { categories, levels } from "@/lib/courses";
 import { refreshCourseRating } from "@/lib/reviews";
 
@@ -323,58 +329,71 @@ export async function saveSettingsAction(
   redirect("/admin/settings?saved=1");
 }
 
-function sanitizeImage(value: string) {
-  const image = value.trim();
-  if (image.startsWith("/") || image.startsWith("https://")) {
-    return image.slice(0, 240);
+async function bannersFromForm(
+  value: unknown,
+  device: "desktop" | "mobile",
+  formData: FormData
+): Promise<HomeBanner[]> {
+  if (!Array.isArray(value)) return [];
+  const banners: HomeBanner[] = [];
+  for (const [index, item] of value.slice(0, 8).entries()) {
+    if (!item || typeof item !== "object") continue;
+    const row = item as Record<string, unknown>;
+    const rawId = String(row.id ?? `${device}-${index}`);
+    const id = rawId.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 40) || `${device}-${index}`;
+    const file = formData.get(`file-${device}-${rawId}`) ?? formData.get(`file-${device}-${id}`);
+    let image = sanitizeBannerImage(String(row.image ?? ""));
+    if (isUploadFile(file)) {
+      try {
+        image = await saveBannerImage(`${device}-${id}`, file);
+      } catch {
+        redirect("/admin/banners?error=photo");
+      }
+    }
+    if (!image) continue;
+    const hrefRaw = String(row.href ?? "").trim();
+    const href =
+      hrefRaw.startsWith("/") || hrefRaw.startsWith("https://")
+        ? hrefRaw.slice(0, 200)
+        : "";
+    banners.push({
+      id,
+      image,
+      href,
+      durationSec: clampBannerDuration(row.durationSec),
+    });
   }
-  return "";
+  return banners;
 }
 
 export async function saveHomeBannersAction(formData: FormData) {
   await requireRole("admin");
-  const raw = String(formData.get("banners") ?? "[]");
+  const raw = String(formData.get("banners") ?? "{}");
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
   } catch {
     redirect("/admin/banners?error=json");
   }
-  if (!Array.isArray(parsed)) redirect("/admin/banners?error=json");
-  const banners = parsed
-    .slice(0, 8)
-    .map((item, index) => {
-      if (!item || typeof item !== "object") return null;
-      const row = item as Record<string, unknown>;
-      const title = String(row.title ?? "").trim();
-      const href = String(row.href ?? "").trim();
-      if (!title || !href) return null;
-      if (!href.startsWith("/") && !href.startsWith("https://")) return null;
-      return {
-        id: String(row.id ?? `banner-${index}`).slice(0, 40),
-        badge: String(row.badge ?? "Offer").trim().slice(0, 24) || "Offer",
-        title: title.slice(0, 80),
-        subtitle: String(row.subtitle ?? "").trim().slice(0, 160),
-        cta: String(row.cta ?? "Learn more").trim().slice(0, 32) || "Learn more",
-        href: href.slice(0, 200),
-        from: String(row.from ?? "#ea580c").slice(0, 16),
-        to: String(row.to ?? "#7c2d12").slice(0, 16),
-        image: sanitizeImage(String(row.image ?? "")),
-      };
-    })
-    .filter((item) => item !== null);
-  if (banners.length === 0) redirect("/admin/banners?error=empty");
+  const row =
+    parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {};
+  const desktop = await bannersFromForm(row.desktop, "desktop", formData);
+  const mobile = await bannersFromForm(row.mobile, "mobile", formData);
+  if (desktop.length === 0 && mobile.length === 0) {
+    redirect("/admin/banners?error=empty");
+  }
 
+  const payload = { desktop, mobile };
   await prisma.setting.upsert({
     where: { id: "default" },
-    update: { homeBanners: JSON.stringify(banners) },
+    update: { homeBanners: JSON.stringify(payload) },
     create: {
       id: "default",
       bkashNumber: "",
       nagadNumber: "",
       payInstructions:
         "Send the exact amount to the number below. Use your order ID as the reference, then paste the TrxID on your orders page.",
-      homeBanners: JSON.stringify(banners),
+      homeBanners: JSON.stringify(payload),
     },
   });
   clearPublicCache();
