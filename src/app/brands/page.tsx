@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 export const metadata: Metadata = {
   title: "Brands we have built",
   description:
-    "Identity work from the Right Skills branding desk — packing, apps, hotels, and shops.",
+    "Identity work from the Right Skills Bangladesh branding desk — packing, apps, hotels, and shops.",
 };
 
 export default function BrandsPage() {
@@ -26,7 +26,7 @@ export default function BrandsPage() {
               Brands we have built
             </h1>
             <p className="mt-3 max-w-2xl text-lg leading-8 text-muted-foreground">
-              Identity work from the Right Skills branding desk. The same
+              Identity work from the Right Skills Bangladesh branding desk. The same
               system we teach — packing, screens, rooms, and shops.
             </p>
           </div>

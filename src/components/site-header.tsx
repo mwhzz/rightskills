@@ -23,6 +23,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { logoutAction } from "@/app/actions";
+import { brand } from "@/lib/brand";
 import { initialsFromName } from "@/lib/slug";
 import { cn } from "@/lib/utils";
 import type { Role } from "@prisma/client";
@@ -67,8 +68,8 @@ export function SiteHeader({
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center gap-3 px-4 sm:px-6">
         <Link href="/" className="flex shrink-0 items-center gap-2">
           <BrandMark className="size-8 text-primary" />
-          <span className="font-heading text-[0.95rem] font-semibold tracking-tight">
-            Right Skills
+          <span className="font-heading text-[0.8rem] font-semibold tracking-tight sm:text-[0.95rem]">
+            {brand.name}
           </span>
         </Link>
 
@@ -202,7 +203,7 @@ export function SiteHeader({
               <SheetHeader className="border-b px-5 py-5">
                 <SheetTitle className="flex items-center gap-2.5">
                   <BrandMark className="size-8 text-primary" />
-                  Right Skills
+                  {brand.name}
                 </SheetTitle>
               </SheetHeader>
               <div className="flex flex-col gap-1 px-3 py-4">

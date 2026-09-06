@@ -5,6 +5,7 @@ import { logoutAction } from "@/app/actions";
 import { BrandMark } from "@/components/brand-mark";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { brand } from "@/lib/brand";
 
 export const dynamic = "force-dynamic";
 
@@ -44,7 +45,7 @@ export default async function AdminLayout({
           <BrandMark className="size-9 shrink-0 text-primary" />
           <span className="min-w-0">
             <span className="block text-sm font-semibold tracking-tight">
-              Right Skills
+              {brand.name}
             </span>
             <span className="block text-xs text-muted-foreground">
               {isAdmin ? "Admin" : "Teacher"}

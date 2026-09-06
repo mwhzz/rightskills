@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Courses",
   description:
-    "Browse Right Skills courses — web development, design, English, Excel, marketing, and career skills.",
+    "Browse Right Skills Bangladesh courses — web development, design, English, Excel, marketing, and career skills.",
 };
 
 async function loadCourses() {

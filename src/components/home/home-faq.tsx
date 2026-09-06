@@ -26,7 +26,7 @@ const faqs = [
   {
     id: "certificate",
     q: "Do you issue certificates?",
-    a: "No. Right Skills gives you the course videos and files after payment is confirmed. We do not issue certificates.",
+    a: "No. Right Skills Bangladesh gives you the course videos and files after payment is confirmed. We do not issue certificates.",
   },
 ] as const;
 

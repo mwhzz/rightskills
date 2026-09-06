@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Instructors",
-  description: "Meet the practitioners who teach at Right Skills.",
+  description: "Meet the practitioners who teach at Right Skills Bangladesh.",
 };
 
 async function loadCourses() {

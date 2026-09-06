@@ -1,5 +1,5 @@
 export const brand = {
-  name: "Right Skills",
+  name: "Right Skills Bangladesh",
   tagline: "Learn with intent.",
   description:
     "High-quality video courses in development, design, English, and career skills. Short lessons. Clear paths. Work you can use.",
