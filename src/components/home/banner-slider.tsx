@@ -60,7 +60,10 @@ export function BannerSlider({
               <img
                 src={src}
                 alt=""
-                className="absolute inset-0 h-full w-full object-contain"
+                className={cn(
+                  "absolute inset-0 h-full w-full",
+                  variant === "mobile" ? "object-cover" : "object-contain"
+                )}
               />
             );
             return (

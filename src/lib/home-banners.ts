@@ -40,7 +40,27 @@ export const defaultHomeBanners: HomeBannerSet = {
   ],
 };
 
-export function bannerImageSrc(image: string) {
+export function isStockBanner(image: string) {
+  const path = image.trim();
+  return (
+    path.startsWith("/brands/") ||
+    path.startsWith("/instructors/")
+  );
+}
+
+export function bannersForViewport(
+  banners: HomeBannerSet,
+  device: "desktop" | "mobile"
+) {
+  if (device === "desktop") return banners.desktop;
+  const customMobile = banners.mobile.filter((item) => !isStockBanner(item.image));
+  if (customMobile.length) return customMobile;
+  const customDesktop = banners.desktop.filter(
+    (item) => !isStockBanner(item.image)
+  );
+  if (customDesktop.length) return customDesktop;
+  return banners.mobile.length ? banners.mobile : banners.desktop;
+}
   const path = image.trim();
   if (!path) return "";
   if (path.startsWith("/") || path.startsWith("https://")) return path;

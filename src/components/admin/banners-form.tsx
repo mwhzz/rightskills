@@ -87,7 +87,7 @@ export function BannersForm({
       />
       <BannerGroup
         title="Mobile banners"
-        description="Phones only. Upload a separate image at the size below."
+        description="Optional. If you skip this, phones use the desktop banners."
         device="mobile"
         items={mobile}
         setItems={setMobile}
@@ -198,7 +198,10 @@ function BannerGroup({
                 <img
                   src={previews[item.id] || bannerImageSrc(item.image)}
                   alt=""
-                  className="absolute inset-0 h-full w-full object-contain"
+                  className={cn(
+                    "absolute inset-0 h-full w-full",
+                    device === "mobile" ? "object-cover" : "object-contain"
+                  )}
                 />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center px-4 text-center text-sm text-muted-foreground">
