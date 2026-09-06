@@ -11,8 +11,13 @@ export type HomeBannerSet = {
 };
 
 export const BANNER_RECOMMENDED = {
-  desktop: { width: 1920, height: 640, label: "1920 × 640 px" },
-  mobile: { width: 1080, height: 720, label: "1080 × 720 px" },
+  desktop: { width: 1920, height: 480, label: "1920 × 480 px" },
+  mobile: { width: 1080, height: 540, label: "1080 × 540 px" },
+} as const;
+
+export const bannerFrameClass = {
+  desktop: "aspect-[4/1]",
+  mobile: "aspect-[2/1]",
 } as const;
 
 const defaultSlide = (

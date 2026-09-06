@@ -6,7 +6,13 @@ import { saveHomeBannersAction } from "@/app/actions";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { bannerImageSrc, BANNER_RECOMMENDED, type HomeBanner, type HomeBannerSet } from "@/lib/home-banners";
+import {
+  bannerFrameClass,
+  bannerImageSrc,
+  BANNER_RECOMMENDED,
+  type HomeBanner,
+  type HomeBannerSet,
+} from "@/lib/home-banners";
 import { IMAGE_MAX_BYTES } from "@/lib/upload-limits";
 import { formatBytes } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -70,7 +76,7 @@ export function BannersForm({
 
       <BannerGroup
         title="Desktop banners"
-        description="Shown on laptop and tablet. Upload the exact size below so text on the edges stays visible."
+        description="Shown on laptop and tablet. Use the size below so the banner fills the slot."
         device="desktop"
         items={desktop}
         setItems={setDesktop}
@@ -81,7 +87,7 @@ export function BannersForm({
       />
       <BannerGroup
         title="Mobile banners"
-        description="Phones only. Upload a separate, taller image for this set."
+        description="Phones only. Upload a separate image at the size below."
         device="mobile"
         items={mobile}
         setItems={setMobile}
@@ -182,15 +188,20 @@ function BannerGroup({
                 </button>
               </div>
             </div>
-            <div className="mt-4 overflow-hidden rounded-xl bg-muted">
+            <div
+              className={cn(
+                "relative mt-4 overflow-hidden rounded-xl bg-background",
+                bannerFrameClass[device]
+              )}
+            >
               {previews[item.id] || item.image ? (
                 <img
                   src={previews[item.id] || bannerImageSrc(item.image)}
                   alt=""
-                  className="block h-auto w-full"
+                  className="absolute inset-0 h-full w-full object-contain"
                 />
               ) : (
-                <div className="flex min-h-28 items-center justify-center px-4 py-8 text-center text-sm text-muted-foreground">
+                <div className="absolute inset-0 flex items-center justify-center px-4 text-center text-sm text-muted-foreground">
                   Upload {recommended.label}
                 </div>
               )}
@@ -245,13 +256,13 @@ function BannerGroup({
                   >
                     This file is {fileSizes[item.id].width} ×{" "}
                     {fileSizes[item.id].height} px. Recommended {recommended.label}.
-                    The homepage still shows the full picture.
+                    The whole picture stays visible — extra space is empty, not cropped.
                   </p>
                 ) : (
                   <p className="mt-1 text-xs text-muted-foreground">
                     JPG, PNG, WEBP, or GIF · up to {formatBytes(IMAGE_MAX_BYTES)}.
-                    Homepage shows the full image, not a crop. Leave empty to keep
-                    the current file.
+                    Use the recommended size to fill the banner. Leave empty to
+                    keep the current file.
                   </p>
                 )}
               </Field>

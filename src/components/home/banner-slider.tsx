@@ -3,7 +3,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { bannerImageSrc, type HomeBanner } from "@/lib/home-banners";
+import {
+  bannerFrameClass,
+  bannerImageSrc,
+  type HomeBanner,
+} from "@/lib/home-banners";
 
 export function BannerSlider({
   banners,
@@ -43,30 +47,33 @@ export function BannerSlider({
     >
       <div
         className={cn(
-          "relative mx-auto w-full max-w-7xl overflow-hidden bg-muted shadow-[0_18px_50px_-28px_rgba(80,40,10,0.4)]",
+          "relative mx-auto w-full max-w-7xl overflow-hidden bg-background shadow-[0_18px_50px_-28px_rgba(80,40,10,0.4)]",
           variant === "mobile"
             ? "rounded-[1.15rem]"
             : "rounded-[1.4rem]"
         )}
       >
-        <div className="relative w-full">
+        <div className={cn("relative w-full", bannerFrameClass[variant])}>
           {slides.map((banner, i) => {
             const src = bannerImageSrc(banner.image);
             const image = (
-              <img src={src} alt="" className="block h-auto w-full" />
+              <img
+                src={src}
+                alt=""
+                className="absolute inset-0 h-full w-full object-contain"
+              />
             );
             return (
               <article
                 key={banner.id}
                 aria-hidden={i !== index}
                 className={cn(
-                  i === index
-                    ? "relative"
-                    : "pointer-events-none absolute inset-0 opacity-0"
+                  "absolute inset-0",
+                  i === index ? "opacity-100" : "pointer-events-none opacity-0"
                 )}
               >
                 {banner.href ? (
-                  <Link href={banner.href} className="block">
+                  <Link href={banner.href} className="absolute inset-0 block">
                     {image}
                     <span className="sr-only">Open banner</span>
                   </Link>
@@ -89,8 +96,8 @@ export function BannerSlider({
                   className={cn(
                     "size-1.5 rounded-full transition",
                     dot === index
-                      ? "bg-white"
-                      : "bg-white/40 hover:bg-white/70"
+                      ? "bg-primary"
+                      : "bg-foreground/25 hover:bg-foreground/50"
                   )}
                 />
               ))}
