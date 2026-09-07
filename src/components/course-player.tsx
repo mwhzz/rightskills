@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { toggleLessonAction } from "@/app/actions";
 import { buttonVariants } from "@/components/ui/button";
-import { type Course } from "@/lib/courses";
+import { levelLabel, type Course } from "@/lib/courses";
 import { formatBytes, formatMinutes } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -87,7 +87,8 @@ export function CoursePlayer({
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-sm text-muted-foreground">
-            {course.instructor.name} · {course.level} · {course.language}
+            {course.instructor.name}
+            {course.level ? ` · ${levelLabel(course.level)}` : ""} · {course.language}
           </p>
           <h1 className="mt-1 font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
             {course.title}

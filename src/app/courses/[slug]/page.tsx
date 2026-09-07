@@ -21,6 +21,7 @@ import {
   categoryLabel,
   courseHours,
   courseIncludes,
+  levelLabel,
   lessonCount,
   type Course,
 } from "@/lib/courses";
@@ -71,10 +72,16 @@ function requirementsFor(course: Course) {
       "A real project or client you can apply the work to",
     ];
   }
+  if (course.level === "Advanced") {
+    return [
+      "You already ship work in this field",
+      "You want a tighter system, not a beginner tour",
+      "A current project to practise on",
+    ];
+  }
   return [
-    "You already ship work in this field",
-    "You want a tighter system, not a beginner tour",
-    "A current project to practise on",
+    "A laptop and a reliable internet connection",
+    "Willingness to practice the assignments",
   ];
 }
 
@@ -155,7 +162,9 @@ export default async function CourseDetailPage({
 
             <div className="mt-5 flex flex-wrap gap-2">
               <Badge>{categoryLabel(course.category)}</Badge>
-              <Badge variant="secondary">{course.level}</Badge>
+              {course.level ? (
+                <Badge variant="secondary">{levelLabel(course.level)}</Badge>
+              ) : null}
               <Badge variant="outline">{course.language}</Badge>
             </div>
 

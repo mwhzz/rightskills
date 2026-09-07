@@ -460,12 +460,15 @@ export async function saveCourseAction(
   const purchaseNote = String(formData.get("purchaseNote") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const category = String(formData.get("category") ?? "development");
-  const level = String(formData.get("level") ?? "Beginner");
+  const levelRaw = String(formData.get("level") ?? "").trim();
+  const level = !levelRaw ? "" : levelRaw;
   const language = String(formData.get("language") ?? "English");
   const priceBdt = Number(formData.get("priceBdt") ?? 0);
   const originalPriceBdtRaw = String(formData.get("originalPriceBdt") ?? "").trim();
   const featured = formData.get("featured") === "on";
-  const published = formData.get("published") === "on";
+  const published =
+    formData.get("published") === "on" ||
+    formData.get("published") === "published";
   const instructorName = String(formData.get("instructorName") ?? "").trim();
   const instructorTitle = String(formData.get("instructorTitle") ?? "").trim();
   const instructorBio = String(formData.get("instructorBio") ?? "").trim();
@@ -490,7 +493,7 @@ export async function saveCourseAction(
   if (title.length < 3) return { error: "Give the course a title of at least 3 characters." };
   if (!slug) return { error: "Add a URL slug, or type a title so we can make one." };
   if (!categoryIds.has(category)) return { error: "Pick a valid category." };
-  if (!levelSet.has(level)) return { error: "Pick a valid level." };
+  if (level && !levelSet.has(level)) return { error: "Pick a valid level." };
   if (!languageSet.has(language)) return { error: "Pick a valid language." };
   if (!Number.isFinite(priceBdt) || priceBdt < 1) {
     return { error: "Set a price of at least ৳1." };
@@ -508,8 +511,6 @@ export async function saveCourseAction(
     if (description.length < 40) {
       return { error: "Write a longer description (40+ characters) before publishing." };
     }
-    if (outcomes.length === 0) return { error: "Add at least one outcome before publishing." };
-    if (!instructorName) return { error: "Add an instructor before publishing." };
   }
   if (isUploadFile(photoFile)) {
     try {
@@ -622,6 +623,25 @@ export async function saveCourseAction(
   }
   clearPublicCache();
   redirect(`/admin/courses/${created.id}`);
+}
+
+export async function publishCourseAction(formData: FormData) {
+  const user = await requireRole("admin", "teacher");
+  const id = String(formData.get("id") ?? "");
+  const existing = await prisma.course.findUnique({ where: { id } });
+  if (!existing) redirect("/admin/courses");
+  if (user.role === "teacher" && existing.teacherId !== user.id) {
+    redirect("/admin/courses");
+  }
+  await prisma.course.update({
+    where: { id },
+    data: {
+      published: true,
+      instructorName: existing.instructorName || user.name,
+    },
+  });
+  clearPublicCache();
+  redirect("/admin/courses");
 }
 
 export async function addModuleAction(formData: FormData) {

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { publishCourseAction } from "@/app/actions";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { formatBdt } from "@/lib/format";
@@ -58,12 +59,25 @@ export default async function AdminCoursesPage() {
                   </span>
                 </div>
               </div>
-              <Link
-                href={`/admin/courses/${course.id}`}
-                className={cn(buttonVariants({ variant: "outline" }))}
-              >
-                Edit
-              </Link>
+              <div className="flex flex-wrap items-center gap-2">
+                {!course.published ? (
+                  <form action={publishCourseAction}>
+                    <input type="hidden" name="id" value={course.id} />
+                    <button
+                      type="submit"
+                      className={cn(buttonVariants({ size: "default" }), "h-10")}
+                    >
+                      পাবলিশ
+                    </button>
+                  </form>
+                ) : null}
+                <Link
+                  href={`/admin/courses/${course.id}`}
+                  className={cn(buttonVariants({ variant: "outline" }))}
+                >
+                  Edit
+                </Link>
+              </div>
             </li>
           ))}
         </ul>

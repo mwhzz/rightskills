@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { CourseCard } from "@/components/course-card";
-import { categories, levels, type CategoryId, type Level } from "@/lib/courses";
+import { categories, levels, levelLabel, type CategoryId, type Level } from "@/lib/courses";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Course } from "@/lib/courses";
@@ -155,11 +155,11 @@ export function CourseCatalog({
               className="h-11 rounded-xl border border-input bg-transparent px-3 text-base"
             >
               <option value="all">All levels</option>
-              {levels.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
+                {levels.map((item) => (
+                  <option key={item} value={item}>
+                    {levelLabel(item)}
+                  </option>
+                ))}
             </select>
           </label>
           <label className="flex items-center gap-2 text-base">

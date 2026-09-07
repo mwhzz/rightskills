@@ -7,9 +7,9 @@ import type {
 import {
   type Course,
   type CourseLanguage,
-  type Level,
   courseHours,
   lessonCount,
+  parseLevel,
 } from "@/lib/courses";
 import { coverImageSrc } from "@/lib/cover-image";
 import { instructorPhotoSrc } from "@/lib/instructor-photos";
@@ -29,7 +29,7 @@ export function mapCourse(row: CourseRecord): Course {
     subtitle: row.subtitle,
     description: row.description,
     category: row.category as Course["category"],
-    level: row.level as Level,
+    level: parseLevel(row.level),
     language: row.language as CourseLanguage,
     priceBdt: row.priceBdt,
     originalPriceBdt: row.originalPriceBdt ?? undefined,

@@ -6,6 +6,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import {
   categoryLabel,
   courseHours,
+  levelLabel,
   type Course,
 } from "@/lib/courses";
 import { formatBdt, formatStudents } from "@/lib/format";
@@ -33,7 +34,9 @@ export function CourseCard({
         <CardContent className="flex flex-1 flex-col gap-2 pt-4">
           <div className="flex flex-wrap items-center gap-1.5">
             <Badge variant="secondary">{categoryLabel(course.category)}</Badge>
-            <Badge variant="outline">{course.level}</Badge>
+            {course.level ? (
+              <Badge variant="outline">{levelLabel(course.level)}</Badge>
+            ) : null}
             {owned ? <Badge>Enrolled</Badge> : null}
           </div>
           <h3 className="font-heading text-lg leading-snug font-semibold text-balance group-hover:text-primary">

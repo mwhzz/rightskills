@@ -13,7 +13,9 @@ import {
   categoryLabel,
   courseLanguages,
   coverPatterns,
+  levelLabel,
   levels,
+  parseLevel,
   type CategoryId,
 } from "@/lib/courses";
 import { coverImageSrc } from "@/lib/cover-image";
@@ -149,7 +151,7 @@ export function CourseEditorForm({
     course?.originalPriceBdt ? String(course.originalPriceBdt) : ""
   );
   const [category, setCategory] = useState(course?.category ?? "development");
-  const [level, setLevel] = useState(course?.level ?? "Beginner");
+  const [level, setLevel] = useState(parseLevel(course?.level));
   const [coverFrom, setCoverFrom] = useState(course?.coverFrom ?? "#EA6A1A");
   const [coverTo, setCoverTo] = useState(course?.coverTo ?? "#9A3412");
   const [coverPattern, setCoverPattern] = useState(
@@ -220,31 +222,27 @@ export function CourseEditorForm({
         ) : null}
         {course && !course.published ? (
           <p className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-            This course is a draft. Students cannot see it on the homepage or
-            /courses until you tick <span className="font-medium">Published</span>{" "}
-            below and save.
+            এই কোর্স এখন খসড়া। নিচে <span className="font-medium">স্ট্যাটাস</span>{" "}
+            থেকে “সাইটে দেখাও” বেছে নিয়ে Save করুন।
           </p>
         ) : null}
 
         <Section
-          title="Show on the site"
-          description="A draft stays in Admin only. Published courses appear on /courses and in the homepage New row."
+          title="স্ট্যাটাস"
+          description="সাইটে দেখাবে কি না — এই অপশন থেকে বাছুন, তারপর নিচে Save চাপুন।"
         >
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="flex cursor-pointer items-start gap-3 rounded-xl border bg-background p-4">
-              <input
-                type="checkbox"
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="কোর্সের স্ট্যাটাস" htmlFor="published">
+              <select
+                id="published"
                 name="published"
-                defaultChecked={course?.published ?? true}
-                className="mt-1 size-4"
-              />
-              <span>
-                <span className="block text-sm font-medium">Published</span>
-                <span className="mt-0.5 block text-xs text-muted-foreground">
-                  Visible to students. Needs subtitle, description, instructor, and an outcome.
-                </span>
-              </span>
-            </label>
+                defaultValue="on"
+                className={selectClass}
+              >
+                <option value="on">সাইটে দেখাও (Publish)</option>
+                <option value="">খসড়া — শুধু Admin-এ থাকবে</option>
+              </select>
+            </Field>
             <label className="flex cursor-pointer items-start gap-3 rounded-xl border bg-background p-4">
               <input
                 type="checkbox"
@@ -255,7 +253,7 @@ export function CourseEditorForm({
               <span>
                 <span className="block text-sm font-medium">Featured</span>
                 <span className="mt-0.5 block text-xs text-muted-foreground">
-                  Also show in the homepage Featured row.
+                  হোমপেজের Featured রোতেও দেখাবে।
                 </span>
               </span>
             </label>
@@ -395,17 +393,22 @@ export function CourseEditorForm({
                 ))}
               </select>
             </Field>
-            <Field label="Level" htmlFor="level">
+            <Field
+              label="Level"
+              htmlFor="level"
+              hint="Optional. Pick Entry, Intermediate, or Advanced — or leave as None."
+            >
               <select
                 id="level"
                 name="level"
                 value={level}
-                onChange={(event) => setLevel(event.target.value)}
+                onChange={(event) => setLevel(parseLevel(event.target.value))}
                 className={selectClass}
               >
+                <option value="">None</option>
                 {levels.map((item) => (
                   <option key={item} value={item}>
-                    {item}
+                    {levelLabel(item)}
                   </option>
                 ))}
               </select>
@@ -703,7 +706,8 @@ export function CourseEditorForm({
           <CourseCover course={preview} className="aspect-16/10" />
           <div className="p-4">
             <p className="text-xs tracking-[0.14em] text-primary uppercase">
-              {categoryLabel(category as CategoryId)} · {level}
+              {categoryLabel(category as CategoryId)}
+              {level ? ` · ${levelLabel(level)}` : ""}
             </p>
             <p className="mt-2 font-heading text-lg leading-snug font-semibold">
               {title || "Course title"}

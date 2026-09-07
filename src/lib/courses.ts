@@ -40,7 +40,7 @@ export type Course = {
   subtitle: string;
   description: string;
   category: CategoryId;
-  level: Level;
+  level: Level | "";
   language: CourseLanguage;
   priceBdt: number;
   originalPriceBdt?: number;
@@ -102,6 +102,20 @@ export function categoryLabel(id: CategoryId) {
 }
 
 export const levels: Level[] = ["Beginner", "Intermediate", "Advanced"];
+
+export function levelLabel(level: string) {
+  if (level === "Beginner") return "Entry";
+  if (level === "Intermediate") return "Intermediate";
+  if (level === "Advanced") return "Advanced";
+  return "";
+}
+
+export function parseLevel(value: string | null | undefined): Level | "" {
+  if (value === "Beginner" || value === "Intermediate" || value === "Advanced") {
+    return value;
+  }
+  return "";
+}
 export const courseLanguages: CourseLanguage[] = [
   "English",
   "Bangla",
