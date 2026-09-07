@@ -1,5 +1,4 @@
 import type { Course } from "@/lib/courses";
-import { instructorPhotoSrc } from "@/lib/instructor-photos";
 
 export function instructorSlug(name: string) {
   return name
@@ -37,10 +36,7 @@ export function buildInstructors(courseList: Course[]): InstructorProfile[] {
       title: course.instructor.title,
       bio: course.instructor.bio,
       initials: course.instructor.initials,
-      photo: instructorPhotoSrc(
-        course.instructor.name,
-        course.instructor.photo
-      ),
+      photo: course.instructor.photo,
       courses: [course],
     });
   }

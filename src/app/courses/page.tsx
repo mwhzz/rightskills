@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { CourseCatalog } from "@/components/course-catalog";
 import { getSession } from "@/lib/auth";
-import { categories, courses } from "@/lib/courses";
+import { categories } from "@/lib/courses";
 import { getHomepageLearning, listPublishedCourses } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +16,7 @@ async function loadCourses() {
   try {
     return await listPublishedCourses();
   } catch {
-    return courses;
+    return [];
   }
 }
 

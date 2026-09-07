@@ -21,13 +21,10 @@ import {
   categoryLabel,
   courseHours,
   courseIncludes,
-  courses,
-  getCourse,
   lessonCount,
   type Course,
 } from "@/lib/courses";
 import { getCart } from "@/lib/session";
-import { instructorPhotoSrc } from "@/lib/instructor-photos";
 import { getSession } from "@/lib/auth";
 import {
   getHomepageLearning,
@@ -40,12 +37,10 @@ export const dynamic = "force-dynamic";
 
 async function loadCourse(slug: string): Promise<Course | null> {
   try {
-    const course = await getPublishedCourse(slug);
-    if (course) return course;
+    return (await getPublishedCourse(slug)) ?? null;
   } catch {
-    /* fall back to the local catalogue */
+    return null;
   }
-  return getCourse(slug) ?? null;
 }
 
 async function loadRelated(course: Course): Promise<Course[]> {
@@ -57,11 +52,7 @@ async function loadRelated(course: Course): Promise<Course[]> {
       )
       .slice(0, 3);
   } catch {
-    return courses
-      .filter(
-        (item) => item.slug !== course.slug && item.category === course.category
-      )
-      .slice(0, 3);
+    return [];
   }
 }
 
@@ -129,10 +120,7 @@ export default async function CourseDetailPage({
 
   const inCart = cart.includes(course.slug);
   const related = await loadRelated(course);
-  const photo = instructorPhotoSrc(
-    course.instructor.name,
-    course.instructor.photo
-  );
+  const photo = course.instructor.photo;
   let liveReviews: Awaited<ReturnType<typeof listReviewsForSlug>> = [];
   try {
     liveReviews = await listReviewsForSlug(slug);

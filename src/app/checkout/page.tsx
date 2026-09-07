@@ -95,12 +95,20 @@ export default async function CheckoutPage({
               <ul className="mt-4 space-y-3">
                 {items.map((course) => (
                   <li key={course.slug} className="flex gap-3">
-                    <div
-                      className="size-12 shrink-0 rounded-lg"
-                      style={{
-                        backgroundImage: `linear-gradient(145deg, ${course.cover.from}, ${course.cover.to})`,
-                      }}
-                    />
+                    {course.cover.image ? (
+                      <img
+                        src={course.cover.image}
+                        alt=""
+                        className="size-12 shrink-0 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <div
+                        className="size-12 shrink-0 rounded-lg"
+                        style={{
+                          backgroundImage: `linear-gradient(145deg, ${course.cover.from}, ${course.cover.to})`,
+                        }}
+                      />
+                    )}
                     <div className="min-w-0 flex-1">
                       <Link
                         href={`/courses/${course.slug}`}

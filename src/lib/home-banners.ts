@@ -20,24 +20,9 @@ export const bannerFrameClass = {
   mobile: "aspect-[16/9]",
 } as const;
 
-const defaultSlide = (
-  id: string,
-  image: string,
-  href: string,
-  durationSec = 5
-): HomeBanner => ({ id, image, href, durationSec });
-
 export const defaultHomeBanners: HomeBannerSet = {
-  desktop: [
-    defaultSlide("desk-1", "/brands/saffron.jpg", "/courses"),
-    defaultSlide("desk-2", "/brands/lumen.jpg", "/courses/fullstack-web-nextjs"),
-    defaultSlide("desk-3", "/instructors/shaila.jpg", "/courses"),
-  ],
-  mobile: [
-    defaultSlide("mob-1", "/brands/saffron.jpg", "/courses"),
-    defaultSlide("mob-2", "/brands/lumen.jpg", "/courses/fullstack-web-nextjs"),
-    defaultSlide("mob-3", "/instructors/shaila.jpg", "/courses"),
-  ],
+  desktop: [],
+  mobile: [],
 };
 
 export function isStockBanner(image: string) {
@@ -80,16 +65,18 @@ export function parseHomeBanners(raw: string | null | undefined): HomeBannerSet 
   try {
     const parsed = JSON.parse(raw) as unknown;
     if (Array.isArray(parsed)) {
-      const list = parsed
-        .map((item, index) => normalizeBanner(item, `legacy-${index}`))
-        .filter((item): item is HomeBanner => item !== null);
+      const list = withoutStock(
+        parsed
+          .map((item, index) => normalizeBanner(item, `legacy-${index}`))
+          .filter((item): item is HomeBanner => item !== null)
+      );
       if (list.length === 0) return defaultHomeBanners;
       return { desktop: list, mobile: list };
     }
     if (!parsed || typeof parsed !== "object") return defaultHomeBanners;
     const row = parsed as Record<string, unknown>;
-    const desktop = listFrom(row.desktop, "desk");
-    const mobile = listFrom(row.mobile, "mob");
+    const desktop = withoutStock(listFrom(row.desktop, "desk"));
+    const mobile = withoutStock(listFrom(row.mobile, "mob"));
     if (desktop.length === 0 && mobile.length === 0) return defaultHomeBanners;
     return {
       desktop: desktop.length ? desktop : mobile,
@@ -98,6 +85,10 @@ export function parseHomeBanners(raw: string | null | undefined): HomeBannerSet 
   } catch {
     return defaultHomeBanners;
   }
+}
+
+function withoutStock(list: HomeBanner[]) {
+  return list.filter((item) => !isStockBanner(item.image));
 }
 
 function listFrom(value: unknown, prefix: string) {

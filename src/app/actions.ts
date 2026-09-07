@@ -25,8 +25,10 @@ import { makeOrderId, type PaymentMethod } from "@/lib/store";
 import {
   assertImageFile,
   isUploadFile,
+  removeCoverImage,
   removeInstructorPhoto,
   removeUpload,
+  saveCoverImage,
   saveInstructorPhoto,
   saveBannerImage,
   saveLessonResource,
@@ -481,6 +483,8 @@ export async function saveCourseAction(
     .slice(0, 20);
   const photoFile = formData.get("instructorPhoto");
   const removePhoto = formData.get("removeInstructorPhoto") === "on";
+  const coverFile = formData.get("coverImage");
+  const removeCover = formData.get("removeCoverImage") === "on";
   let slug = slugify(String(formData.get("slug") ?? title));
 
   if (title.length < 3) return { error: "Give the course a title of at least 3 characters." };
@@ -516,6 +520,18 @@ export async function saveCourseAction(
           error instanceof Error
             ? error.message
             : "Could not use that instructor photo.",
+      };
+    }
+  }
+  if (isUploadFile(coverFile)) {
+    try {
+      assertImageFile(coverFile);
+    } catch (error) {
+      return {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Could not use that course banner.",
       };
     }
   }
@@ -558,9 +574,16 @@ export async function saveCourseAction(
       await removeInstructorPhoto(id);
       instructorPhoto = null;
     }
+    let coverImage = existing.coverImage;
+    if (isUploadFile(coverFile)) {
+      coverImage = await saveCoverImage(id, coverFile);
+    } else if (removeCover) {
+      await removeCoverImage(id);
+      coverImage = null;
+    }
     await prisma.course.update({
       where: { id },
-      data: { ...data, instructorPhoto, slug: existing.slug },
+      data: { ...data, instructorPhoto, coverImage, slug: existing.slug },
     });
     clearPublicCache();
     redirect(`/admin/courses/${id}`);
@@ -571,22 +594,31 @@ export async function saveCourseAction(
   const created = await prisma.course.create({
     data: { ...data, slug },
   });
-  if (isUploadFile(photoFile)) {
-    try {
-      const instructorPhoto = await saveInstructorPhoto(created.id, photoFile);
+  const createdMedia: { instructorPhoto?: string; coverImage?: string } = {};
+  try {
+    if (isUploadFile(photoFile)) {
+      createdMedia.instructorPhoto = await saveInstructorPhoto(
+        created.id,
+        photoFile
+      );
+    }
+    if (isUploadFile(coverFile)) {
+      createdMedia.coverImage = await saveCoverImage(created.id, coverFile);
+    }
+    if (createdMedia.instructorPhoto || createdMedia.coverImage) {
       await prisma.course.update({
         where: { id: created.id },
-        data: { instructorPhoto },
+        data: createdMedia,
       });
-    } catch (error) {
-      clearPublicCache();
-      return {
-        error:
-          error instanceof Error
-            ? `Course saved, but the photo failed: ${error.message}`
-            : "Course saved, but the photo failed. Try again.",
-      };
     }
+  } catch (error) {
+    clearPublicCache();
+    return {
+      error:
+        error instanceof Error
+          ? `Course saved, but the image failed: ${error.message}`
+          : "Course saved, but the image failed. Try again.",
+    };
   }
   clearPublicCache();
   redirect(`/admin/courses/${created.id}`);

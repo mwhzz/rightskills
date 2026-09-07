@@ -222,3 +222,30 @@ export async function saveBannerImage(id: string, file: File) {
 export async function removeInstructorPhoto(courseId: string) {
   await removeInstructorPhotoFiles(courseId);
 }
+
+async function removeCoverImageFiles(courseId: string) {
+  const dir = path.join(uploadsRoot(), "covers");
+  await Promise.all(
+    IMAGE_EXTS.map((ext) =>
+      fs.unlink(path.join(dir, `${courseId}${ext}`)).catch(() => undefined)
+    )
+  );
+}
+
+export async function saveCoverImage(courseId: string, file: File) {
+  assertImageFile(file);
+  const ext = extOf(file.name);
+  const safeExt = IMAGE_EXTS.includes(ext)
+    ? ext === ".jpeg"
+      ? ".jpg"
+      : ext
+    : ".jpg";
+  await removeCoverImageFiles(courseId);
+  const relative = path.posix.join("covers", `${courseId}${safeExt}`);
+  await writeFile(absoluteUploadPath(relative), file);
+  return relative;
+}
+
+export async function removeCoverImage(courseId: string) {
+  await removeCoverImageFiles(courseId);
+}

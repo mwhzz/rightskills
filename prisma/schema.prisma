@@ -71,6 +71,7 @@ model Course {
   coverFrom          String
   coverTo            String
   coverPattern       String
+  coverImage         String?
   teacherId          String?
   teacher            User?        @relation("TeacherCourses", fields: [teacherId], references: [id], onDelete: SetNull)
   modules            Module[]

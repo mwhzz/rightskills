@@ -16,12 +16,21 @@ export function CourseCover({
   course: Pick<Course, "title" | "cover">;
   className?: string;
 }) {
+  if (course.cover.image) {
+    return (
+      <div className={cn("relative overflow-hidden bg-muted", className)}>
+        <img
+          src={course.cover.image}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      </div>
+    );
+  }
+
   return (
     <div
-      className={cn(
-        "relative overflow-hidden text-white",
-        className
-      )}
+      className={cn("relative overflow-hidden text-white", className)}
       style={{
         backgroundImage: `linear-gradient(145deg, ${course.cover.from}, ${course.cover.to})`,
       }}

@@ -11,6 +11,7 @@ import {
   courseHours,
   lessonCount,
 } from "@/lib/courses";
+import { coverImageSrc } from "@/lib/cover-image";
 import { instructorPhotoSrc } from "@/lib/instructor-photos";
 
 export type CourseRecord = DbCourse & {
@@ -44,7 +45,7 @@ export function mapCourse(row: CourseRecord): Course {
       title: row.instructorTitle,
       bio: row.instructorBio,
       initials: row.instructorInitials,
-      photo: instructorPhotoSrc(row.instructorName, row.instructorPhoto),
+      photo: instructorPhotoSrc(row.instructorPhoto),
     },
     cover: {
       from: row.coverFrom,
@@ -53,6 +54,7 @@ export function mapCourse(row: CourseRecord): Course {
         pattern === "dots" || pattern === "waves" || pattern === "grid"
           ? pattern
           : "grid",
+      image: coverImageSrc(row.coverImage) || undefined,
     },
     modules: row.modules
       .slice()

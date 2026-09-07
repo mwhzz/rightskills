@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import { BookOpen, Star, Users } from "lucide-react";
 import { CourseCard } from "@/components/course-card";
 import { getSession } from "@/lib/auth";
-import { courses } from "@/lib/courses";
 import { formatStudents } from "@/lib/format";
 import { getInstructorBySlug } from "@/lib/instructors";
 import { getHomepageLearning, listPublishedCourses } from "@/lib/queries";
@@ -15,7 +14,7 @@ async function loadCourses() {
   try {
     return await listPublishedCourses();
   } catch {
-    return courses;
+    return [];
   }
 }
 

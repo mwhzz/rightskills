@@ -186,9 +186,13 @@ export function CourseCatalog({
 
       {sorted.length === 0 ? (
         <div className="rounded-3xl border border-dashed bg-card px-6 py-20 text-center">
-          <p className="font-heading text-2xl font-semibold">No courses match</p>
+          <p className="font-heading text-2xl font-semibold">
+            {courses.length === 0 ? "No courses yet" : "No courses match"}
+          </p>
           <p className="mx-auto mt-2 max-w-md text-base text-muted-foreground">
-            Try another keyword, or reset filters to see the full catalogue.
+            {courses.length === 0
+              ? "Published courses will show up here."
+              : "Try another keyword, or reset filters to see the full catalogue."}
           </p>
           <Link
             href="/courses"

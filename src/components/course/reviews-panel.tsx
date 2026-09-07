@@ -3,39 +3,6 @@ import { initialsFromName } from "@/lib/slug";
 import { StarRow } from "@/components/stars";
 import type { PublicReview } from "@/lib/reviews";
 
-const quotes: PublicReview[] = [
-  {
-    name: "Sadia Rahman",
-    initials: "SR",
-    subtitle: "Junior web developer, Banani",
-    photo: "/reviews/sadia.jpg",
-    rating: 5,
-    when: "3 weeks ago",
-    quote:
-      "Clear, paced, and actually useful. I shipped client work the same week I finished the project lessons — not another tutorial clone.",
-  },
-  {
-    name: "Mehedi Hasan",
-    initials: "MH",
-    subtitle: "Freelance designer, Chattogram",
-    photo: "/reviews/mehedi.jpg",
-    rating: 5,
-    when: "1 month ago",
-    quote:
-      "The structure is honest. Short videos, a real brief, and a way to price the work. I stopped undercharging after the proposal lesson.",
-  },
-  {
-    name: "Nusrat Alam",
-    initials: "NA",
-    subtitle: "MIS officer, Gazipur",
-    photo: "/reviews/nusrat.jpg",
-    rating: 4,
-    when: "5 days ago",
-    quote:
-      "I watch on my phone after office. The lessons are short enough to finish, and the practice matches what my desk actually asks for.",
-  },
-];
-
 function ratingBars(rating: number) {
   const five = Math.min(92, Math.max(55, Math.round((rating - 3.8) * 50 + 58)));
   const four = Math.round((100 - five) * 0.55);
@@ -72,7 +39,7 @@ export function CourseReviews({
   reviews?: PublicReview[];
 }) {
   const live = reviews && reviews.length > 0;
-  const items = live ? reviews : quotes;
+  const items = live ? reviews : [];
   const bars = live ? barsFromReviews(reviews) : ratingBars(rating);
   const shownRating = live
     ? Math.round(

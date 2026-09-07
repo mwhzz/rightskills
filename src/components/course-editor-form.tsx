@@ -16,6 +16,7 @@ import {
   levels,
   type CategoryId,
 } from "@/lib/courses";
+import { coverImageSrc } from "@/lib/cover-image";
 import { formatBdt, formatBytes } from "@/lib/format";
 import { instructorPhotoSrc } from "@/lib/instructor-photos";
 import { slugify } from "@/lib/slug";
@@ -163,6 +164,9 @@ export function CourseEditorForm({
   const [photoLabel, setPhotoLabel] = useState("");
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [removePhoto, setRemovePhoto] = useState(false);
+  const [coverLabel, setCoverLabel] = useState("");
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [removeCover, setRemoveCover] = useState(false);
   const [state, formAction, pending] = useActionState<SaveCourseState, FormData>(
     saveCourseAction,
     null
@@ -176,9 +180,12 @@ export function CourseEditorForm({
       ? Math.round((1 - price / original) * 100)
       : null;
   const existingPhoto = course
-    ? instructorPhotoSrc(course.instructorName, course.instructorPhoto)
+    ? instructorPhotoSrc(course.instructorPhoto)
     : undefined;
   const shownPhoto = removePhoto ? null : photoPreview || existingPhoto;
+
+  const existingCover = coverImageSrc(course?.coverImage);
+  const shownCover = removeCover ? "" : coverPreview || existingCover;
 
   const preview = useMemo(
     () => ({
@@ -189,9 +196,10 @@ export function CourseEditorForm({
         pattern: (coverPatterns.includes(coverPattern as (typeof coverPatterns)[number])
           ? coverPattern
           : "grid") as (typeof coverPatterns)[number],
+        image: shownCover || undefined,
       },
     }),
-    [title, coverFrom, coverTo, coverPattern]
+    [title, coverFrom, coverTo, coverPattern, shownCover]
   );
 
   return (
@@ -210,11 +218,95 @@ export function CourseEditorForm({
             {state.error}
           </p>
         ) : null}
+        {course && !course.published ? (
+          <p className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+            This course is a draft. Students cannot see it on the homepage or
+            /courses until you tick <span className="font-medium">Published</span>{" "}
+            below and save.
+          </p>
+        ) : null}
+
+        <Section
+          title="Show on the site"
+          description="A draft stays in Admin only. Published courses appear on /courses and in the homepage New row."
+        >
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="flex cursor-pointer items-start gap-3 rounded-xl border bg-background p-4">
+              <input
+                type="checkbox"
+                name="published"
+                defaultChecked={course?.published ?? true}
+                className="mt-1 size-4"
+              />
+              <span>
+                <span className="block text-sm font-medium">Published</span>
+                <span className="mt-0.5 block text-xs text-muted-foreground">
+                  Visible to students. Needs subtitle, description, instructor, and an outcome.
+                </span>
+              </span>
+            </label>
+            <label className="flex cursor-pointer items-start gap-3 rounded-xl border bg-background p-4">
+              <input
+                type="checkbox"
+                name="featured"
+                defaultChecked={course?.featured ?? false}
+                className="mt-1 size-4"
+              />
+              <span>
+                <span className="block text-sm font-medium">Featured</span>
+                <span className="mt-0.5 block text-xs text-muted-foreground">
+                  Also show in the homepage Featured row.
+                </span>
+              </span>
+            </label>
+          </div>
+        </Section>
 
         <Section
           title="Listing"
           description="This is what students see on the course page and in search."
         >
+          <Field label="Course banner" htmlFor="coverImage" hint="JPG, PNG, WEBP, or GIF · up to 5MB. 1280 × 800 px fills the card. If you skip this, the colour cover is used.">
+            <input
+              id="coverImage"
+              type="file"
+              name="coverImage"
+              accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
+              className="text-sm file:mr-2 file:rounded-md file:border-0 file:bg-muted file:px-2 file:py-1"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (!file) {
+                  setCoverLabel("");
+                  setCoverPreview(null);
+                  return;
+                }
+                if (file.size > IMAGE_MAX_BYTES) {
+                  setCoverLabel("Banner must be 5MB or smaller.");
+                  event.target.value = "";
+                  setCoverPreview(null);
+                  return;
+                }
+                setRemoveCover(false);
+                setCoverLabel(`${file.name} · ${formatBytes(file.size)}`);
+                setCoverPreview(URL.createObjectURL(file));
+              }}
+            />
+          </Field>
+          {coverLabel ? (
+            <p className="text-xs text-muted-foreground">{coverLabel}</p>
+          ) : null}
+          {course?.coverImage && !coverPreview ? (
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              <input
+                type="checkbox"
+                name="removeCoverImage"
+                checked={removeCover}
+                onChange={(event) => setRemoveCover(event.target.checked)}
+                className="size-4 rounded border"
+              />
+              Remove banner image
+            </label>
+          ) : null}
           <Field label="Title" htmlFor="title">
             <Input
               id="title"
@@ -515,8 +607,8 @@ export function CourseEditorForm({
         </Section>
 
         <Section
-          title="Cover"
-          description="Used on cards and the course header. Pick a preset or mix your own."
+          title="Colour cover"
+          description="Used only if you do not upload a banner image."
         >
           <div className="flex flex-wrap gap-2">
             {coverPresets.map((preset) => (
@@ -587,42 +679,6 @@ export function CourseEditorForm({
                 ))}
               </select>
             </Field>
-          </div>
-        </Section>
-
-        <Section
-          title="Visibility"
-          description="Drafts stay off the storefront. Featured courses appear on the homepage."
-        >
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="flex cursor-pointer items-start gap-3 rounded-xl border bg-background p-4">
-              <input
-                type="checkbox"
-                name="published"
-                defaultChecked={course?.published ?? false}
-                className="mt-1 size-4"
-              />
-              <span>
-                <span className="block text-sm font-medium">Published</span>
-                <span className="mt-0.5 block text-xs text-muted-foreground">
-                  Visible on /courses. Needs subtitle, description, instructor, and an outcome.
-                </span>
-              </span>
-            </label>
-            <label className="flex cursor-pointer items-start gap-3 rounded-xl border bg-background p-4">
-              <input
-                type="checkbox"
-                name="featured"
-                defaultChecked={course?.featured ?? false}
-                className="mt-1 size-4"
-              />
-              <span>
-                <span className="block text-sm font-medium">Featured</span>
-                <span className="mt-0.5 block text-xs text-muted-foreground">
-                  Show in the homepage featured row.
-                </span>
-              </span>
-            </label>
           </div>
         </Section>
 

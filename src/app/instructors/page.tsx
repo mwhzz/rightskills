@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { courses } from "@/lib/courses";
 import { buildInstructors } from "@/lib/instructors";
 import { listPublishedCourses } from "@/lib/queries";
 
@@ -15,7 +14,7 @@ async function loadCourses() {
   try {
     return await listPublishedCourses();
   } catch {
-    return courses;
+    return [];
   }
 }
 
@@ -35,6 +34,11 @@ export default async function InstructorsPage() {
         Practitioners first. Each course is led by someone still doing the work.
       </p>
 
+      {people.length === 0 ? (
+        <p className="mt-10 rounded-3xl border border-dashed bg-card px-6 py-16 text-center text-muted-foreground">
+          Instructors appear here when you publish a course.
+        </p>
+      ) : (
       <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {people.map((person) => (
           <Link
@@ -66,6 +70,7 @@ export default async function InstructorsPage() {
           </Link>
         ))}
       </div>
+      )}
     </div>
   );
 }
