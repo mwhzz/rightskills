@@ -44,42 +44,43 @@ model User {
 }
 
 model Course {
-  id                 String       @id @default(cuid())
-  slug               String       @unique
+  id                 String         @id @default(cuid())
+  slug               String         @unique
   title              String
   banglaTitle        String
-  subtitle           String       @db.Text
-  description        String       @db.Text
+  subtitle           String         @db.Text
+  description        String         @db.Text
   category           String
   level              String
   language           String
   priceBdt           Int
   originalPriceBdt   Int?
-  purchaseNote       String       @default("") @db.Text
+  purchaseNote       String         @default("") @db.Text
   includes           Json?
   instructorPhoto    String?
-  rating             Float        @default(0)
-  reviewCount        Int          @default(0)
-  students           Int          @default(0)
-  featured           Boolean      @default(false)
-  published          Boolean      @default(true)
+  rating             Float          @default(0)
+  reviewCount        Int            @default(0)
+  students           Int            @default(0)
+  featured           Boolean        @default(false)
+  published          Boolean        @default(true)
   outcomes           Json
   instructorName     String
   instructorTitle    String
-  instructorBio      String       @db.Text
+  instructorBio      String         @db.Text
   instructorInitials String
   coverFrom          String
   coverTo            String
   coverPattern       String
   coverImage         String?
+  promoVideoUrl      String?        @db.Text
   teacherId          String?
-  teacher            User?        @relation("TeacherCourses", fields: [teacherId], references: [id], onDelete: SetNull)
+  teacher            User?          @relation("TeacherCourses", fields: [teacherId], references: [id], onDelete: SetNull)
   modules            Module[]
   enrollments        Enrollment[]
   orderItems         OrderItem[]
   reviews            CourseReview[]
-  createdAt          DateTime     @default(now())
-  updatedAt          DateTime     @updatedAt
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
 }
 
 model Module {
@@ -102,6 +103,7 @@ model Lesson {
   videoPath   String?
   videoName   String?
   videoBytes  Int?
+  videoUrl    String?          @db.Text
   sortOrder   Int              @default(0)
   progress    LessonProgress[]
   resources   LessonResource[]
@@ -136,17 +138,18 @@ model CourseReview {
 }
 
 model Order {
-  id        String        @id @default(cuid())
-  orderId   String        @unique
-  userId    String
-  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  totalBdt  Int
-  method    PaymentMethod
-  status    OrderStatus   @default(pending)
-  trxId     String?
-  items     OrderItem[]
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  id          String        @id @default(cuid())
+  orderId     String        @unique
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalBdt    Int
+  method      PaymentMethod
+  status      OrderStatus   @default(pending)
+  trxId       String?
+  payerNumber String?
+  items       OrderItem[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 }
 
 model OrderItem {
@@ -181,9 +184,10 @@ model LessonProgress {
 }
 
 model Setting {
-  id                String @id @default("default")
-  bkashNumber       String @default("")
-  nagadNumber       String @default("")
-  payInstructions   String @db.Text
-  homeBanners       String @db.Text
+  id              String @id @default("default")
+  bkashNumber     String @default("")
+  nagadNumber     String @default("")
+  payInstructions String @db.Text
+  homeBanners     String @db.Text
+  homeOffers      String @db.Text
 }

@@ -219,6 +219,26 @@ export async function saveBannerImage(id: string, file: File) {
   return relative;
 }
 
+export async function saveOfferImage(id: string, file: File) {
+  assertImageFile(file);
+  const ext = extOf(file.name);
+  const safeExt = IMAGE_EXTS.includes(ext)
+    ? ext === ".jpeg"
+      ? ".jpg"
+      : ext
+    : ".jpg";
+  const safeId = id.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 40) || "offer";
+  const dir = path.join(uploadsRoot(), "offers");
+  await Promise.all(
+    IMAGE_EXTS.map((item) =>
+      fs.unlink(path.join(dir, `${safeId}${item}`)).catch(() => undefined)
+    )
+  );
+  const relative = path.posix.join("offers", `${safeId}${safeExt}`);
+  await writeFile(absoluteUploadPath(relative), file);
+  return relative;
+}
+
 export async function removeInstructorPhoto(courseId: string) {
   await removeInstructorPhotoFiles(courseId);
 }

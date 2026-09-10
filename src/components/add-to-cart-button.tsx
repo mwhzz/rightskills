@@ -57,6 +57,25 @@ export function AddToCartButton({
   );
 }
 
+/**
+ * Buy now for a course card. The card is one big stretched link, so this sits
+ * above it on its own layer and stops the click from opening the card.
+ */
+export function CardBuyNowButton({ slug }: { slug: string }) {
+  return (
+    <form action={buyNowAction} className="relative z-10">
+      <input type="hidden" name="slug" value={slug} />
+      <button
+        type="submit"
+        className={cn(buttonVariants({ size: "sm" }), "h-10 w-full text-sm")}
+      >
+        <ShoppingBag data-icon="inline-start" />
+        Buy now
+      </button>
+    </form>
+  );
+}
+
 export function BuyNowButton({
   slug,
   owned,

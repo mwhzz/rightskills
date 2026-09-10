@@ -176,6 +176,7 @@ export default async function CheckoutSuccessPage({
                 <TrxForm
                   orderId={order.orderId}
                   defaultTrxId={order.trxId}
+                  defaultPayerNumber={order.payerNumber}
                   from="success"
                 />
               </div>

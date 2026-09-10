@@ -36,6 +36,7 @@ export default async function AdminOrdersPage({
           OR: [
             { orderId: { contains: q } },
             { trxId: { contains: q } },
+            { payerNumber: { contains: q } },
             { user: { name: { contains: q } } },
             { user: { phone: { contains: q } } },
           ],
@@ -67,8 +68,8 @@ export default async function AdminOrdersPage({
     <div className="mx-auto w-full max-w-6xl">
       <h1 className="font-heading text-3xl font-semibold tracking-tight">Orders</h1>
       <p className="mt-2 max-w-2xl text-base text-muted-foreground">
-        Match the TrxID in bKash or Nagad, then mark paid to unlock the
-        courses. Reject if the reference does not match.
+        Check the paid-from number and TrxID against your bKash or Nagad app,
+        then mark paid to unlock the courses. Reject if nothing matches.
       </p>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -86,7 +87,7 @@ export default async function AdminOrdersPage({
         <input
           name="q"
           defaultValue={q}
-          placeholder="Search order ID, phone, name, TrxID"
+          placeholder="Search name, paid-from number, order ID, TrxID"
           className="h-11 flex-1 rounded-lg border bg-background px-3 text-sm"
         />
         {status ? <input type="hidden" name="status" value={status} /> : null}
@@ -159,7 +160,20 @@ export default async function AdminOrdersPage({
                   <dd className="mt-1 text-sm font-medium">{formatBdt(order.totalBdt)}</dd>
                   <dd className="text-xs uppercase text-muted-foreground">{order.method}</dd>
                 </div>
-                <div className="sm:col-span-2">
+                <div>
+                  <dt className="text-xs tracking-[0.14em] text-muted-foreground uppercase">
+                    Paid from
+                  </dt>
+                  <dd className="mt-1 font-mono text-sm font-medium">
+                    {order.payerNumber || "Not given"}
+                  </dd>
+                  {order.payerNumber && order.payerNumber !== order.user.phone ? (
+                    <dd className="text-xs text-muted-foreground">
+                      Different from the account number
+                    </dd>
+                  ) : null}
+                </div>
+                <div>
                   <dt className="text-xs tracking-[0.14em] text-muted-foreground uppercase">
                     TrxID
                   </dt>

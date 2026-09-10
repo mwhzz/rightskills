@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Star } from "lucide-react";
+import { CardBuyNowButton } from "@/components/add-to-cart-button";
 import { CourseCover } from "@/components/course-cover";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -28,25 +29,28 @@ export function CourseCard({
   const finished = Boolean(progress && progress.total > 0 && progress.done >= progress.total);
 
   return (
-    <Link href={to} className="group block h-full">
-      <Card className="h-full py-0 ring-foreground/8 transition-shadow group-hover:ring-foreground/20">
-        <CourseCover course={course} className="aspect-16/10 rounded-t-xl" />
-        <CardContent className="flex flex-1 flex-col gap-2 pt-4">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <Badge variant="secondary">{categoryLabel(course.category)}</Badge>
-            {course.level ? (
-              <Badge variant="outline">{levelLabel(course.level)}</Badge>
-            ) : null}
-            {owned ? <Badge>Enrolled</Badge> : null}
-          </div>
-          <h3 className="font-heading text-lg leading-snug font-semibold text-balance group-hover:text-primary">
+    <Card className="group relative h-full py-0 ring-foreground/8 transition-shadow hover:ring-foreground/20">
+      <CourseCover course={course} className="aspect-16/10 rounded-t-xl" />
+      <CardContent className="flex flex-1 flex-col gap-2 pt-4">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Badge variant="secondary">{categoryLabel(course.category)}</Badge>
+          {course.level ? (
+            <Badge variant="outline">{levelLabel(course.level)}</Badge>
+          ) : null}
+          {owned ? <Badge>Enrolled</Badge> : null}
+        </div>
+        <h3 className="font-heading text-lg leading-snug font-semibold text-balance">
+          {/* Stretched link: covers the whole card so the card stays clickable. */}
+          <Link href={to} className="after:absolute after:inset-0 group-hover:text-primary">
             {course.title}
-          </h3>
-          <p className="line-clamp-2 text-base text-muted-foreground">
-            {course.subtitle}
-          </p>
-        </CardContent>
-        <CardFooter className="justify-between gap-3 bg-transparent">
+          </Link>
+        </h3>
+        <p className="line-clamp-2 text-base text-muted-foreground">
+          {course.subtitle}
+        </p>
+      </CardContent>
+      <CardFooter className="flex-col items-stretch gap-3 bg-transparent">
+        <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-1 font-medium text-foreground">
               <Star className="size-3.5 fill-amber-400 text-amber-400" />
@@ -77,8 +81,9 @@ export function CourseCard({
               ) : null}
             </div>
           )}
-        </CardFooter>
-      </Card>
-    </Link>
+        </div>
+        {owned ? null : <CardBuyNowButton slug={course.slug} />}
+      </CardFooter>
+    </Card>
   );
 }

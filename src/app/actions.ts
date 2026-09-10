@@ -31,6 +31,7 @@ import {
   saveCoverImage,
   saveInstructorPhoto,
   saveBannerImage,
+  saveOfferImage,
   saveLessonResource,
   saveLessonVideo,
 } from "@/lib/uploads";
@@ -40,7 +41,15 @@ import {
   sanitizeBannerImage,
   type HomeBanner,
 } from "@/lib/home-banners";
+import {
+  offerShape,
+  sanitizeOfferHref,
+  sanitizeOfferImage,
+  OFFER_MAX_ITEMS,
+  type HomeOffer,
+} from "@/lib/home-offers";
 import { categories, levels } from "@/lib/courses";
+import { normalizeVideoInput } from "@/lib/video";
 import { refreshCourseRating } from "@/lib/reviews";
 
 function authFail(mode: "login" | "register", code: string, next: string): never {
@@ -152,6 +161,8 @@ export async function checkoutAction(formData: FormData) {
   if (!["bkash", "nagad", "card"].includes(method)) {
     redirect("/checkout?error=method");
   }
+  const payerNumber = normalizePhone(String(formData.get("payerNumber") ?? ""));
+  if (!payerNumber) redirect("/checkout?error=payer");
 
   const owned = await getOwnedSlugsForUser(user.id);
   const cart = (await getCart()).filter((slug) => !owned.includes(slug));
@@ -169,6 +180,7 @@ export async function checkoutAction(formData: FormData) {
       userId: user.id,
       totalBdt,
       method,
+      payerNumber,
       status: "pending",
       items: {
         create: dbCourses.map((course) => ({
@@ -186,6 +198,7 @@ export async function submitTrxAction(formData: FormData) {
   const user = await requireUser("/account/orders");
   const orderId = String(formData.get("orderId") ?? "");
   const trxId = String(formData.get("trxId") ?? "").trim();
+  const payerNumber = normalizePhone(String(formData.get("payerNumber") ?? ""));
   const from = String(formData.get("from") ?? "");
   const successPath = `/checkout/success?order=${encodeURIComponent(orderId)}`;
   if (trxId.length < 4) {
@@ -202,7 +215,11 @@ export async function submitTrxAction(formData: FormData) {
 
   await prisma.order.update({
     where: { id: order.id },
-    data: { trxId, status: "awaiting_review" },
+    data: {
+      trxId,
+      status: "awaiting_review",
+      ...(payerNumber ? { payerNumber } : {}),
+    },
   });
   redirect(
     from === "success" ? `${successPath}&submitted=1` : "/account/orders?submitted=1"
@@ -325,6 +342,7 @@ export async function saveSettingsAction(
       nagadNumber: nagadNumber ?? "",
       payInstructions,
       homeBanners: "[]",
+      homeOffers: "{}",
     },
   });
   clearPublicCache();
@@ -396,10 +414,71 @@ export async function saveHomeBannersAction(formData: FormData) {
       payInstructions:
         "Send the exact amount to the number below. Use your order ID as the reference, then paste the TrxID on your orders page.",
       homeBanners: JSON.stringify(payload),
+      homeOffers: "{}",
     },
   });
   clearPublicCache();
   redirect("/admin/banners?saved=1");
+}
+
+async function offersFromForm(
+  value: unknown,
+  formData: FormData
+): Promise<HomeOffer[]> {
+  if (!Array.isArray(value)) return [];
+  const offers: HomeOffer[] = [];
+  for (const [index, item] of value.slice(0, OFFER_MAX_ITEMS).entries()) {
+    if (!item || typeof item !== "object") continue;
+    const row = item as Record<string, unknown>;
+    const rawId = String(row.id ?? `offer-${index}`);
+    const id = rawId.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 40) || `offer-${index}`;
+    const file = formData.get(`file-offer-${rawId}`) ?? formData.get(`file-offer-${id}`);
+    let image = sanitizeOfferImage(String(row.image ?? ""));
+    if (isUploadFile(file)) {
+      try {
+        image = await saveOfferImage(id, file);
+      } catch {
+        redirect("/admin/offers?error=photo");
+      }
+    }
+    if (!image) continue;
+    offers.push({ id, image, href: sanitizeOfferHref(row.href) });
+  }
+  return offers;
+}
+
+export async function saveHomeOffersAction(formData: FormData) {
+  await requireRole("admin");
+  const raw = String(formData.get("offers") ?? "{}");
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    redirect("/admin/offers?error=json");
+  }
+  const row =
+    parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {};
+  const payload = {
+    title: String(row.title ?? "").trim().slice(0, 120),
+    shape: offerShape(row.shape),
+    items: await offersFromForm(row.items, formData),
+  };
+
+  await prisma.setting.upsert({
+    where: { id: "default" },
+    update: { homeOffers: JSON.stringify(payload) },
+    create: {
+      id: "default",
+      bkashNumber: "",
+      nagadNumber: "",
+      payInstructions:
+        "Send the exact amount to the number below. Use your order ID as the reference, then paste the TrxID on your orders page.",
+      homeBanners: "[]",
+      homeOffers: JSON.stringify(payload),
+    },
+  });
+  clearPublicCache();
+  redirect("/admin/offers?saved=1");
 }
 
 export async function createTeacherAction(formData: FormData) {
@@ -458,6 +537,8 @@ export async function saveCourseAction(
   const banglaTitle = String(formData.get("banglaTitle") ?? "").trim();
   const subtitle = String(formData.get("subtitle") ?? "").trim();
   const purchaseNote = String(formData.get("purchaseNote") ?? "").trim();
+  const promoVideoRaw = String(formData.get("promoVideoUrl") ?? "").trim();
+  const promoVideoUrl = promoVideoRaw ? normalizeVideoInput(promoVideoRaw) : "";
   const description = String(formData.get("description") ?? "").trim();
   const category = String(formData.get("category") ?? "development");
   const levelRaw = String(formData.get("level") ?? "").trim();
@@ -506,6 +587,12 @@ export async function saveCourseAction(
     return { error: "Cover colours must be hex values like #EA6A1A." };
   }
   if (!patternSet.has(coverPattern)) return { error: "Pick a cover pattern." };
+  if (promoVideoRaw && !promoVideoUrl) {
+    return {
+      error:
+        "That preview video link does not look right. Paste a full YouTube link, like https://www.youtube.com/watch?v=xxxxxxxxxxx",
+    };
+  }
   if (published) {
     if (!subtitle) return { error: "Add a subtitle before publishing." };
     if (description.length < 40) {
@@ -542,6 +629,7 @@ export async function saveCourseAction(
     banglaTitle: banglaTitle || title,
     subtitle,
     purchaseNote: purchaseNote.slice(0, 600),
+    promoVideoUrl: promoVideoUrl || null,
     description,
     category,
     level,
@@ -710,6 +798,7 @@ export async function addLessonAction(formData: FormData) {
   const body = String(formData.get("body") ?? "").trim();
   const durationMin = Number(formData.get("durationMin") ?? 0);
   const preview = formData.get("preview") === "on";
+  const videoUrl = normalizeVideoInput(formData.get("videoUrl"));
   const module = await prisma.module.findUnique({
     where: { id: moduleId },
     include: { course: true },
@@ -729,6 +818,7 @@ export async function addLessonAction(formData: FormData) {
       body,
       durationMin: Number.isFinite(durationMin) ? durationMin : 0,
       preview,
+      videoUrl: videoUrl || null,
       sortOrder: (last?.sortOrder ?? -1) + 1,
     },
   });
@@ -765,6 +855,7 @@ export async function updateLessonAction(formData: FormData) {
         body: String(formData.get("body") ?? lesson.body),
         durationMin: Number(formData.get("durationMin") ?? lesson.durationMin),
         preview: formData.get("preview") === "on",
+        videoUrl: normalizeVideoInput(formData.get("videoUrl")) || null,
       },
     });
     await saveLessonFiles(lesson.id, formData);

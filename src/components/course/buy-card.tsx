@@ -1,9 +1,10 @@
 import { Check, Infinity, Languages, MonitorPlay, Smartphone } from "lucide-react";
 import { AddToCartButton, BuyNowButton } from "@/components/add-to-cart-button";
-import { HomeVideo } from "@/components/home/home-video";
-import { brand } from "@/lib/brand";
+import { CourseCover } from "@/components/course-cover";
+import { VideoFrame } from "@/components/video-frame";
 import { courseHours, lessonCount, DEFAULT_PURCHASE_NOTE, type Course } from "@/lib/courses";
 import { formatBdt } from "@/lib/format";
+import { videoEmbed } from "@/lib/video";
 
 export function CourseBuyCard({
   course,
@@ -14,6 +15,7 @@ export function CourseBuyCard({
   owned: boolean;
   inCart: boolean;
 }) {
+  const preview = videoEmbed(course.promoVideoUrl);
   const discount =
     course.originalPriceBdt && course.originalPriceBdt > course.priceBdt
       ? Math.round(
@@ -23,20 +25,12 @@ export function CourseBuyCard({
 
   return (
     <div className="overflow-hidden rounded-3xl border bg-card shadow-[0_20px_60px_-28px_rgba(180,70,20,0.28)]">
-      <div id="preview">
-        <HomeVideo
-          src={brand.lessonVideo}
-          label={`Preview of ${course.title}`}
-          autoPlay={false}
-          className="aspect-video"
-          overlay={
-            <div className="absolute inset-x-0 bottom-0 z-10 p-4">
-              <p className="text-sm font-medium text-white">
-                Preview this course
-              </p>
-            </div>
-          }
-        />
+      <div id="preview" className="bg-zinc-950">
+        {preview ? (
+          <VideoFrame url={course.promoVideoUrl} title={`Preview of ${course.title}`} />
+        ) : (
+          <CourseCover course={course} className="aspect-video" />
+        )}
       </div>
       <div className="p-6">
         <div className="flex flex-wrap items-end gap-3">

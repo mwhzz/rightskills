@@ -245,7 +245,11 @@ export default async function OrdersPage({
                       After Send Money, paste the TrxID from the {methodLabel}{" "}
                       SMS or app.
                     </p>
-                    <TrxForm orderId={order.orderId} defaultTrxId={order.trxId} />
+                    <TrxForm
+                      orderId={order.orderId}
+                      defaultTrxId={order.trxId}
+                      defaultPayerNumber={order.payerNumber}
+                    />
                   </div>
                 ) : null}
 

@@ -29,6 +29,7 @@ async function main() {
       payInstructions:
         "Send Money the exact order total. Put the order ID in the reference. Then open My orders and paste the TrxID.",
       homeBanners: "[]",
+      homeOffers: "{}",
     },
   });
 

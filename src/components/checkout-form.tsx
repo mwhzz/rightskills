@@ -21,6 +21,7 @@ const methods = [
 
 const errorCopy: Record<string, string> = {
   method: "Choose a payment method.",
+  payer: "Add the number you sent the money from (01XXXXXXXXX).",
 };
 
 export function CheckoutForm({
@@ -28,11 +29,13 @@ export function CheckoutForm({
   error,
   bkashNumber,
   nagadNumber,
+  defaultPayerNumber,
 }: {
   totalBdt: number;
   error?: string;
   bkashNumber: string;
   nagadNumber: string;
+  defaultPayerNumber: string;
 }) {
   const [method, setMethod] = useState<"bkash" | "nagad">("bkash");
   const number = method === "nagad" ? nagadNumber : bkashNumber;
@@ -44,11 +47,11 @@ export function CheckoutForm({
           Step 1
         </p>
         <h2 className="mt-2 font-heading text-2xl font-semibold tracking-tight">
-          Choose how you will pay
+          Please send your payment
         </h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Placing the order does not charge you. Next you Send Money yourself,
-          then paste the TrxID.
+          Send {formatBdt(totalBdt)} to the number below from your bKash or
+          Nagad app, then add the number you paid from so we can match it.
         </p>
         <div className="mt-5 grid gap-3">
           {methods.map((item) => {
@@ -97,6 +100,25 @@ export function CheckoutForm({
             {number || "Number not set yet — contact support after placing the order"}
           </p>
         </div>
+        <div className="mt-5">
+          <label htmlFor="payerNumber" className="text-sm font-medium">
+            Your {method === "nagad" ? "Nagad" : "bKash"} number
+          </label>
+          <input
+            id="payerNumber"
+            name="payerNumber"
+            type="tel"
+            inputMode="numeric"
+            required
+            defaultValue={defaultPayerNumber}
+            placeholder="01XXXXXXXXX"
+            autoComplete="tel"
+            className="mt-1.5 h-11 w-full rounded-lg border bg-background px-3 text-sm"
+          />
+          <p className="mt-1.5 text-xs text-muted-foreground">
+            The number you sent the money from. We match your payment with it.
+          </p>
+        </div>
       </div>
 
       {error && errorCopy[error] ? (
@@ -112,8 +134,8 @@ export function CheckoutForm({
         Place order · {formatBdt(totalBdt)}
       </button>
       <p className="text-center text-xs text-muted-foreground">
-        You will get an order ID on the next screen. Send the exact amount, then
-        paste the TrxID.
+        You get an order ID on the next screen, where you paste the TrxID. The
+        course unlocks once we confirm the payment.
       </p>
     </form>
   );

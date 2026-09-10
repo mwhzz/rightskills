@@ -47,7 +47,7 @@ export default async function CheckoutPage({
       </h1>
       <p className="mt-3 max-w-2xl text-base text-muted-foreground">
         {session
-          ? `Paying as ${session.name}. After this step you will see the wallet number and amount. Courses unlock only after an admin confirms the TrxID.`
+          ? `Paying as ${session.name}. Send the money to the wallet number below, add the number you paid from, then place the order. Courses unlock once we confirm the payment.`
           : "No account needed to pick a course. Log in or create one here to place the order, then send money on bKash or Nagad."}
       </p>
 
@@ -85,6 +85,7 @@ export default async function CheckoutPage({
               error={error}
               bkashNumber={settings.bkashNumber}
               nagadNumber={settings.nagadNumber}
+              defaultPayerNumber={session.phone ?? ""}
             />
           ) : (
             <CheckoutAuth error={error} initialMode={authMode} />

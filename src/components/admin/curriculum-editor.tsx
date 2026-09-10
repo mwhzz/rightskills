@@ -7,6 +7,7 @@ import {
   updateLessonAction,
 } from "@/app/actions";
 import { MediaFields } from "@/components/admin/media-fields";
+import { VideoFrame } from "@/components/video-frame";
 import { buttonVariants } from "@/components/ui/button";
 import { formatBytes } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -31,8 +32,8 @@ export function CurriculumEditor({
         Modules & lessons
       </h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Upload the lesson video and any files students should download — slides,
-        briefs, worksheets.
+        Upload the lesson video — or paste a YouTube link — plus any files
+        students should download: slides, briefs, worksheets.
       </p>
       {error ? (
         <p className="mt-4 rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
@@ -112,27 +113,43 @@ export function CurriculumEditor({
                         Free preview
                       </label>
                     </div>
-                    {lesson.videoPath ? (
+                    {lesson.videoPath || lesson.videoUrl ? (
                       <div className="overflow-hidden rounded-xl bg-zinc-950">
-                        <video
-                          className="aspect-video w-full"
-                          controls
-                          playsInline
-                          preload="metadata"
-                          src={`/api/lessons/${lesson.id}/video`}
+                        <VideoFrame
+                          filePath={
+                            lesson.videoPath ? `/api/lessons/${lesson.id}/video` : null
+                          }
+                          url={lesson.videoUrl}
+                          title={lesson.title}
                         />
                         <div className="flex items-center justify-between gap-3 px-3 py-2 text-xs text-white/70">
                           <span>
-                            {lesson.videoName || "Video uploaded"}
-                            {lesson.videoBytes
-                              ? ` · ${formatBytes(lesson.videoBytes)}`
-                              : ""}
+                            {lesson.videoPath
+                              ? `${lesson.videoName || "Video uploaded"}${
+                                  lesson.videoBytes
+                                    ? ` · ${formatBytes(lesson.videoBytes)}`
+                                    : ""
+                                }`
+                              : "Playing from the link below"}
                           </span>
                         </div>
                       </div>
                     ) : (
                       <p className="text-sm text-muted-foreground">No video yet.</p>
                     )}
+                    <label className="block text-sm">
+                      <span className="font-medium">YouTube or video link</span>
+                      <input
+                        name="videoUrl"
+                        defaultValue={lesson.videoUrl ?? ""}
+                        placeholder="https://www.youtube.com/watch?v=..."
+                        className="mt-1.5 h-11 w-full rounded-lg border px-3 text-sm"
+                      />
+                      <span className="mt-1 block text-xs text-muted-foreground">
+                        Use this instead of uploading a file. An uploaded video
+                        wins if both are set.
+                      </span>
+                    </label>
                     <MediaFields />
                     {lesson.resources.length > 0 ? (
                       <ul className="space-y-2">
@@ -216,6 +233,11 @@ export function CurriculumEditor({
                 min={0}
                 defaultValue={10}
                 className="h-10 w-24 rounded-lg border px-2 text-sm"
+              />
+              <input
+                name="videoUrl"
+                placeholder="YouTube or video link (optional)"
+                className="h-11 w-full rounded-lg border px-3 text-sm"
               />
               <MediaFields />
               <button

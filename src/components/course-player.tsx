@@ -8,6 +8,7 @@ import {
   Lock,
 } from "lucide-react";
 import { toggleLessonAction } from "@/app/actions";
+import { VideoFrame } from "@/components/video-frame";
 import { buttonVariants } from "@/components/ui/button";
 import { levelLabel, type Course } from "@/lib/courses";
 import { formatBytes, formatMinutes } from "@/lib/format";
@@ -105,14 +106,12 @@ export function CoursePlayer({
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <section className="min-w-0">
           <div className="overflow-hidden rounded-2xl bg-zinc-950 shadow-sm">
-            {active.videoPath ? (
-              <video
-                key={active.id}
-                className="aspect-video w-full"
-                controls
-                playsInline
-                preload="metadata"
-                src={`/api/lessons/${active.id}/video`}
+            {active.videoPath || active.videoUrl ? (
+              <VideoFrame
+                playerKey={active.id}
+                filePath={active.videoPath ? `/api/lessons/${active.id}/video` : null}
+                url={active.videoUrl}
+                title={active.title}
               />
             ) : (
               <div className="flex aspect-video items-center justify-center text-center text-white">
@@ -258,7 +257,7 @@ export function CoursePlayer({
                           </span>
                           <span className="text-xs text-muted-foreground">
                             {formatMinutes(lesson.durationMin)}
-                            {lesson.videoPath ? "" : " · notes"}
+                            {lesson.videoPath || lesson.videoUrl ? "" : " · notes"}
                           </span>
                         </span>
                       </Link>

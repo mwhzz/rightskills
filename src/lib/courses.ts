@@ -24,6 +24,7 @@ export type Lesson = {
   preview?: boolean;
   body: string;
   videoPath?: string | null;
+  videoUrl?: string | null;
   resources?: LessonResourceFile[];
 };
 
@@ -45,6 +46,7 @@ export type Course = {
   priceBdt: number;
   originalPriceBdt?: number;
   purchaseNote?: string;
+  promoVideoUrl?: string;
   rating: number;
   reviewCount: number;
   students: number;

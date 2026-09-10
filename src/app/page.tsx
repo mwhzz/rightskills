@@ -3,18 +3,20 @@ import { CourseRail } from "@/components/home/course-rail";
 import { HomeFaq } from "@/components/home/home-faq";
 import { HomeHero } from "@/components/home/home-hero";
 import { Instructors } from "@/components/home/instructors";
+import { OfferRail } from "@/components/home/offer-rail";
 import { Reviews } from "@/components/home/reviews";
-import { SkillStrip } from "@/components/home/skill-strip";
 import { getSession } from "@/lib/auth";
 import {
   getHomepageLearning,
   getHomeBanners,
+  getHomeOffers,
   listFeaturedCourses,
   listNewestCourses,
   listPopularCourses,
   listPublishedCourses,
 } from "@/lib/queries";
 import { defaultHomeBanners } from "@/lib/home-banners";
+import { defaultHomeOffers } from "@/lib/home-offers";
 import { buildInstructors } from "@/lib/instructors";
 
 export const dynamic = "force-dynamic";
@@ -35,11 +37,12 @@ async function loadHome() {
 
 export default async function HomePage() {
   const session = await getSession();
-  const [{ featured, newest, popular, published }, learning, banners] =
+  const [{ featured, newest, popular, published }, learning, banners, offers] =
     await Promise.all([
       loadHome(),
       session ? getHomepageLearning(session.id).catch(() => null) : null,
       getHomeBanners().catch(() => defaultHomeBanners),
+      getHomeOffers().catch(() => defaultHomeOffers),
     ]);
 
   const ownedSlugs = learning?.ownedSlugs;
@@ -52,31 +55,31 @@ export default async function HomePage() {
     <div className="overflow-x-hidden">
       <HomeHero banners={banners} />
 
-      <SkillStrip />
+      <OfferRail row={offers} />
 
       {learning ? <ContinueStrip learning={learning} /> : null}
 
       {hasRails ? (
         <section className="mx-auto w-full max-w-7xl space-y-12 px-4 py-12 sm:px-6 lg:py-16">
           <CourseRail
-            title="Featured"
-            description="The ones learners finish — then use on a job."
+            title="Top picks"
+            description="Hand-picked by our team. A good place to start."
             href="/courses"
             courses={featured}
             ownedSlugs={ownedSlugs}
             progressBySlug={progressBySlug}
           />
           <CourseRail
-            title="New"
-            description="Just published. Start at the beginning."
+            title="Just added"
+            description="The newest courses on Right Skills Bangladesh."
             href="/courses"
             courses={newest}
             ownedSlugs={ownedSlugs}
             progressBySlug={progressBySlug}
           />
           <CourseRail
-            title="Popular"
-            description="What people are taking right now."
+            title="Most popular"
+            description="What learners are enrolling in right now."
             href="/courses"
             courses={popular}
             ownedSlugs={ownedSlugs}

@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { parseHomeBanners, type HomeBannerSet } from "@/lib/home-banners";
+import { parseHomeOffers, type HomeOfferRow } from "@/lib/home-offers";
 import { prisma } from "@/lib/db";
 import { mapCourse, type CourseRecord } from "@/lib/catalog";
 import type { Course } from "@/lib/courses";
@@ -248,6 +249,15 @@ export async function getHomeBanners(): Promise<HomeBannerSet> {
   }
 }
 
+export async function getHomeOffers(): Promise<HomeOfferRow> {
+  try {
+    const settings = await getSettings();
+    return parseHomeOffers(settings.homeOffers);
+  } catch {
+    return parseHomeOffers(null);
+  }
+}
+
 export async function getSettings() {
   return cached("settings", PUBLIC_TTL_MS, async () => {
     const existing = await prisma.setting.findUnique({ where: { id: "default" } });
@@ -260,6 +270,7 @@ export async function getSettings() {
         payInstructions:
           "Send the exact amount to the number below. Use your order ID as the reference, then paste the TrxID on your orders page.",
         homeBanners: "[]",
+        homeOffers: "{}",
       },
     });
   });

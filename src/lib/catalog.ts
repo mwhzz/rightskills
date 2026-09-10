@@ -34,6 +34,7 @@ export function mapCourse(row: CourseRecord): Course {
     priceBdt: row.priceBdt,
     originalPriceBdt: row.originalPriceBdt ?? undefined,
     purchaseNote: row.purchaseNote?.trim() || undefined,
+    promoVideoUrl: row.promoVideoUrl?.trim() || undefined,
     rating: row.rating,
     reviewCount: row.reviewCount,
     students: row.students,
@@ -72,6 +73,7 @@ export function mapCourse(row: CourseRecord): Course {
             preview: lesson.preview,
             body: lesson.body ?? "",
             videoPath: lesson.videoPath,
+            videoUrl: lesson.videoUrl,
             resources: (lesson.resources ?? []).map((resource) => ({
               id: resource.id,
               name: resource.name,

@@ -1,0 +1,3 @@
+ALTER TABLE `Course` ADD COLUMN `promoVideoUrl` TEXT NULL;
+ALTER TABLE `Lesson` ADD COLUMN `videoUrl` TEXT NULL;
+ALTER TABLE `Order` ADD COLUMN `payerNumber` VARCHAR(191) NULL;

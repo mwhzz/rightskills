@@ -305,6 +305,18 @@ export function CourseEditorForm({
               Remove banner image
             </label>
           ) : null}
+          <Field
+            label="Preview video link"
+            htmlFor="promoVideoUrl"
+            hint="Paste a YouTube link (or any direct video URL). It plays at the top of the course page. Leave empty to show the banner image instead."
+          >
+            <Input
+              id="promoVideoUrl"
+              name="promoVideoUrl"
+              defaultValue={course?.promoVideoUrl ?? ""}
+              placeholder="https://www.youtube.com/watch?v=..."
+            />
+          </Field>
           <Field label="Title" htmlFor="title">
             <Input
               id="title"
