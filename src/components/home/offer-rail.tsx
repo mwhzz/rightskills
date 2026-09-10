@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MediaSlider } from "@/components/home/media-slider";
+import { OfferSlider } from "@/components/home/offer-slider";
 import { Reveal } from "@/components/home/reveal";
 import {
   offerCardWidthClass,
@@ -26,13 +26,13 @@ export function OfferRail({ row }: { row: HomeOfferRow }) {
     >
       <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:py-10">
         {row.title ? (
-          <Reveal>
+          <Reveal className="mb-5">
             <h2 className="font-heading text-xl font-semibold tracking-tight sm:text-2xl">
               {row.title}
             </h2>
           </Reveal>
         ) : null}
-        <MediaSlider className={row.title ? "mt-5" : undefined}>
+        <OfferSlider>
           {items.map((item) => {
             const image = (
               <img
@@ -58,7 +58,7 @@ export function OfferRail({ row }: { row: HomeOfferRow }) {
               </div>
             );
           })}
-        </MediaSlider>
+        </OfferSlider>
       </div>
     </section>
   );
