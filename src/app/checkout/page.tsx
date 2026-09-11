@@ -43,11 +43,11 @@ export default async function CheckoutPage({
         Checkout
       </p>
       <h1 className="mt-2 font-heading text-4xl font-semibold tracking-tight sm:text-5xl">
-        {session ? "Place the order, then send money" : "Your courses are waiting"}
+        {session ? "টাকা পাঠিয়ে অর্ডার করুন" : "Your courses are waiting"}
       </h1>
       <p className="mt-3 max-w-2xl text-base text-muted-foreground">
         {session
-          ? `Paying as ${session.name}. Send the money to the wallet number below, add the number you paid from, then place the order. Courses unlock once we confirm the payment.`
+          ? `${session.name} হিসেবে অর্ডার করছেন। পেমেন্ট রিভিউ করার পর কোর্সটি আনলক হয়ে যাবে।`
           : "No account needed to pick a course. Log in or create one here to place the order, then send money on bKash or Nagad."}
       </p>
 
@@ -139,13 +139,13 @@ export default async function CheckoutPage({
             </div>
             <div className="rounded-2xl border bg-card p-5 text-sm leading-6 text-muted-foreground">
               <p className="font-heading text-base font-semibold text-foreground">
-                After you place the order
+                কীভাবে হবে
               </p>
               <ol className="mt-3 space-y-2">
-                <li>1. Copy the amount and the wallet number.</li>
-                <li>2. Send Money from your bKash or Nagad app.</li>
-                <li>3. Paste the TrxID — you can do that on the next screen.</li>
-                <li>4. Wait for an admin to match it. Then open My learning.</li>
+                <li>১. নাম্বারে টাকা Send Money করুন।</li>
+                <li>২. যে নাম্বার থেকে পাঠিয়েছেন সেটি লিখে অর্ডার করুন।</li>
+                <li>৩. পরের স্ক্রিনে TrxID দিন।</li>
+                <li>৪. আমরা রিভিউ করে কোর্সটি আনলক করে দেবো।</li>
               </ol>
             </div>
             {alreadyOwned.length > 0 ? (

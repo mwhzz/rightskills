@@ -1,9 +1,9 @@
 import { cn } from "@/lib/utils";
 
 const steps = [
-  { n: 1, label: "Place order" },
-  { n: 2, label: "Send money" },
-  { n: 3, label: "Course unlocks" },
+  { n: 1, label: "অর্ডার করুন" },
+  { n: 2, label: "TrxID দিন" },
+  { n: 3, label: "কোর্স আনলক" },
 ] as const;
 
 export function PaymentSteps({ current }: { current: 1 | 2 | 3 }) {
@@ -27,7 +27,7 @@ export function PaymentSteps({ current }: { current: 1 | 2 | 3 }) {
                 active ? "text-primary" : "text-muted-foreground"
               )}
             >
-              Step {step.n}
+              ধাপ {step.n}
             </p>
             <p className="mt-1 text-sm font-medium">{step.label}</p>
           </li>

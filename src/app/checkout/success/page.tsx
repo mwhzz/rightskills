@@ -94,8 +94,7 @@ export default async function CheckoutSuccessPage({
 
       {submitted ? (
         <p className="mt-6 rounded-2xl border bg-primary/5 px-4 py-3 text-sm">
-          TrxID submitted. Keep this page or check My orders — the course unlocks
-          after an admin matches the payment.
+          TrxID পেয়েছি। আমরা আপনার পেমেন্ট রিভিউ করে কোর্সটি আনলক করে দেবো।
         </p>
       ) : null}
       {error === "trx" ? (
@@ -155,9 +154,10 @@ export default async function CheckoutSuccessPage({
                 </p>
               ) : null}
               <ol className="mt-5 space-y-2 text-sm text-muted-foreground">
-                <li>1. Open {methodLabel} and choose Send Money.</li>
-                <li>2. Pay the exact amount to the number above.</li>
-                <li>3. Copy the TrxID from the SMS or app, then paste it here.</li>
+                <li>১. {methodLabel} খুলে Send Money দিন।</li>
+                <li>২. উপরের নাম্বারে ঠিক এই টাকাটা পাঠান।</li>
+                <li>৩. SMS থেকে TrxID কপি করে এখানে দিন।</li>
+                <li>৪. আমরা রিভিউ করে কোর্সটি আনলক করে দেবো।</li>
               </ol>
             </>
           )}
@@ -169,8 +169,8 @@ export default async function CheckoutSuccessPage({
               <p className="font-heading text-lg font-semibold">Paste TrxID</p>
               <p className="mt-1 text-sm text-muted-foreground">
                 {waiting
-                  ? "You can update it if you sent a new payment."
-                  : "Do this as soon as the Send Money is done."}
+                  ? "নতুন করে টাকা পাঠালে TrxID বদলে দিতে পারেন।"
+                  : "Send Money শেষ হলেই TrxID টা এখানে দিন।"}
               </p>
               <div className="mt-4">
                 <TrxForm

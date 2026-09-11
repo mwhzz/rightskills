@@ -20,6 +20,7 @@ import {
   clearPublicCache,
   getOwnedSlugsForUser,
   getPublishedCourse,
+  getSettings,
 } from "@/lib/queries";
 import { makeOrderId, type PaymentMethod } from "@/lib/store";
 import {
@@ -161,6 +162,12 @@ export async function checkoutAction(formData: FormData) {
   if (!["bkash", "nagad", "card"].includes(method)) {
     redirect("/checkout?error=method");
   }
+  // A wallet with no number set is not offered in the form; block it here too.
+  const settings = await getSettings();
+  const wallet =
+    method === "nagad" ? settings.nagadNumber?.trim() : settings.bkashNumber?.trim();
+  if (!wallet) redirect("/checkout?error=method");
+
   const payerNumber = normalizePhone(String(formData.get("payerNumber") ?? ""));
   if (!payerNumber) redirect("/checkout?error=payer");
 
