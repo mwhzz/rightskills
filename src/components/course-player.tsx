@@ -10,11 +10,12 @@ import {
 import { toggleLessonAction } from "@/app/actions";
 import { VideoFrame } from "@/components/video-frame";
 import { buttonVariants } from "@/components/ui/button";
-import { levelLabel, type Course } from "@/lib/courses";
+import { getDictionary, getLocale } from "@/lib/i18n";
+import { courseTitle, levelLabel, type Course } from "@/lib/courses";
 import { formatBytes, formatMinutes } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-export function CoursePlayer({
+export async function CoursePlayer({
   course,
   owned,
   activeLessonId,
@@ -25,6 +26,7 @@ export function CoursePlayer({
   activeLessonId?: string;
   completed: string[];
 }) {
+  const [dict, locale] = await Promise.all([getDictionary(), getLocale()]);
   const lessons = course.modules.flatMap((module) =>
     module.lessons.map((lesson) => ({ ...lesson, moduleTitle: module.title }))
   );
@@ -45,24 +47,23 @@ export function CoursePlayer({
         <div className="px-6 py-16 text-center sm:px-10">
           <Lock className="mx-auto size-8 text-muted-foreground" />
           <p className="mt-4 font-heading text-2xl font-semibold">
-            This course is locked
+            {dict.coursePlayer.lockedTitle}
           </p>
           <p className="mx-auto mt-2 max-w-md text-base text-muted-foreground">
-            Buy {course.title} and wait for the TrxID to be confirmed. Then every
-            lesson opens here.
+            {dict.coursePlayer.lockedBody(courseTitle(course, locale))}
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-2">
             <Link
               href={`/courses/${course.slug}`}
               className={cn(buttonVariants({ size: "lg" }), "h-11")}
             >
-              View course
+              {dict.coursePlayer.viewCourse}
             </Link>
             <Link
               href="/account/orders"
               className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-11")}
             >
-              Check payment
+              {dict.coursePlayer.checkPayment}
             </Link>
           </div>
         </div>
@@ -73,9 +74,9 @@ export function CoursePlayer({
   if (!active) {
     return (
       <div className="rounded-2xl border bg-card px-6 py-16 text-center">
-        <p className="font-heading text-2xl font-semibold">No lessons yet</p>
+        <p className="font-heading text-2xl font-semibold">{dict.coursePlayer.noLessonsTitle}</p>
         <p className="mt-2 text-base text-muted-foreground">
-          The teacher has not added lessons to this course.
+          {dict.coursePlayer.noLessonsBody}
         </p>
       </div>
     );
@@ -89,14 +90,14 @@ export function CoursePlayer({
         <div>
           <p className="text-sm text-muted-foreground">
             {course.instructor.name}
-            {course.level ? ` · ${levelLabel(course.level)}` : ""} · {course.language}
+            {course.level ? ` · ${levelLabel(course.level, locale)}` : ""} · {course.language}
           </p>
           <h1 className="mt-1 font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
-            {course.title}
+            {courseTitle(course, locale)}
           </h1>
         </div>
         <p className="text-sm text-muted-foreground">
-          {doneCount} of {lessons.length} lessons · {pct}%
+          {dict.coursePlayer.lessonsOfPct(doneCount, lessons.length, pct)}
         </p>
       </div>
       <div className="mb-6 h-2 overflow-hidden rounded-full bg-muted">
@@ -117,7 +118,7 @@ export function CoursePlayer({
               <div className="flex aspect-video items-center justify-center text-center text-white">
                 <div className="px-6">
                   <p className="text-xs tracking-[0.2em] text-white/50 uppercase">
-                    Lesson player
+                    {dict.coursePlayer.lessonPlayer}
                   </p>
                   <p className="mt-2 font-heading text-2xl font-semibold text-balance">
                     {active.title}
@@ -126,7 +127,7 @@ export function CoursePlayer({
                     {active.moduleTitle} · {formatMinutes(active.durationMin)}
                   </p>
                   <p className="mt-3 text-xs text-white/40">
-                    Video not uploaded yet. Read the notes below.
+                    {dict.coursePlayer.videoNotUploaded}
                   </p>
                 </div>
               </div>
@@ -143,8 +144,11 @@ export function CoursePlayer({
                   {active.title}
                 </h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Lesson {activeIndex + 1} of {lessons.length} ·{" "}
-                  {formatMinutes(active.durationMin)}
+                  {dict.coursePlayer.lessonOf(
+                    activeIndex + 1,
+                    lessons.length,
+                    formatMinutes(active.durationMin)
+                  )}
                 </p>
               </div>
               <form action={toggleLessonAction}>
@@ -160,7 +164,7 @@ export function CoursePlayer({
                     "h-11"
                   )}
                 >
-                  {activeDone ? "Mark as not done" : "Mark complete"}
+                  {activeDone ? dict.coursePlayer.markNotDone : dict.coursePlayer.markComplete}
                 </button>
               </form>
             </div>
@@ -172,7 +176,7 @@ export function CoursePlayer({
 
             {active.resources && active.resources.length > 0 ? (
               <div className="mt-6">
-                <p className="text-sm font-medium">Resources</p>
+                <p className="text-sm font-medium">{dict.coursePlayer.resources}</p>
                 <ul className="mt-2 divide-y rounded-xl border">
                   {active.resources.map((resource) => (
                     <li key={resource.id}>
@@ -201,7 +205,7 @@ export function CoursePlayer({
                   className={cn(buttonVariants({ variant: "outline" }))}
                 >
                   <ChevronLeft data-icon="inline-start" />
-                  Previous
+                  {dict.coursePlayer.previous}
                 </Link>
               ) : (
                 <span />
@@ -211,12 +215,12 @@ export function CoursePlayer({
                   href={`/learn/${course.slug}?lesson=${next.id}`}
                   className={cn(buttonVariants())}
                 >
-                  Next lesson
+                  {dict.coursePlayer.nextLesson}
                   <ChevronRight data-icon="inline-end" />
                 </Link>
               ) : (
                 <Link href="#review" className={cn(buttonVariants({ variant: "outline" }))}>
-                  Rate this course
+                  {dict.coursePlayer.rateThisCourse}
                 </Link>
               )}
             </div>
@@ -225,7 +229,7 @@ export function CoursePlayer({
 
         <aside className="h-fit rounded-2xl border bg-card p-3 lg:sticky lg:top-24">
           <p className="px-2 pt-2 pb-3 text-xs font-medium tracking-[0.14em] text-muted-foreground uppercase">
-            Curriculum
+            {dict.coursePlayer.curriculum}
           </p>
           <nav className="space-y-4">
             {course.modules.map((module) => (
@@ -257,7 +261,7 @@ export function CoursePlayer({
                           </span>
                           <span className="text-xs text-muted-foreground">
                             {formatMinutes(lesson.durationMin)}
-                            {lesson.videoPath || lesson.videoUrl ? "" : " · notes"}
+                            {lesson.videoPath || lesson.videoUrl ? "" : dict.coursePlayer.notesSuffix}
                           </span>
                         </span>
                       </Link>

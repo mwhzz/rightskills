@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { ArrowRight, Play, Wallet } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
+import { getDictionary } from "@/lib/i18n";
 import type { HomepageLearning } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 
-export function ContinueStrip({ learning }: { learning: HomepageLearning }) {
+export async function ContinueStrip({ learning }: { learning: HomepageLearning }) {
   if (!learning.continueItem && learning.openOrderCount === 0) return null;
+  const dict = await getDictionary();
 
   return (
     <section className="mx-auto w-full max-w-7xl px-4 pt-6 sm:px-6">
@@ -21,7 +23,7 @@ export function ContinueStrip({ learning }: { learning: HomepageLearning }) {
               </span>
               <div className="min-w-0">
                 <p className="text-xs font-medium tracking-[0.14em] text-primary uppercase">
-                  Continue learning
+                  {dict.continueStrip.continueLearning}
                 </p>
                 <p className="mt-0.5 truncate font-heading text-base font-semibold">
                   {learning.continueItem.title}
@@ -51,10 +53,10 @@ export function ContinueStrip({ learning }: { learning: HomepageLearning }) {
               </span>
               <div className="min-w-0">
                 <p className="text-xs font-medium tracking-[0.14em] text-amber-800 uppercase">
-                  Open orders
+                  {dict.continueStrip.openOrders}
                 </p>
                 <p className="mt-0.5 text-sm text-amber-950">
-                  {learning.openOrderCount} waiting for TrxID or review
+                  {dict.continueStrip.waitingForReview(learning.openOrderCount)}
                 </p>
               </div>
             </div>
@@ -64,7 +66,7 @@ export function ContinueStrip({ learning }: { learning: HomepageLearning }) {
                 "hidden h-8 rounded-full border-amber-300 bg-white sm:inline-flex"
               )}
             >
-              Orders
+              {dict.continueStrip.orders}
               <ArrowRight data-icon="inline-end" />
             </span>
           </Link>

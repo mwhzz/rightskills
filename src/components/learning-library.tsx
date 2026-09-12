@@ -5,8 +5,9 @@ import { buttonVariants } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { mapCourse, type CourseRecord } from "@/lib/catalog";
-import { categoryLabel } from "@/lib/courses";
+import { categoryLabel, courseTitle } from "@/lib/courses";
 import { formatAgo, formatMinutes } from "@/lib/format";
+import { getDictionary, getLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 export async function LearningLibrary({
@@ -15,6 +16,7 @@ export async function LearningLibrary({
   embedded?: boolean;
 }) {
   const user = await requireUser("/learn");
+  const [dict, locale] = await Promise.all([getDictionary(), getLocale()]);
   const [enrollments, progressRows, openOrders, reviewRows] = await Promise.all([
     prisma.enrollment.findMany({
       where: { userId: user.id },
@@ -79,16 +81,15 @@ export async function LearningLibrary({
   return (
     <div className={embedded ? undefined : "mx-auto w-full max-w-6xl px-4 py-10 sm:px-6"}>
       <p className="text-sm font-medium tracking-[0.18em] text-primary uppercase">
-        My learning
+        {dict.learningLibrary.kicker}
       </p>
       <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
-            {embedded ? "Your courses" : `Welcome back, ${firstName}`}
+            {embedded ? dict.learningLibrary.titleEmbedded : dict.learningLibrary.welcomeBack(firstName)}
           </h1>
           <p className="mt-3 max-w-2xl text-base text-muted-foreground">
-            Pick up where you left off. Courses show here after an admin marks
-            your payment paid.
+            {dict.learningLibrary.subtitle}
           </p>
         </div>
         {embedded ? null : (
@@ -96,7 +97,7 @@ export async function LearningLibrary({
             href="/account/orders"
             className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-11")}
           >
-            My orders
+            {dict.learningLibrary.myOrders}
           </Link>
         )}
       </div>
@@ -104,17 +105,17 @@ export async function LearningLibrary({
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
         <Stat
           icon={BookOpen}
-          label="Unlocked"
-          value={`${items.length} course${items.length === 1 ? "" : "s"}`}
+          label={dict.learningLibrary.statUnlocked}
+          value={dict.learningLibrary.courseCount(items.length)}
         />
         <Stat
           icon={Clock}
-          label="In progress"
+          label={dict.learningLibrary.statInProgress}
           value={`${inProgress.length}`}
         />
         <Stat
           icon={CircleCheck}
-          label="Finished"
+          label={dict.learningLibrary.statFinished}
           value={`${completed.length}`}
         />
       </div>
@@ -127,11 +128,10 @@ export async function LearningLibrary({
             </span>
             <div className="min-w-0 flex-1">
               <p className="font-heading text-lg font-semibold">
-                Payment still open
+                {dict.learningLibrary.paymentOpenTitle}
               </p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Send the exact amount and paste the TrxID. These courses unlock
-                after we confirm the payment.
+                {dict.learningLibrary.paymentOpenBody}
               </p>
               <ul className="mt-3 space-y-1 text-sm">
                 {openOrders.map((order) => (
@@ -139,7 +139,7 @@ export async function LearningLibrary({
                     <span className="font-medium">{order.orderId}</span>
                     <span className="text-muted-foreground">
                       {" "}
-                      · {order.items.map((item) => item.course.title).join(", ")}
+                      · {order.items.map((item) => courseTitle(item.course, locale)).join(", ")}
                     </span>
                   </li>
                 ))}
@@ -148,7 +148,7 @@ export async function LearningLibrary({
                 href="/account/orders"
                 className={cn(buttonVariants({ size: "lg" }), "mt-4 h-11")}
               >
-                Paste TrxID
+                {dict.learningLibrary.pasteTrxId}
               </Link>
             </div>
           </div>
@@ -160,36 +160,36 @@ export async function LearningLibrary({
           <div className="grid lg:grid-cols-[1.1fr_0.9fr]">
             <div className="p-8 sm:p-10">
               <p className="font-heading text-2xl font-semibold">
-                Nothing unlocked yet
+                {dict.learningLibrary.nothingUnlockedTitle}
               </p>
               <p className="mt-2 max-w-md text-base text-muted-foreground">
-                Buy a course, send money to our bKash or Nagad number, then
-                paste the TrxID. After confirmation it appears here.
+                {dict.learningLibrary.nothingUnlockedBody}
               </p>
               <ol className="mt-6 space-y-2 text-sm text-muted-foreground">
-                <li>1. Browse the catalogue and add a course to the cart.</li>
-                <li>2. Place the order and Send Money for the exact amount.</li>
-                <li>3. Paste the TrxID on My orders.</li>
+                {dict.learningLibrary.steps.map((step, index) => (
+                  <li key={step}>
+                    {index + 1}. {step}
+                  </li>
+                ))}
               </ol>
               <div className="mt-6 flex flex-wrap gap-2">
                 <Link href="/courses" className={cn(buttonVariants({ size: "lg" }), "h-11")}>
-                  Find a course
+                  {dict.learningLibrary.findCourse}
                 </Link>
                 <Link
                   href="/account/orders"
                   className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-11")}
                 >
-                  Check orders
+                  {dict.learningLibrary.checkOrders}
                 </Link>
               </div>
             </div>
             <div className="border-t bg-muted/40 p-8 sm:p-10 lg:border-t-0 lg:border-l">
               <p className="text-xs tracking-[0.14em] text-muted-foreground uppercase">
-                Waiting on payment?
+                {dict.learningLibrary.waitingOnPayment}
               </p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                If you already paid, the course stays locked until an admin
-                matches the TrxID. That is expected — we do not auto-unlock.
+                {dict.learningLibrary.waitingOnPaymentBody}
               </p>
             </div>
           </div>
@@ -199,7 +199,7 @@ export async function LearningLibrary({
           {continueItem ? (
             <section className="mt-10">
               <p className="text-xs font-medium tracking-[0.14em] text-muted-foreground uppercase">
-                Continue
+                {dict.learningLibrary.continueKicker}
               </p>
               <div className="mt-3 overflow-hidden rounded-2xl border bg-card sm:flex">
                 <CourseCover
@@ -209,23 +209,23 @@ export async function LearningLibrary({
                 <div className="flex flex-1 flex-col justify-between gap-4 p-6">
                   <div>
                     <p className="text-sm text-muted-foreground">
-                      {categoryLabel(continueItem.course.category)} ·{" "}
+                      {categoryLabel(continueItem.course.category, locale)} ·{" "}
                       {continueItem.course.instructor.name}
                     </p>
                     <h2 className="mt-1 font-heading text-2xl font-semibold tracking-tight">
-                      {continueItem.course.title}
+                      {courseTitle(continueItem.course, locale)}
                     </h2>
                     <p className="mt-2 text-sm text-muted-foreground">
                       {continueItem.nextLesson
-                        ? `Next: ${continueItem.nextLesson.title}`
-                        : "Lessons will appear when the teacher adds them."}
+                        ? dict.learningLibrary.nextLesson(continueItem.nextLesson.title)
+                        : dict.learningLibrary.lessonsComingSoon}
                       {continueItem.remainingMin
-                        ? ` · ${formatMinutes(continueItem.remainingMin)} left`
+                        ? dict.learningLibrary.minutesLeft(formatMinutes(continueItem.remainingMin))
                         : ""}
                     </p>
                     <ProgressBar pct={continueItem.pct} />
                     <p className="mt-2 text-xs text-muted-foreground">
-                      {continueItem.done} of {continueItem.total} lessons complete
+                      {dict.learningLibrary.lessonsCompleteOf(continueItem.done, continueItem.total)}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -237,7 +237,9 @@ export async function LearningLibrary({
                       }
                       className={cn(buttonVariants({ size: "lg" }), "h-11")}
                     >
-                      {continueItem.done === 0 ? "Start course" : "Continue"}
+                      {continueItem.done === 0
+                        ? dict.learningLibrary.startCourse
+                        : dict.learningLibrary.continueCourse}
                     </Link>
                     <Link
                       href={`/courses/${continueItem.course.slug}`}
@@ -246,7 +248,7 @@ export async function LearningLibrary({
                         "h-11"
                       )}
                     >
-                      Course page
+                      {dict.learningLibrary.coursePage}
                     </Link>
                   </div>
                 </div>
@@ -256,7 +258,7 @@ export async function LearningLibrary({
 
           <section className="mt-10">
             <h2 className="font-heading text-2xl font-semibold tracking-tight">
-              Your courses
+              {dict.learningLibrary.yourCoursesTitle}
             </h2>
             <ul className="mt-5 grid gap-5 sm:grid-cols-2">
               {items.map((item) => (
@@ -266,10 +268,10 @@ export async function LearningLibrary({
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <h3 className="font-heading text-lg font-semibold leading-snug">
-                          {item.course.title}
+                          {courseTitle(item.course, locale)}
                         </h3>
                         <p className="mt-1 text-sm text-muted-foreground">
-                          Unlocked {formatAgo(item.enrolledAt)}
+                          {dict.learningLibrary.unlockedAgo(formatAgo(item.enrolledAt))}
                         </p>
                       </div>
                       <span
@@ -280,14 +282,14 @@ export async function LearningLibrary({
                             : "bg-muted text-muted-foreground"
                         )}
                       >
-                        {item.complete ? "Finished" : `${item.pct}%`}
+                        {item.complete ? dict.learningLibrary.finished : `${item.pct}%`}
                       </span>
                     </div>
                     <ProgressBar pct={item.pct} />
                     <p className="mt-2 text-xs text-muted-foreground">
-                      {item.done} of {item.total} lessons
+                      {dict.learningLibrary.lessonsOf(item.done, item.total)}
                       {item.nextLesson && !item.complete
-                        ? ` · next: ${item.nextLesson.title}`
+                        ? dict.learningLibrary.nextSuffix(item.nextLesson.title)
                         : ""}
                     </p>
                     <div className="mt-4 flex flex-wrap gap-2">
@@ -299,13 +301,19 @@ export async function LearningLibrary({
                         }
                         className={cn(buttonVariants())}
                       >
-                        {item.complete ? "Rewatch" : item.done === 0 ? "Start" : "Continue"}
+                        {item.complete
+                          ? dict.learningLibrary.rewatch
+                          : item.done === 0
+                            ? dict.learningLibrary.start
+                            : dict.learningLibrary.continueCourse}
                       </Link>
                       <Link
                         href={`/learn/${item.course.slug}#review`}
                         className={cn(buttonVariants({ variant: "outline" }))}
                       >
-                        {reviewed.has(item.courseId) ? "Edit review" : "Write a review"}
+                        {reviewed.has(item.courseId)
+                          ? dict.learningLibrary.editReview
+                          : dict.learningLibrary.writeReview}
                       </Link>
                     </div>
                   </div>

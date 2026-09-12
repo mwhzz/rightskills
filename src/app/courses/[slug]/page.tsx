@@ -21,12 +21,14 @@ import {
   categoryLabel,
   courseHours,
   courseIncludes,
+  courseTitle,
   levelLabel,
   lessonCount,
   type Course,
 } from "@/lib/courses";
 import { getCart } from "@/lib/session";
 import { getSession } from "@/lib/auth";
+import { getDictionary, getLocale, type Dictionary } from "@/lib/i18n";
 import {
   getHomepageLearning,
   getPublishedCourse,
@@ -57,32 +59,11 @@ async function loadRelated(course: Course): Promise<Course[]> {
   }
 }
 
-function requirementsFor(course: Course) {
-  if (course.level === "Beginner") {
-    return [
-      "No prior experience required",
-      "A laptop and a reliable internet connection",
-      "Willingness to practice the assignments",
-    ];
-  }
-  if (course.level === "Intermediate") {
-    return [
-      "Comfortable with the basics of this topic",
-      "A laptop you can install the tools on",
-      "A real project or client you can apply the work to",
-    ];
-  }
-  if (course.level === "Advanced") {
-    return [
-      "You already ship work in this field",
-      "You want a tighter system, not a beginner tour",
-      "A current project to practise on",
-    ];
-  }
-  return [
-    "A laptop and a reliable internet connection",
-    "Willingness to practice the assignments",
-  ];
+function requirementsFor(course: Course, dict: Dictionary) {
+  if (course.level === "Beginner") return dict.courseDetail.requirementsBeginner;
+  if (course.level === "Intermediate") return dict.courseDetail.requirementsIntermediate;
+  if (course.level === "Advanced") return dict.courseDetail.requirementsAdvanced;
+  return dict.courseDetail.requirementsDefault;
 }
 
 export async function generateMetadata({
@@ -136,6 +117,7 @@ export default async function CourseDetailPage({
   }
   const hours = courseHours(course);
   const lessons = lessonCount(course);
+  const [dict, locale] = await Promise.all([getDictionary(), getLocale()]);
 
   return (
     <div className="pb-28 lg:pb-0">
@@ -149,27 +131,27 @@ export default async function CourseDetailPage({
           <div>
             <nav className="text-base text-muted-foreground">
               <Link href="/courses" className="hover:text-foreground">
-                Courses
+                {dict.courseDetail.coursesBreadcrumb}
               </Link>
               <span className="mx-2">/</span>
               <Link
                 href={`/courses?category=${course.category}`}
                 className="hover:text-foreground"
               >
-                {categoryLabel(course.category)}
+                {categoryLabel(course.category, locale)}
               </Link>
             </nav>
 
             <div className="mt-5 flex flex-wrap gap-2">
-              <Badge>{categoryLabel(course.category)}</Badge>
+              <Badge>{categoryLabel(course.category, locale)}</Badge>
               {course.level ? (
-                <Badge variant="secondary">{levelLabel(course.level)}</Badge>
+                <Badge variant="secondary">{levelLabel(course.level, locale)}</Badge>
               ) : null}
               <Badge variant="outline">{course.language}</Badge>
             </div>
 
             <h1 className="mt-5 font-heading text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
-              {course.title}
+              {courseTitle(course, locale)}
             </h1>
             <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground sm:text-xl">
               {course.subtitle}
@@ -181,16 +163,16 @@ export default async function CourseDetailPage({
                 {course.rating.toFixed(1)}
               </span>
               <a href="#reviews" className="text-primary hover:underline">
-                ({course.reviewCount.toLocaleString("en-BD")} reviews)
+                {dict.courseDetail.reviewsSuffix(course.reviewCount.toLocaleString("en-BD"))}
               </a>
               <span className="inline-flex items-center gap-1.5 text-muted-foreground">
                 <Users className="size-5" />
-                {formatStudents(course.students)} learners
+                {formatStudents(course.students)} {dict.courseDetail.learners}
               </span>
             </div>
 
             <p className="mt-4 text-base">
-              Created by{" "}
+              {dict.courseDetail.createdBy}{" "}
               <a
                 href="#instructor"
                 className="font-semibold text-primary hover:underline"
@@ -201,7 +183,7 @@ export default async function CourseDetailPage({
             <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-base text-muted-foreground">
               <span className="inline-flex items-center gap-1.5">
                 <Clock className="size-5" />
-                {hours}h · {lessons} lectures
+                {dict.courseDetail.lecturesSuffix(hours, lessons)}
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <Languages className="size-5" />
@@ -219,10 +201,10 @@ export default async function CourseDetailPage({
           <div className="min-w-0 space-y-14 pb-16">
             <nav className="-mx-4 flex gap-6 overflow-x-auto border-y bg-background/90 px-4 text-base font-medium backdrop-blur-md sm:mx-0 sm:rounded-none sm:px-0">
               {[
-                ["Overview", "#overview"],
-                ["Curriculum", "#curriculum"],
-                ["Instructor", "#instructor"],
-                ["Reviews", "#reviews"],
+                [dict.courseDetail.tabOverview, "#overview"],
+                [dict.courseDetail.tabCurriculum, "#curriculum"],
+                [dict.courseDetail.tabInstructor, "#instructor"],
+                [dict.courseDetail.tabReviews, "#reviews"],
               ].map(([label, href]) => (
                 <a
                   key={href}
@@ -235,7 +217,7 @@ export default async function CourseDetailPage({
             </nav>
           <section id="overview" className="scroll-mt-28">
             <h2 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
-              What you will learn
+              {dict.courseDetail.whatYouWillLearn}
             </h2>
             <ul className="mt-6 grid gap-3 sm:grid-cols-2">
               {course.outcomes.map((outcome) => (
@@ -252,10 +234,10 @@ export default async function CourseDetailPage({
 
           <section>
             <h2 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
-              This course includes
+              {dict.courseDetail.courseIncludesTitle}
             </h2>
             <ul className="mt-6 grid gap-3 sm:grid-cols-2">
-              {courseIncludes(course).map((item) => (
+              {courseIncludes(course, locale).map((item) => (
                 <li
                   key={item}
                   className="flex items-center gap-3 text-base leading-7"
@@ -271,10 +253,10 @@ export default async function CourseDetailPage({
 
           <section>
             <h2 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
-              Requirements
+              {dict.courseDetail.requirementsTitle}
             </h2>
             <ul className="mt-5 space-y-2.5 text-base leading-7 text-muted-foreground">
-              {requirementsFor(course).map((item) => (
+              {requirementsFor(course, dict).map((item) => (
                 <li key={item} className="flex gap-3">
                   <span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary" />
                   {item}
@@ -285,7 +267,7 @@ export default async function CourseDetailPage({
 
           <section>
             <h2 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
-              Description
+              {dict.courseDetail.descriptionTitle}
             </h2>
             <p className="mt-5 max-w-3xl text-lg leading-8 text-muted-foreground">
               {course.description}
@@ -297,13 +279,15 @@ export default async function CourseDetailPage({
             className="scroll-mt-28 rounded-3xl border bg-card p-6 sm:p-8"
           >
             <h2 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
-              Instructor
+              {dict.courseDetail.instructorTitle}
             </h2>
             <div className="mt-6 flex flex-col gap-5 sm:flex-row sm:items-start">
               {photo ? (
                 <img
                   src={photo}
                   alt={course.instructor.name}
+                  loading="lazy"
+                  decoding="async"
                   className="size-28 shrink-0 rounded-2xl object-cover"
                 />
               ) : (
@@ -338,7 +322,7 @@ export default async function CourseDetailPage({
         <section className="border-t">
           <div className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6">
             <h2 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
-              Students also viewed
+              {dict.courseDetail.studentsAlsoViewed}
             </h2>
             <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {related.map((item) => {

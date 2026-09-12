@@ -3,6 +3,7 @@ import { Search } from "lucide-react";
 import { CourseCard } from "@/components/course-card";
 import { categories, levels, levelLabel, type CategoryId, type Level } from "@/lib/courses";
 import { buttonVariants } from "@/components/ui/button";
+import { getDictionary, getLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import type { Course } from "@/lib/courses";
 import type { CourseProgress } from "@/lib/queries";
@@ -38,7 +39,7 @@ function catalogHref({
   return query ? `/courses?${query}` : "/courses";
 }
 
-export function CourseCatalog({
+export async function CourseCatalog({
   courses,
   query = "",
   category = "all",
@@ -55,6 +56,7 @@ export function CourseCatalog({
   ownedSlugs?: string[];
   progressBySlug?: Record<string, CourseProgress>;
 }) {
+  const [dict, locale] = await Promise.all([getDictionary(), getLocale()]);
   const needle = query.trim().toLowerCase();
   const activeCategory = categories.some((item) => item.id === category)
     ? (category as CategoryId)
@@ -97,7 +99,7 @@ export function CourseCatalog({
               : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
           )}
         >
-          All
+          {dict.catalog.all}
         </Link>
         {categories.map((item) => (
           <Link
@@ -115,7 +117,7 @@ export function CourseCatalog({
                 : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
             )}
           >
-            {item.label}
+            {locale === "bn" ? item.bangla : item.label}
           </Link>
         ))}
       </div>
@@ -134,52 +136,52 @@ export function CourseCatalog({
             <input
               name="q"
               defaultValue={query}
-              placeholder="Search courses or instructors…"
+              placeholder={dict.catalog.searchPlaceholder}
               className="h-12 w-full rounded-xl border border-input bg-transparent pr-4 pl-11 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-              aria-label="Search courses"
+              aria-label={dict.catalog.searchAria}
             />
           </div>
           <button
             type="submit"
             className={cn(buttonVariants({ size: "lg" }), "h-12 px-6 text-base")}
           >
-            Search
+            {dict.catalog.search}
           </button>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
           <label className="flex items-center gap-2 text-base">
-            <span className="text-muted-foreground">Level</span>
+            <span className="text-muted-foreground">{dict.catalog.level}</span>
             <select
               name="level"
               defaultValue={activeLevel === "all" ? "all" : activeLevel}
               className="h-11 rounded-xl border border-input bg-transparent px-3 text-base"
             >
-              <option value="all">All levels</option>
+              <option value="all">{dict.catalog.allLevels}</option>
                 {levels.map((item) => (
                   <option key={item} value={item}>
-                    {levelLabel(item)}
+                    {levelLabel(item, locale)}
                   </option>
                 ))}
             </select>
           </label>
           <label className="flex items-center gap-2 text-base">
-            <span className="text-muted-foreground">Sort</span>
+            <span className="text-muted-foreground">{dict.catalog.sort}</span>
             <select
               name="sort"
               defaultValue={activeSort}
               className="h-11 rounded-xl border border-input bg-transparent px-3 text-base"
             >
-              <option value="popular">Most learners</option>
-              <option value="rating">Highest rated</option>
-              <option value="price-asc">Price: low to high</option>
-              <option value="price-desc">Price: high to low</option>
+              <option value="popular">{dict.catalog.sortMostLearners}</option>
+              <option value="rating">{dict.catalog.sortHighestRated}</option>
+              <option value="price-asc">{dict.catalog.sortPriceAsc}</option>
+              <option value="price-desc">{dict.catalog.sortPriceDesc}</option>
             </select>
           </label>
           <Link
             href="/courses"
             className={cn(buttonVariants({ variant: "ghost", size: "lg" }), "h-11 text-base")}
           >
-            Reset
+            {dict.catalog.reset}
           </Link>
         </div>
       </form>
@@ -187,24 +189,24 @@ export function CourseCatalog({
       {sorted.length === 0 ? (
         <div className="rounded-3xl border border-dashed bg-card px-6 py-20 text-center">
           <p className="font-heading text-2xl font-semibold">
-            {courses.length === 0 ? "No courses yet" : "No courses match"}
+            {courses.length === 0 ? dict.catalog.noCoursesYet : dict.catalog.noCoursesMatch}
           </p>
           <p className="mx-auto mt-2 max-w-md text-base text-muted-foreground">
             {courses.length === 0
-              ? "Published courses will show up here."
-              : "Try another keyword, or reset filters to see the full catalogue."}
+              ? dict.catalog.noCoursesYetBody
+              : dict.catalog.noCoursesMatchBody}
           </p>
           <Link
             href="/courses"
             className={cn(buttonVariants({ size: "lg" }), "mt-6 h-12 px-6 text-base")}
           >
-            Show all courses
+            {dict.catalog.showAllCourses}
           </Link>
         </div>
       ) : (
         <>
           <p className="text-base text-muted-foreground">
-            {sorted.length} course{sorted.length === 1 ? "" : "s"}
+            {dict.catalog.courseCount(sorted.length)}
           </p>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {sorted.map((course) => {

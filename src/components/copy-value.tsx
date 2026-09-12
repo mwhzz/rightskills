@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
+import { useLocale } from "@/components/locale-provider";
 import { cn } from "@/lib/utils";
 
 export function CopyValue({
@@ -12,6 +13,7 @@ export function CopyValue({
   className?: string;
 }) {
   const [copied, setCopied] = useState(false);
+  const { dict } = useLocale();
 
   async function copy() {
     try {
@@ -33,7 +35,7 @@ export function CopyValue({
       )}
     >
       {copied ? <Check className="size-3.5 text-primary" /> : <Copy className="size-3.5" />}
-      {copied ? "Copied" : "Copy"}
+      {copied ? dict.copyValue.copied : dict.copyValue.copy}
     </button>
   );
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { CourseCatalog } from "@/components/course-catalog";
 import { getSession } from "@/lib/auth";
+import { getDictionary } from "@/lib/i18n";
 import { categories } from "@/lib/courses";
 import { getHomepageLearning, listPublishedCourses } from "@/lib/queries";
 
@@ -39,20 +40,20 @@ export default async function CoursesPage({
   const learning = session
     ? await getHomepageLearning(session.id).catch(() => null)
     : null;
+  const dict = await getDictionary();
 
   return (
     <div>
       <section className="border-b bg-[linear-gradient(180deg,oklch(0.98_0.02_70),oklch(0.992_0.006_75))]">
         <div className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 lg:py-16">
           <p className="text-base font-medium tracking-[0.18em] text-primary uppercase">
-            Catalogue
+            {dict.catalog.kicker}
           </p>
           <h1 className="mt-3 font-heading text-4xl font-semibold tracking-tight sm:text-5xl">
-            All courses
+            {dict.catalog.title}
           </h1>
           <p className="mt-3 max-w-2xl text-lg leading-8 text-muted-foreground">
-            Pick a path. Filter by topic or level. Every course is built to
-            finish — then use on a job.
+            {dict.catalog.subtitle}
           </p>
         </div>
       </section>

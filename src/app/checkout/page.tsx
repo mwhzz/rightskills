@@ -6,6 +6,8 @@ import { formatBdt } from "@/lib/format";
 import { getCart } from "@/lib/session";
 import { getSession } from "@/lib/auth";
 import { getOwnedSlugsForUser, getSettings, listPublishedCourses } from "@/lib/queries";
+import { getDictionary, getLocale } from "@/lib/i18n";
+import { courseTitle } from "@/lib/courses";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -36,19 +38,20 @@ export default async function CheckoutPage({
   );
   const cartTotal = items.reduce((sum, course) => sum + course.priceBdt, 0);
   const authMode = auth === "login" ? "login" : "register";
+  const [dict, locale] = await Promise.all([getDictionary(), getLocale()]);
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
       <p className="text-sm font-medium tracking-[0.18em] text-primary uppercase">
-        Checkout
+        {dict.checkout.kicker}
       </p>
       <h1 className="mt-2 font-heading text-4xl font-semibold tracking-tight sm:text-5xl">
-        {session ? "টাকা পাঠিয়ে অর্ডার করুন" : "Your courses are waiting"}
+        {session ? dict.checkout.titleLoggedIn : dict.checkout.titleGuest}
       </h1>
       <p className="mt-3 max-w-2xl text-base text-muted-foreground">
         {session
-          ? `${session.name} হিসেবে অর্ডার করছেন। পেমেন্ট রিভিউ করার পর কোর্সটি আনলক হয়ে যাবে।`
-          : "No account needed to pick a course. Log in or create one here to place the order, then send money on bKash or Nagad."}
+          ? dict.checkout.subtitleLoggedIn(session.name)
+          : dict.checkout.subtitleGuest}
       </p>
 
       <div className="mt-8">
@@ -57,22 +60,22 @@ export default async function CheckoutPage({
 
       {items.length === 0 ? (
         <div className="mt-10 rounded-2xl border bg-card px-6 py-16 text-center">
-          <p className="font-heading text-2xl font-semibold">Nothing to pay for</p>
+          <p className="font-heading text-2xl font-semibold">{dict.checkout.nothingToPay}</p>
           <p className="mx-auto mt-2 max-w-md text-base text-muted-foreground">
             {alreadyOwned.length
-              ? "Every course in your cart is already unlocked on this account."
-              : "Add a course first, then come back to checkout."}
+              ? dict.checkout.alreadyOwnedBody
+              : dict.checkout.addCourseBody}
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-2">
             <Link href="/courses" className={cn(buttonVariants({ size: "lg" }), "h-11")}>
-              Browse courses
+              {dict.mobileDock.browseCourses}
             </Link>
             {session ? (
               <Link
                 href="/learn"
                 className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-11")}
               >
-                My learning
+                {dict.nav.myLearning}
               </Link>
             ) : null}
           </div>
@@ -92,7 +95,7 @@ export default async function CheckoutPage({
           )}
           <aside className="space-y-4 lg:sticky lg:top-24 h-fit">
             <div className="rounded-2xl border bg-card p-5">
-              <h2 className="font-heading text-lg font-semibold">Order summary</h2>
+              <h2 className="font-heading text-lg font-semibold">{dict.checkout.orderSummary}</h2>
               <ul className="mt-4 space-y-3">
                 {items.map((course) => (
                   <li key={course.slug} className="flex gap-3">
@@ -100,6 +103,8 @@ export default async function CheckoutPage({
                       <img
                         src={course.cover.image}
                         alt=""
+                        loading="lazy"
+                        decoding="async"
                         className="size-12 shrink-0 rounded-lg object-cover"
                       />
                     ) : (
@@ -115,7 +120,7 @@ export default async function CheckoutPage({
                         href={`/courses/${course.slug}`}
                         className="block truncate text-sm font-medium hover:text-primary"
                       >
-                        {course.title}
+                        {courseTitle(course, locale)}
                       </Link>
                       <p className="mt-1 text-sm text-muted-foreground">
                         {formatBdt(course.priceBdt)}
@@ -125,33 +130,32 @@ export default async function CheckoutPage({
                 ))}
               </ul>
               <div className="mt-4 flex justify-between border-t pt-3 text-sm font-semibold">
-                <span>
-                  Total · {items.length} course{items.length === 1 ? "" : "s"}
-                </span>
+                <span>{dict.checkout.totalCourses(items.length)}</span>
                 <span>{formatBdt(cartTotal)}</span>
               </div>
               <Link
                 href="/cart"
                 className="mt-3 inline-block text-sm font-medium text-primary hover:underline"
               >
-                Edit cart
+                {dict.checkout.editCart}
               </Link>
             </div>
             <div className="rounded-2xl border bg-card p-5 text-sm leading-6 text-muted-foreground">
               <p className="font-heading text-base font-semibold text-foreground">
-                কীভাবে হবে
+                {dict.checkout.howItWorks}
               </p>
               <ol className="mt-3 space-y-2">
-                <li>১. নাম্বারে টাকা Send Money করুন।</li>
-                <li>২. যে নাম্বার থেকে পাঠিয়েছেন সেটি লিখে অর্ডার করুন।</li>
-                <li>৩. পরের স্ক্রিনে TrxID দিন।</li>
-                <li>৪. আমরা রিভিউ করে কোর্সটি আনলক করে দেবো।</li>
+                {dict.checkout.steps.map((step, index) => (
+                  <li key={step}>
+                    {index + 1}. {step}
+                  </li>
+                ))}
               </ol>
             </div>
             {alreadyOwned.length > 0 ? (
               <p className="rounded-2xl border px-4 py-3 text-sm text-muted-foreground">
-                Already unlocked and skipped:{" "}
-                {alreadyOwned.map((course) => course.title).join(", ")}
+                {dict.checkout.alreadyUnlockedPrefix}
+                {alreadyOwned.map((course) => courseTitle(course, locale)).join(", ")}
               </p>
             ) : null}
           </aside>

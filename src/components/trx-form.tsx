@@ -1,9 +1,10 @@
 import { submitTrxAction } from "@/app/actions";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { getDictionary } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-export function TrxForm({
+export async function TrxForm({
   orderId,
   defaultTrxId,
   defaultPayerNumber,
@@ -14,6 +15,7 @@ export function TrxForm({
   defaultPayerNumber?: string | null;
   from?: "success";
 }) {
+  const dict = await getDictionary();
   return (
     <form action={submitTrxAction} className="space-y-2">
       <input type="hidden" name="orderId" value={orderId} />
@@ -22,12 +24,12 @@ export function TrxForm({
         <Input
           name="trxId"
           defaultValue={defaultTrxId ?? ""}
-          placeholder="Paste TrxID from bKash or Nagad"
+          placeholder={dict.trxForm.placeholder}
           className="h-11 flex-1 font-mono text-sm"
           autoComplete="off"
         />
         <button type="submit" className={cn(buttonVariants({ size: "lg" }), "h-11")}>
-          {defaultTrxId ? "Update TrxID" : "Submit TrxID"}
+          {defaultTrxId ? dict.trxForm.update : dict.trxForm.submit}
         </button>
       </div>
       <Input
@@ -35,7 +37,7 @@ export function TrxForm({
         type="tel"
         inputMode="numeric"
         defaultValue={defaultPayerNumber ?? ""}
-        placeholder="Number you paid from (01XXXXXXXXX)"
+        placeholder={dict.trxForm.payerPlaceholder}
         className="h-11 text-sm"
         autoComplete="tel"
       />

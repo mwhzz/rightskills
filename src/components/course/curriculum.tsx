@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { ChevronDown, Clock, Lock, PlayCircle } from "lucide-react";
+import { useLocale } from "@/components/locale-provider";
 import type { Module } from "@/lib/courses";
 import { cn } from "@/lib/utils";
 
 export function CourseCurriculum({ modules }: { modules: Module[] }) {
+  const { dict } = useLocale();
   const [openIds, setOpenIds] = useState<Set<string>>(
     () => new Set(modules[0] ? [modules[0].id] : [])
   );
@@ -35,11 +37,10 @@ export function CourseCurriculum({ modules }: { modules: Module[] }) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
-            Course content
+            {dict.curriculum.title}
           </h2>
           <p className="mt-2 text-base text-muted-foreground">
-            {modules.length} sections · {lessonTotal} lectures · {minutes} min
-            total
+            {dict.curriculum.summary(modules.length, lessonTotal, minutes)}
           </p>
         </div>
         <button
@@ -47,7 +48,7 @@ export function CourseCurriculum({ modules }: { modules: Module[] }) {
           onClick={toggleAll}
           className="text-base font-medium text-primary hover:underline"
         >
-          {allOpen ? "Collapse all sections" : "Expand all sections"}
+          {allOpen ? dict.curriculum.collapseAll : dict.curriculum.expandAll}
         </button>
       </div>
 
@@ -76,7 +77,7 @@ export function CourseCurriculum({ modules }: { modules: Module[] }) {
                   {module.title}
                 </span>
                 <span className="hidden text-sm text-muted-foreground sm:inline">
-                  {module.lessons.length} lectures · {moduleMinutes} min
+                  {dict.curriculum.moduleSummary(module.lessons.length, moduleMinutes)}
                 </span>
               </button>
               {open ? (
@@ -98,13 +99,13 @@ export function CourseCurriculum({ modules }: { modules: Module[] }) {
                             href="#preview"
                             className="ml-2 font-medium text-primary hover:underline"
                           >
-                            Preview
+                            {dict.curriculum.preview}
                           </a>
                         ) : null}
                       </span>
                       <span className="inline-flex shrink-0 items-center gap-1 text-sm text-muted-foreground">
                         <Clock className="size-3.5" />
-                        {lesson.durationMin} min
+                        {dict.curriculum.minSuffix(lesson.durationMin)}
                       </span>
                     </li>
                   ))}

@@ -72,6 +72,13 @@ export type Course = {
 export const DEFAULT_PURCHASE_NOTE =
   "One-time payment. Add to cart without an account — you log in when you place the order. The course unlocks after we confirm your TrxID.";
 
+export const DEFAULT_PURCHASE_NOTE_BN =
+  "একবারের পেমেন্ট। অ্যাকাউন্ট ছাড়াই কার্টে যোগ করুন — অর্ডার করার সময় লগ ইন করবেন। TrxID নিশ্চিত হওয়ার পর কোর্সটি আনলক হবে।";
+
+export function defaultPurchaseNote(locale: "en" | "bn" = "en") {
+  return locale === "bn" ? DEFAULT_PURCHASE_NOTE_BN : DEFAULT_PURCHASE_NOTE;
+}
+
 export function courseHours(course: Course) {
   const minutes = course.modules
     .flatMap((module) => module.lessons)
@@ -83,7 +90,17 @@ export function lessonCount(course: Course) {
   return course.modules.reduce((sum, module) => sum + module.lessons.length, 0);
 }
 
-export function defaultCourseIncludes(course: Course) {
+export function defaultCourseIncludes(course: Course, locale: "en" | "bn" = "en") {
+  if (locale === "bn") {
+    return [
+      `${courseHours(course)} ঘণ্টার অন-ডিমান্ড ভিডিও`,
+      `${lessonCount(course)}টি লেকচার, নিজের গতিতে দেখার সুযোগ`,
+      `${course.language} ভাষায় শেখানো হয়`,
+      "বাস্তব কাজের মতো অ্যাসাইনমেন্ট",
+      "আপনার অ্যাকাউন্টে লাইফটাইম অ্যাক্সেস",
+      "ডেস্কটপ বা ফোনে দেখুন",
+    ];
+  }
   return [
     `${courseHours(course)} hours of on-demand video`,
     `${lessonCount(course)} lectures you can watch at your pace`,
@@ -94,18 +111,34 @@ export function defaultCourseIncludes(course: Course) {
   ];
 }
 
-export function courseIncludes(course: Course) {
+export function courseIncludes(course: Course, locale: "en" | "bn" = "en") {
   const custom = (course.includes ?? []).map((item) => item.trim()).filter(Boolean);
-  return custom.length > 0 ? custom : defaultCourseIncludes(course);
+  return custom.length > 0 ? custom : defaultCourseIncludes(course, locale);
 }
 
-export function categoryLabel(id: CategoryId) {
-  return categories.find((category) => category.id === id)?.label ?? id;
+export function courseTitle(
+  course: Pick<Course, "title" | "banglaTitle">,
+  locale: "en" | "bn" = "en"
+) {
+  if (locale === "bn") return course.banglaTitle.trim() || course.title;
+  return course.title;
+}
+
+export function categoryLabel(id: CategoryId, locale: "en" | "bn" = "en") {
+  const category = categories.find((item) => item.id === id);
+  if (!category) return id;
+  return locale === "bn" ? category.bangla : category.label;
 }
 
 export const levels: Level[] = ["Beginner", "Intermediate", "Advanced"];
 
-export function levelLabel(level: string) {
+export function levelLabel(level: string, locale: "en" | "bn" = "en") {
+  if (locale === "bn") {
+    if (level === "Beginner") return "শুরুর স্তর";
+    if (level === "Intermediate") return "মধ্যম স্তর";
+    if (level === "Advanced") return "উচ্চ স্তর";
+    return "";
+  }
   if (level === "Beginner") return "Entry";
   if (level === "Intermediate") return "Intermediate";
   if (level === "Advanced") return "Advanced";

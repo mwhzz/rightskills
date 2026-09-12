@@ -1,7 +1,9 @@
 import { BrandMark } from "@/components/brand-mark";
 import { brand } from "@/lib/brand";
+import { getDictionary } from "@/lib/i18n";
 
-export function MaintenanceScreen() {
+export async function MaintenanceScreen() {
+  const dict = await getDictionary();
   return (
     <div className="relative flex min-h-full flex-1 flex-col items-center justify-center overflow-hidden px-4 py-20">
       <div
@@ -12,11 +14,10 @@ export function MaintenanceScreen() {
         <BrandMark className="mx-auto size-12 text-primary" />
         <p className="mt-6 text-sm font-medium text-primary">{brand.name}</p>
         <h1 className="mt-2 font-heading text-3xl tracking-tight">
-          Under maintenance
+          {dict.maintenance.title}
         </h1>
         <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-          We are updating the site and will be back shortly. Please check again
-          in a little while.
+          {dict.maintenance.body}
         </p>
       </div>
     </div>

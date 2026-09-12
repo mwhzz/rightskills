@@ -12,6 +12,8 @@ import { CopyValue } from "@/components/copy-value";
 import { PaymentSteps } from "@/components/payment-steps";
 import { TrxForm } from "@/components/trx-form";
 import { buttonVariants } from "@/components/ui/button";
+import { getDictionary, getLocale } from "@/lib/i18n";
+import { courseTitle } from "@/lib/courses";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -20,13 +22,7 @@ export const metadata = {
   title: "My orders",
 };
 
-const filters = [
-  { id: "all", label: "All" },
-  { id: "pending", label: "Waiting for TrxID" },
-  { id: "awaiting_review", label: "Waiting for admin" },
-  { id: "paid", label: "Paid" },
-  { id: "rejected", label: "Rejected" },
-] as const;
+const filterIds = ["all", "pending", "awaiting_review", "paid", "rejected"] as const;
 
 export default async function OrdersPage({
   searchParams,
@@ -35,18 +31,27 @@ export default async function OrdersPage({
 }) {
   const user = await requireUser("/account/orders");
   const { error, submitted, status: statusParam } = await searchParams;
-  const status = filters.some((item) => item.id === statusParam)
-    ? statusParam
+  const status = filterIds.includes(statusParam as (typeof filterIds)[number])
+    ? (statusParam as (typeof filterIds)[number])
     : "all";
 
-  const [allOrders, settings] = await Promise.all([
+  const [allOrders, settings, dict, locale] = await Promise.all([
     prisma.order.findMany({
       where: { userId: user.id },
       include: { items: { include: { course: true } } },
       orderBy: { createdAt: "desc" },
     }),
     getSettings(),
+    getDictionary(),
+    getLocale(),
   ]);
+  const filters = [
+    { id: "all" as const, label: dict.ordersPage.filterAll },
+    { id: "pending" as const, label: dict.ordersPage.filterPending },
+    { id: "awaiting_review" as const, label: dict.ordersPage.filterAwaitingReview },
+    { id: "paid" as const, label: dict.ordersPage.filterPaid },
+    { id: "rejected" as const, label: dict.ordersPage.filterRejected },
+  ];
 
   const orders =
     status === "all" ? allOrders : allOrders.filter((order) => order.status === status);
@@ -59,14 +64,13 @@ export default async function OrdersPage({
   return (
     <div>
       <p className="text-sm font-medium tracking-[0.18em] text-primary uppercase">
-        Payments
+        {dict.ordersPage.kicker}
       </p>
       <h1 className="mt-2 font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
-        My orders
+        {dict.ordersPage.title}
       </h1>
       <p className="mt-3 max-w-2xl text-base text-muted-foreground">
-        Send the exact amount, paste the TrxID, then wait for an admin to match
-        it. Courses unlock on My learning after that — not before.
+        {dict.ordersPage.subtitle}
       </p>
 
       <div className="mt-8">
@@ -81,7 +85,7 @@ export default async function OrdersPage({
                 bKash
               </p>
               <p className="mt-2 font-heading text-2xl font-semibold tracking-wide">
-                {settings.bkashNumber || "Not set"}
+                {settings.bkashNumber || dict.ordersPage.notSet}
               </p>
             </div>
             {settings.bkashNumber ? <CopyValue value={settings.bkashNumber} /> : null}
@@ -94,7 +98,7 @@ export default async function OrdersPage({
                 Nagad
               </p>
               <p className="mt-2 font-heading text-2xl font-semibold tracking-wide">
-                {settings.nagadNumber || "Not set"}
+                {settings.nagadNumber || dict.ordersPage.notSet}
               </p>
             </div>
             {settings.nagadNumber ? <CopyValue value={settings.nagadNumber} /> : null}
@@ -109,27 +113,27 @@ export default async function OrdersPage({
 
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border bg-card p-5">
-          <p className="text-sm text-muted-foreground">Open payments</p>
+          <p className="text-sm text-muted-foreground">{dict.ordersPage.openPayments}</p>
           <p className="mt-2 font-heading text-2xl font-semibold">{open}</p>
         </div>
         <div className="rounded-2xl border bg-card p-5">
-          <p className="text-sm text-muted-foreground">Paid</p>
+          <p className="text-sm text-muted-foreground">{dict.ordersPage.paid}</p>
           <p className="mt-2 font-heading text-2xl font-semibold">{paid}</p>
         </div>
         <div className="rounded-2xl border bg-card p-5">
-          <p className="text-sm text-muted-foreground">All orders</p>
+          <p className="text-sm text-muted-foreground">{dict.ordersPage.allOrders}</p>
           <p className="mt-2 font-heading text-2xl font-semibold">{allOrders.length}</p>
         </div>
       </div>
 
       {submitted ? (
         <p className="mt-6 rounded-2xl border bg-primary/5 px-4 py-3 text-sm">
-          TrxID submitted. We will unlock the course after checking the payment.
+          {dict.ordersPage.trxSubmittedNote}
         </p>
       ) : null}
       {error === "trx" ? (
         <p className="mt-6 rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-          Enter a valid TrxID (at least 4 characters).
+          {dict.ordersPage.invalidTrxError}
         </p>
       ) : null}
 
@@ -153,18 +157,17 @@ export default async function OrdersPage({
       {allOrders.length === 0 ? (
         <div className="mt-8 rounded-2xl border bg-card px-6 py-16 text-center">
           <Wallet className="mx-auto size-8 text-muted-foreground" />
-          <p className="mt-4 font-heading text-2xl font-semibold">No orders yet</p>
+          <p className="mt-4 font-heading text-2xl font-semibold">{dict.ordersPage.noOrdersTitle}</p>
           <p className="mx-auto mt-2 max-w-md text-base text-muted-foreground">
-            Add a course to the cart and check out. You will get an order ID,
-            then send the exact amount.
+            {dict.ordersPage.noOrdersBody}
           </p>
           <Link href="/courses" className={cn(buttonVariants({ size: "lg" }), "mt-6 h-11")}>
-            Browse courses
+            {dict.mobileDock.browseCourses}
           </Link>
         </div>
       ) : orders.length === 0 ? (
         <p className="mt-8 rounded-2xl border bg-card px-4 py-12 text-center text-sm text-muted-foreground">
-          No orders in this view.
+          {dict.ordersPage.noOrdersInView}
         </p>
       ) : (
         <ul className="mt-8 space-y-5">
@@ -183,9 +186,9 @@ export default async function OrdersPage({
                       <CopyValue value={order.orderId} />
                     </div>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Placed {formatWhen(order.createdAt)}
+                      {dict.ordersPage.placedAt(formatWhen(order.createdAt))}
                       {order.updatedAt.getTime() !== order.createdAt.getTime()
-                        ? ` · updated ${formatWhen(order.updatedAt)}`
+                        ? dict.ordersPage.updatedAt(formatWhen(order.updatedAt))
                         : ""}
                     </p>
                   </div>
@@ -199,7 +202,7 @@ export default async function OrdersPage({
                 <dl className="mt-5 grid gap-4 sm:grid-cols-3">
                   <div>
                     <dt className="text-xs tracking-[0.14em] text-muted-foreground uppercase">
-                      Amount
+                      {dict.ordersPage.amountLabel}
                     </dt>
                     <dd className="mt-1 flex items-center gap-2 font-heading text-xl font-semibold">
                       {formatBdt(order.totalBdt)}
@@ -208,19 +211,19 @@ export default async function OrdersPage({
                   </div>
                   <div>
                     <dt className="text-xs tracking-[0.14em] text-muted-foreground uppercase">
-                      Send via {methodLabel}
+                      {dict.ordersPage.sendViaLabel(methodLabel)}
                     </dt>
                     <dd className="mt-1 flex items-center gap-2 font-heading text-lg font-semibold tracking-wide">
-                      {payTo || "Number not set"}
+                      {payTo || dict.ordersPage.numberNotSet}
                       {payTo ? <CopyValue value={payTo} /> : null}
                     </dd>
                   </div>
                   <div>
                     <dt className="text-xs tracking-[0.14em] text-muted-foreground uppercase">
-                      TrxID
+                      {dict.ordersPage.trxIdLabel}
                     </dt>
                     <dd className="mt-1 font-mono text-sm">
-                      {order.trxId || "Not submitted yet"}
+                      {order.trxId || dict.ordersPage.trxNotSubmitted}
                     </dd>
                   </div>
                 </dl>
@@ -231,7 +234,7 @@ export default async function OrdersPage({
                       key={item.id}
                       className="flex items-center justify-between gap-3 px-4 py-3 text-sm"
                     >
-                      <span className="min-w-0 truncate">{item.course.title}</span>
+                      <span className="min-w-0 truncate">{courseTitle(item.course, locale)}</span>
                       <span className="shrink-0 text-muted-foreground">
                         {formatBdt(item.priceBdt)}
                       </span>
@@ -242,8 +245,7 @@ export default async function OrdersPage({
                 {order.status === "pending" || order.status === "awaiting_review" ? (
                   <div className="mt-5">
                     <p className="mb-2 text-sm text-muted-foreground">
-                      After Send Money, paste the TrxID from the {methodLabel}{" "}
-                      SMS or app.
+                      {dict.ordersPage.afterSendMoney(methodLabel)}
                     </p>
                     <TrxForm
                       orderId={order.orderId}
@@ -261,7 +263,7 @@ export default async function OrdersPage({
                         href={`/learn/${item.course.slug}`}
                         className={cn(buttonVariants({ size: "lg" }), "h-11")}
                       >
-                        Open {item.course.title}
+                        {dict.ordersPage.openCourse(courseTitle(item.course, locale))}
                       </Link>
                     ))}
                   </div>
@@ -269,8 +271,7 @@ export default async function OrdersPage({
 
                 {order.status === "rejected" ? (
                   <p className="mt-5 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-                    This payment did not match. Place a new order if you still
-                    want the course.
+                    {dict.ordersPage.rejectedNote}
                   </p>
                 ) : null}
               </li>

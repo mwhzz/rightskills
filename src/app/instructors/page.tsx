@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { buildInstructors } from "@/lib/instructors";
+import { getDictionary } from "@/lib/i18n";
 import { listPublishedCourses } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
@@ -21,22 +22,23 @@ async function loadCourses() {
 export default async function InstructorsPage() {
   const catalogue = await loadCourses();
   const people = buildInstructors(catalogue);
+  const dict = await getDictionary();
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 lg:py-16">
       <p className="text-base font-medium tracking-[0.18em] text-primary uppercase">
-        Instructors
+        {dict.instructorsPage.kicker}
       </p>
       <h1 className="mt-3 font-heading text-4xl font-semibold tracking-tight sm:text-5xl">
-        The people who teach
+        {dict.instructorsPage.title}
       </h1>
       <p className="mt-3 max-w-2xl text-lg leading-8 text-muted-foreground">
-        Practitioners first. Each course is led by someone still doing the work.
+        {dict.instructorsPage.subtitle}
       </p>
 
       {people.length === 0 ? (
         <p className="mt-10 rounded-3xl border border-dashed bg-card px-6 py-16 text-center text-muted-foreground">
-          Instructors appear here when you publish a course.
+          {dict.instructorsPage.emptyState}
         </p>
       ) : (
       <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -50,6 +52,8 @@ export default async function InstructorsPage() {
               <img
                 src={person.photo}
                 alt={person.name}
+                loading="lazy"
+                decoding="async"
                 className="aspect-4/5 w-full object-cover object-top"
               />
             ) : (
@@ -63,8 +67,7 @@ export default async function InstructorsPage() {
               </h2>
               <p className="mt-1 text-base text-muted-foreground">{person.title}</p>
               <p className="mt-3 text-base text-muted-foreground">
-                {person.courses.length} course
-                {person.courses.length === 1 ? "" : "s"}
+                {dict.instructorsPage.courseCount(person.courses.length)}
               </p>
             </div>
           </Link>

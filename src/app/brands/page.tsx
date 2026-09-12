@@ -53,6 +53,8 @@ export default function BrandsPage() {
               <img
                 src={featured.image}
                 alt={featured.name}
+                fetchPriority="high"
+                decoding="async"
                 className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105"
               />
             </div>
@@ -95,6 +97,8 @@ export default function BrandsPage() {
                 <img
                   src={work.image}
                   alt={work.name}
+                  loading="lazy"
+                  decoding="async"
                   className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
                 />
                 <div className="absolute inset-x-0 bottom-0 bg-[linear-gradient(to_top,rgba(20,12,6,0.72),transparent)] p-5">

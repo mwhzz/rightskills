@@ -6,6 +6,7 @@ import { CourseCard } from "@/components/course-card";
 import { getSession } from "@/lib/auth";
 import { formatStudents } from "@/lib/format";
 import { getInstructorBySlug } from "@/lib/instructors";
+import { getDictionary } from "@/lib/i18n";
 import { getHomepageLearning, listPublishedCourses } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
@@ -50,12 +51,13 @@ export default async function InstructorDetailPage({
   const learning = session
     ? await getHomepageLearning(session.id).catch(() => null)
     : null;
+  const dict = await getDictionary();
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:py-14">
       <nav className="text-base text-muted-foreground">
         <Link href="/instructors" className="hover:text-foreground">
-          Instructors
+          {dict.instructorDetail.breadcrumb}
         </Link>
         <span className="mx-2">/</span>
         <span className="text-foreground">{person.name}</span>
@@ -66,6 +68,7 @@ export default async function InstructorDetailPage({
           <img
             src={person.photo}
             alt={person.name}
+            decoding="async"
             className="size-40 shrink-0 rounded-3xl object-cover sm:size-48"
           />
         ) : (
@@ -85,7 +88,7 @@ export default async function InstructorDetailPage({
             <div>
               <dt className="flex items-center gap-2 text-muted-foreground">
                 <BookOpen className="size-4" />
-                Courses
+                {dict.instructorDetail.courses}
               </dt>
               <dd className="mt-1 font-heading text-2xl font-semibold">
                 {person.courses.length}
@@ -94,7 +97,7 @@ export default async function InstructorDetailPage({
             <div>
               <dt className="flex items-center gap-2 text-muted-foreground">
                 <Users className="size-4" />
-                Learners
+                {dict.instructorDetail.learners}
               </dt>
               <dd className="mt-1 font-heading text-2xl font-semibold">
                 {formatStudents(students)}
@@ -103,7 +106,7 @@ export default async function InstructorDetailPage({
             <div>
               <dt className="flex items-center gap-2 text-muted-foreground">
                 <Star className="size-4" />
-                Rating
+                {dict.instructorDetail.rating}
               </dt>
               <dd className="mt-1 font-heading text-2xl font-semibold">
                 {rating.toFixed(1)}
@@ -115,7 +118,7 @@ export default async function InstructorDetailPage({
 
       <section className="mt-14">
         <h2 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
-          Courses
+          {dict.instructorDetail.courses}
         </h2>
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {person.courses.map((course) => {

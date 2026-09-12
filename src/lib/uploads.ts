@@ -1,6 +1,7 @@
 import path from "node:path";
 import fs from "node:fs/promises";
 import { randomBytes } from "node:crypto";
+import sharp from "sharp";
 import {
   IMAGE_MAX_BYTES,
   RESOURCE_MAX_BYTES,
@@ -84,6 +85,52 @@ function extOf(name: string) {
 async function writeFile(full: string, file: File) {
   await fs.mkdir(path.dirname(full), { recursive: true });
   await fs.writeFile(full, Buffer.from(await file.arrayBuffer()));
+}
+
+/**
+ * Uploads arrive at whatever size the admin's phone or camera produced
+ * (sometimes several MB). Downscale to a sane max dimension and re-encode
+ * so course covers, banners, offers, and photos don't tax every visitor's
+ * connection. GIFs are left untouched to avoid breaking animation.
+ */
+async function processImageBuffer(
+  buffer: Buffer,
+  ext: string,
+  maxDimension: number
+): Promise<Buffer> {
+  if (ext === ".gif") return buffer;
+
+  const pipeline = sharp(buffer)
+    .rotate()
+    .resize({
+      width: maxDimension,
+      height: maxDimension,
+      fit: "inside",
+      withoutEnlargement: true,
+    });
+
+  switch (ext) {
+    case ".png":
+      return pipeline.png({ compressionLevel: 9 }).toBuffer();
+    case ".webp":
+      return pipeline.webp({ quality: 82 }).toBuffer();
+    default:
+      return pipeline.jpeg({ quality: 82, mozjpeg: true }).toBuffer();
+  }
+}
+
+async function writeImageFile(
+  full: string,
+  file: File,
+  ext: string,
+  maxDimension: number
+) {
+  await fs.mkdir(path.dirname(full), { recursive: true });
+  const original = Buffer.from(await file.arrayBuffer());
+  const processed = await processImageBuffer(original, ext, maxDimension).catch(
+    () => original
+  );
+  await fs.writeFile(full, processed);
 }
 
 export async function removeUpload(relative: string | null | undefined) {
@@ -195,7 +242,7 @@ export async function saveInstructorPhoto(courseId: string, file: File) {
     : ".jpg";
   await removeInstructorPhotoFiles(courseId);
   const relative = path.posix.join("instructors", `${courseId}${safeExt}`);
-  await writeFile(absoluteUploadPath(relative), file);
+  await writeImageFile(absoluteUploadPath(relative), file, safeExt, 800);
   return relative;
 }
 
@@ -215,7 +262,7 @@ export async function saveBannerImage(id: string, file: File) {
     )
   );
   const relative = path.posix.join("banners", `${safeId}${safeExt}`);
-  await writeFile(absoluteUploadPath(relative), file);
+  await writeImageFile(absoluteUploadPath(relative), file, safeExt, 1920);
   return relative;
 }
 
@@ -235,7 +282,7 @@ export async function saveOfferImage(id: string, file: File) {
     )
   );
   const relative = path.posix.join("offers", `${safeId}${safeExt}`);
-  await writeFile(absoluteUploadPath(relative), file);
+  await writeImageFile(absoluteUploadPath(relative), file, safeExt, 1200);
   return relative;
 }
 
@@ -262,7 +309,7 @@ export async function saveCoverImage(courseId: string, file: File) {
     : ".jpg";
   await removeCoverImageFiles(courseId);
   const relative = path.posix.join("covers", `${courseId}${safeExt}`);
-  await writeFile(absoluteUploadPath(relative), file);
+  await writeImageFile(absoluteUploadPath(relative), file, safeExt, 1200);
   return relative;
 }
 

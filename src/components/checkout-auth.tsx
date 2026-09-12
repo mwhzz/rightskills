@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AuthForm } from "@/components/auth-form";
+import { useLocale } from "@/components/locale-provider";
 import { cn } from "@/lib/utils";
 
 export function CheckoutAuth({
@@ -12,18 +13,18 @@ export function CheckoutAuth({
   initialMode?: "login" | "register";
 }) {
   const [mode, setMode] = useState<"login" | "register">(initialMode);
+  const { dict } = useLocale();
 
   return (
     <div className="rounded-2xl border bg-card p-6">
       <p className="text-xs font-medium tracking-[0.14em] text-primary uppercase">
-        Almost there
+        {dict.auth.almostThere}
       </p>
       <h2 className="mt-2 font-heading text-2xl font-semibold tracking-tight">
-        Save the order to an account
+        {dict.auth.saveOrderTitle}
       </h2>
       <p className="mt-2 text-sm leading-6 text-muted-foreground">
-        Your cart is already saved. Create an account or log in, then place the
-        order and send money.
+        {dict.auth.saveOrderBody}
       </p>
       <div className="mt-5 grid grid-cols-2 gap-1 rounded-full border bg-muted/50 p-1">
         <button
@@ -36,7 +37,7 @@ export function CheckoutAuth({
               : "text-muted-foreground hover:text-foreground"
           )}
         >
-          Create account
+          {dict.auth.createAccountTab}
         </button>
         <button
           type="button"
@@ -48,7 +49,7 @@ export function CheckoutAuth({
               : "text-muted-foreground hover:text-foreground"
           )}
         >
-          Log in
+          {dict.auth.loginTab}
         </button>
       </div>
       <AuthForm

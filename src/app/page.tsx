@@ -6,6 +6,7 @@ import { Instructors } from "@/components/home/instructors";
 import { OfferRail } from "@/components/home/offer-rail";
 import { Reviews } from "@/components/home/reviews";
 import { getSession } from "@/lib/auth";
+import { getDictionary } from "@/lib/i18n";
 import {
   getHomepageLearning,
   getHomeBanners,
@@ -37,12 +38,13 @@ async function loadHome() {
 
 export default async function HomePage() {
   const session = await getSession();
-  const [{ featured, newest, popular, published }, learning, banners, offers] =
+  const [{ featured, newest, popular, published }, learning, banners, offers, dict] =
     await Promise.all([
       loadHome(),
       session ? getHomepageLearning(session.id).catch(() => null) : null,
       getHomeBanners().catch(() => defaultHomeBanners),
       getHomeOffers().catch(() => defaultHomeOffers),
+      getDictionary(),
     ]);
 
   const ownedSlugs = learning?.ownedSlugs;
@@ -62,24 +64,24 @@ export default async function HomePage() {
       {hasRails ? (
         <section className="mx-auto w-full max-w-7xl space-y-12 px-4 py-12 sm:px-6 lg:py-16">
           <CourseRail
-            title="Top picks"
-            description="Hand-picked by our team. A good place to start."
+            title={dict.home.topPicksTitle}
+            description={dict.home.topPicksDescription}
             href="/courses"
             courses={featured}
             ownedSlugs={ownedSlugs}
             progressBySlug={progressBySlug}
           />
           <CourseRail
-            title="Just added"
-            description="The newest courses on Right Skills Bangladesh."
+            title={dict.home.justAddedTitle}
+            description={dict.home.justAddedDescription}
             href="/courses"
             courses={newest}
             ownedSlugs={ownedSlugs}
             progressBySlug={progressBySlug}
           />
           <CourseRail
-            title="Most popular"
-            description="What learners are enrolling in right now."
+            title={dict.home.popularTitle}
+            description={dict.home.popularDescription}
             href="/courses"
             courses={popular}
             ownedSlugs={ownedSlugs}

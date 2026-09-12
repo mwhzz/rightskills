@@ -78,6 +78,8 @@ export default async function BrandCasePage({
           <img
             src={work.image}
             alt={`${work.name} brand photography`}
+            fetchPriority="high"
+            decoding="async"
             className="aspect-16/9 w-full object-cover"
           />
         </div>
@@ -190,6 +192,8 @@ export default async function BrandCasePage({
                 <img
                   src={work.image}
                   alt=""
+                  loading="lazy"
+                  decoding="async"
                   className="h-full w-full object-cover"
                   style={{
                     objectPosition:

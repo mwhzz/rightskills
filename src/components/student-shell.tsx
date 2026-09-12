@@ -4,15 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BookOpen, LayoutDashboard, LogOut, Receipt } from "lucide-react";
 import { logoutAction } from "@/app/actions";
+import { useLocale } from "@/components/locale-provider";
 import type { Role } from "@prisma/client";
 import { initialsFromName } from "@/lib/slug";
 import { cn } from "@/lib/utils";
-
-const links = [
-  { href: "/account", label: "Overview", icon: LayoutDashboard },
-  { href: "/learn", label: "My learning", icon: BookOpen },
-  { href: "/account/orders", label: "Orders", icon: Receipt },
-];
 
 export function StudentShell({
   user,
@@ -22,7 +17,13 @@ export function StudentShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const { dict } = useLocale();
   const first = user.name.trim().split(/\s+/)[0] || user.name;
+  const links = [
+    { href: "/account", label: dict.studentShell.overview, icon: LayoutDashboard },
+    { href: "/learn", label: dict.nav.myLearning, icon: BookOpen },
+    { href: "/account/orders", label: dict.nav.orders, icon: Receipt },
+  ];
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:py-10">
@@ -37,7 +38,7 @@ export function StudentShell({
                 <p className="truncate font-heading text-base font-semibold">
                   {first}
                 </p>
-                <p className="text-xs text-muted-foreground">Student panel</p>
+                <p className="text-xs text-muted-foreground">{dict.studentShell.studentPanel}</p>
               </div>
             </div>
           </div>
@@ -70,7 +71,7 @@ export function StudentShell({
               className="inline-flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               <LogOut className="size-4" />
-              Log out
+              {dict.nav.logout}
             </button>
           </form>
         </aside>

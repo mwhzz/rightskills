@@ -22,6 +22,8 @@ export function CourseCover({
         <img
           src={course.cover.image}
           alt=""
+          loading="lazy"
+          decoding="async"
           className="absolute inset-0 h-full w-full object-cover"
         />
       </div>

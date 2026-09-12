@@ -2,9 +2,11 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { isLocale, LOCALE_COOKIE } from "@/lib/i18n/locale";
 import {
   clearSession,
   createSession,
@@ -119,6 +121,20 @@ export async function logoutAction() {
   await clearSession();
   revalidatePath("/", "layout");
   redirect("/");
+}
+
+export async function setLocaleAction(formData: FormData) {
+  const locale = String(formData.get("locale") ?? "");
+  const next = String(formData.get("next") ?? "/");
+  if (isLocale(locale)) {
+    (await cookies()).set(LOCALE_COOKIE, locale, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: "lax",
+    });
+  }
+  revalidatePath("/", "layout");
+  redirect(next.startsWith("/") ? next : "/");
 }
 
 export async function addToCartAction(formData: FormData) {

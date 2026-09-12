@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { CourseCard } from "@/components/course-card";
 import { Reveal } from "@/components/home/reveal";
+import { getDictionary } from "@/lib/i18n";
 import type { Course } from "@/lib/courses";
 import type { CourseProgress } from "@/lib/queries";
 
-export function CourseRail({
+export async function CourseRail({
   title,
   description,
   href,
@@ -20,6 +21,7 @@ export function CourseRail({
   progressBySlug?: Record<string, CourseProgress>;
 }) {
   if (courses.length === 0) return null;
+  const dict = await getDictionary();
 
   return (
     <div>
@@ -37,7 +39,7 @@ export function CourseRail({
             href={href}
             className="shrink-0 text-sm font-medium text-primary hover:underline"
           >
-            All courses
+            {dict.footer.allCourses}
           </Link>
         </div>
       </Reveal>

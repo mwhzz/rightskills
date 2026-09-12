@@ -4,9 +4,8 @@ import { useState } from "react";
 import { Star } from "lucide-react";
 import { submitReviewAction } from "@/app/actions";
 import { buttonVariants } from "@/components/ui/button";
+import { useLocale } from "@/components/locale-provider";
 import { cn } from "@/lib/utils";
-
-const labels = ["Poor", "Okay", "Good", "Great", "Excellent"];
 
 export function ReviewForm({
   slug,
@@ -16,20 +15,20 @@ export function ReviewForm({
   existing?: { rating: number; body: string };
 }) {
   const [rating, setRating] = useState(existing?.rating ?? 5);
+  const { dict } = useLocale();
 
   return (
     <form action={submitReviewAction} className="rounded-2xl border bg-card p-6 sm:p-8">
       <input type="hidden" name="slug" value={slug} />
       <input type="hidden" name="rating" value={rating} />
       <p className="text-xs font-medium tracking-[0.14em] text-primary uppercase">
-        Review
+        {dict.reviewForm.kicker}
       </p>
       <h2 className="mt-2 font-heading text-2xl font-semibold tracking-tight">
-        {existing ? "Update your review" : "How was this course?"}
+        {existing ? dict.reviewForm.updateTitle : dict.reviewForm.newTitle}
       </h2>
       <p className="mt-2 text-sm text-muted-foreground">
-        Honest notes help the next student decide. Keep it specific — what you
-        used, what you would skip.
+        {dict.reviewForm.subtitle}
       </p>
       <div className="mt-5 flex flex-wrap items-center gap-3">
         <div className="flex gap-1">
@@ -41,7 +40,7 @@ export function ReviewForm({
                 type="button"
                 onClick={() => setRating(value)}
                 className="rounded-lg p-1 hover:bg-muted"
-                aria-label={`${value} stars`}
+                aria-label={dict.reviewForm.starsAria(value)}
               >
                 <Star
                   className={
@@ -54,21 +53,21 @@ export function ReviewForm({
             );
           })}
         </div>
-        <p className="text-sm text-muted-foreground">{labels[rating - 1]}</p>
+        <p className="text-sm text-muted-foreground">{dict.reviewForm.ratingLabels[rating - 1]}</p>
       </div>
       <textarea
         name="body"
         required
         minLength={12}
         defaultValue={existing?.body ?? ""}
-        placeholder="What was useful? What would you change?"
+        placeholder={dict.reviewForm.bodyPlaceholder}
         className="mt-5 min-h-32 w-full rounded-xl border bg-background px-3 py-2 text-sm"
       />
       <button
         type="submit"
         className={cn(buttonVariants({ size: "lg" }), "mt-4 h-11")}
       >
-        {existing ? "Save review" : "Post review"}
+        {existing ? dict.reviewForm.saveReview : dict.reviewForm.postReview}
       </button>
     </form>
   );

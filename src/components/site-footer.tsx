@@ -2,33 +2,34 @@ import Link from "next/link";
 import type { Role } from "@prisma/client";
 import { BrandMark } from "@/components/brand-mark";
 import { logoutAction } from "@/app/actions";
+import { getDictionary, getLocale } from "@/lib/i18n";
 import { brand } from "@/lib/brand";
 import { categories } from "@/lib/courses";
 
-const learn = [
-  { href: "/courses", label: "All courses" },
-  { href: "/brands", label: "Studio" },
-  { href: "/instructors", label: "Instructors" },
-  { href: "/cart", label: "Cart" },
-];
-
-export function SiteFooter({
+export async function SiteFooter({
   user = null,
 }: {
   user?: { name: string; role: Role } | null;
 }) {
+  const [dict, locale] = await Promise.all([getDictionary(), getLocale()]);
   const staff = user?.role === "admin" || user?.role === "teacher";
+  const learn = [
+    { href: "/courses", label: dict.footer.allCourses },
+    { href: "/brands", label: dict.nav.studio },
+    { href: "/instructors", label: dict.nav.instructors },
+    { href: "/cart", label: dict.nav.cart },
+  ];
   const account = user
     ? [
-        { href: "/account", label: "My panel" },
-        { href: "/learn", label: "My learning" },
-        { href: "/account/orders", label: "Orders" },
-        ...(staff ? [{ href: "/admin", label: "Studio" }] : []),
+        { href: "/account", label: dict.nav.myPanel },
+        { href: "/learn", label: dict.nav.myLearning },
+        { href: "/account/orders", label: dict.nav.orders },
+        ...(staff ? [{ href: "/admin", label: dict.nav.studio }] : []),
       ]
     : [
-        { href: "/login", label: "Log in" },
-        { href: "/register", label: "Create account" },
-        { href: "/checkout", label: "Checkout" },
+        { href: "/login", label: dict.nav.login },
+        { href: "/register", label: dict.footer.createAccount },
+        { href: "/checkout", label: dict.footer.checkout },
       ];
 
   return (
@@ -48,22 +49,20 @@ export function SiteFooter({
                 </span>
               </Link>
               <p className="mt-5 font-heading text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-                Skills, taught with care.
+                {dict.footer.tagline}
               </p>
               <p className="mt-3 text-base leading-7 text-white/55">
                 {brand.description}
               </p>
             </div>
-            <p className="text-sm text-white/40">
-              Dhaka · bKash & Nagad after checkout
-            </p>
+            <p className="text-sm text-white/40">{dict.footer.locationNote}</p>
           </div>
 
           <div className="mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
-            <FooterCol title="Learn" links={learn} />
+            <FooterCol title={dict.footer.learnTitle} links={learn} />
             <div>
               <p className="text-xs font-medium tracking-[0.18em] text-white/40 uppercase">
-                Topics
+                {dict.footer.topicsTitle}
               </p>
               <ul className="mt-4 space-y-2.5 text-sm text-white/65">
                 {categories.map((category) => (
@@ -72,7 +71,7 @@ export function SiteFooter({
                       href={`/courses?category=${category.id}`}
                       className="transition-colors hover:text-white"
                     >
-                      {category.label}
+                      {locale === "bn" ? category.bangla : category.label}
                     </Link>
                   </li>
                 ))}
@@ -80,7 +79,7 @@ export function SiteFooter({
             </div>
             <div>
               <p className="text-xs font-medium tracking-[0.18em] text-white/40 uppercase">
-                Account
+                {dict.footer.accountTitle}
               </p>
               <ul className="mt-4 space-y-2.5 text-sm text-white/65">
                 {account.map((link) => (
@@ -97,7 +96,7 @@ export function SiteFooter({
                         type="submit"
                         className="transition-colors hover:text-white"
                       >
-                        Log out
+                        {dict.nav.logout}
                       </button>
                     </form>
                   </li>
@@ -106,12 +105,10 @@ export function SiteFooter({
             </div>
             <div>
               <p className="text-xs font-medium tracking-[0.18em] text-white/40 uppercase">
-                Access
+                {dict.footer.accessTitle}
               </p>
               <p className="mt-4 max-w-xs text-sm leading-7 text-white/55">
-                Short, finished lessons. Access unlocks after payment is
-                confirmed — we do not auto-unlock, and we do not issue
-                certificates.
+                {dict.footer.accessBody}
               </p>
             </div>
           </div>
@@ -120,9 +117,9 @@ export function SiteFooter({
       <div className="border-t border-white/10">
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-4 py-5 text-xs text-white/40 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <p>
-            © {new Date().getFullYear()} {brand.name}. All rights reserved.
+            © {new Date().getFullYear()} {brand.name}. {dict.footer.rightsReserved}
           </p>
-          <p>Manual bKash / Nagad · TrxID review</p>
+          <p>{dict.footer.paymentNote}</p>
         </div>
       </div>
     </footer>

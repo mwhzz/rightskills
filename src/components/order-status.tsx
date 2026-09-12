@@ -1,3 +1,4 @@
+import { getDictionary } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 export const orderStatusLabel: Record<string, string> = {
@@ -7,21 +8,23 @@ export const orderStatusLabel: Record<string, string> = {
   rejected: "Rejected",
 };
 
-export const studentOrderStatusLabel: Record<string, string> = {
-  pending: "Waiting for TrxID",
-  awaiting_review: "Waiting for admin",
-  paid: "Paid — course unlocked",
-  rejected: "Rejected",
-};
-
-export function OrderStatusBadge({
+export async function OrderStatusBadge({
   status,
   audience = "admin",
 }: {
   status: string;
   audience?: "admin" | "student";
 }) {
-  const labels = audience === "student" ? studentOrderStatusLabel : orderStatusLabel;
+  let labels = orderStatusLabel;
+  if (audience === "student") {
+    const dict = await getDictionary();
+    labels = {
+      pending: dict.orderStatus.pending,
+      awaiting_review: dict.orderStatus.awaitingReview,
+      paid: dict.orderStatus.paid,
+      rejected: dict.orderStatus.rejected,
+    };
+  }
   return (
     <span
       className={cn(
@@ -37,13 +40,13 @@ export function OrderStatusBadge({
   );
 }
 
-const studentTimeline = [
-  { id: "placed", label: "Order placed" },
-  { id: "trx", label: "TrxID sent" },
-  { id: "unlock", label: "Course unlocked" },
-] as const;
-
-export function StudentOrderTimeline({ status }: { status: string }) {
+export async function StudentOrderTimeline({ status }: { status: string }) {
+  const dict = await getDictionary();
+  const studentTimeline = [
+    { id: "placed", label: dict.orderTimeline.placed },
+    { id: "trx", label: dict.orderTimeline.trxSent },
+    { id: "unlock", label: dict.orderTimeline.unlocked },
+  ] as const;
   const trxDone = status === "awaiting_review" || status === "paid";
   const unlocked = status === "paid";
   const rejected = status === "rejected";
@@ -80,7 +83,7 @@ export function StudentOrderTimeline({ status }: { status: string }) {
                 state.failed && "text-destructive"
               )}
             >
-              {state.failed ? "Payment rejected" : step.label}
+              {state.failed ? dict.orderTimeline.rejected : step.label}
             </span>
           </li>
         );

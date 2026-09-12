@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { MediaSlider } from "@/components/home/media-slider";
 import { Reveal } from "@/components/home/reveal";
+import { getDictionary } from "@/lib/i18n";
 import type { InstructorProfile } from "@/lib/instructors";
 
-export function Instructors({ people }: { people: InstructorProfile[] }) {
+export async function Instructors({ people }: { people: InstructorProfile[] }) {
   if (people.length === 0) return null;
+  const dict = await getDictionary();
 
   return (
     <section id="instructors" className="border-y bg-card">
@@ -13,17 +15,17 @@ export function Instructors({ people }: { people: InstructorProfile[] }) {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-base font-medium tracking-[0.18em] text-primary uppercase">
-                Instructors
+                {dict.instructors.kicker}
               </p>
               <h2 className="mt-3 font-heading text-4xl font-semibold tracking-tight sm:text-5xl">
-                Taught by people who still do the work
+                {dict.instructors.title}
               </h2>
             </div>
             <Link
               href="/instructors"
               className="text-base font-medium text-primary hover:underline"
             >
-              All instructors
+              {dict.instructors.allInstructors}
             </Link>
           </div>
         </Reveal>

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { AuthForm } from "@/components/auth-form";
 import { getSession, safeNextPath } from "@/lib/auth";
+import { getDictionary } from "@/lib/i18n";
 
 export default async function RegisterPage({
   searchParams,
@@ -11,16 +12,15 @@ export default async function RegisterPage({
   const user = await getSession();
   if (user) redirect(safeNextPath(next, user.role));
   const checkout = next?.startsWith("/checkout");
+  const dict = await getDictionary();
 
   return (
     <div className="mx-auto w-full max-w-md px-4 py-16 sm:px-6">
       <h1 className="font-heading text-3xl font-semibold tracking-tight">
-        Create account
+        {dict.registerPage.title}
       </h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        {checkout
-          ? "Your cart is saved. Create an account to place the order."
-          : "Students sign up with name, phone, profession, and a 4-digit PIN. Teachers are added by an admin."}
+        {checkout ? dict.registerPage.checkoutSubtitle : dict.registerPage.subtitle}
       </p>
       <AuthForm mode="register" error={error} next={next} />
     </div>

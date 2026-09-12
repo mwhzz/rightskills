@@ -1,12 +1,13 @@
+import { getDictionary } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-const steps = [
-  { n: 1, label: "অর্ডার করুন" },
-  { n: 2, label: "TrxID দিন" },
-  { n: 3, label: "কোর্স আনলক" },
-] as const;
+export async function PaymentSteps({ current }: { current: 1 | 2 | 3 }) {
+  const dict = await getDictionary();
+  const steps = [1, 2, 3].map((n) => ({
+    n,
+    label: dict.paymentSteps.labels[n - 1],
+  }));
 
-export function PaymentSteps({ current }: { current: 1 | 2 | 3 }) {
   return (
     <ol className="grid gap-3 sm:grid-cols-3">
       {steps.map((step) => {
@@ -27,7 +28,7 @@ export function PaymentSteps({ current }: { current: 1 | 2 | 3 }) {
                 active ? "text-primary" : "text-muted-foreground"
               )}
             >
-              ধাপ {step.n}
+              {dict.paymentSteps.stepLabel(step.n)}
             </p>
             <p className="mt-1 text-sm font-medium">{step.label}</p>
           </li>

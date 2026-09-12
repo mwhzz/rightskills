@@ -55,11 +55,14 @@ export function BannerSlider({
       >
         <div className={cn("relative w-full", bannerFrameClass[variant])}>
           {slides.map((banner, i) => {
+            if (i !== index) return null;
             const src = bannerImageSrc(banner.image);
             const image = (
               <img
                 src={src}
                 alt=""
+                loading="lazy"
+                decoding="async"
                 className={cn(
                   "absolute inset-0 h-full w-full",
                   variant === "mobile" ? "object-cover" : "object-contain"
@@ -67,14 +70,7 @@ export function BannerSlider({
               />
             );
             return (
-              <article
-                key={banner.id}
-                aria-hidden={i !== index}
-                className={cn(
-                  "absolute inset-0",
-                  i === index ? "opacity-100" : "pointer-events-none opacity-0"
-                )}
-              >
+              <article key={banner.id} className="absolute inset-0">
                 {banner.href ? (
                   <Link href={banner.href} className="absolute inset-0 block">
                     {image}

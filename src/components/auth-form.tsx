@@ -1,16 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import { loginAction, registerAction } from "@/app/actions";
 import { buttonVariants } from "@/components/ui/button";
+import { useLocale } from "@/components/locale-provider";
 import { cn } from "@/lib/utils";
-
-const errors: Record<string, string> = {
-  name: "Enter your name.",
-  phone: "Enter an 11-digit Bangladeshi mobile number (01XXXXXXXXX).",
-  profession: "Enter your profession.",
-  pin: "Enter a 4-digit PIN.",
-  taken: "That mobile number already has an account. Log in instead.",
-  invalid: "Mobile number or PIN is wrong.",
-};
 
 export function AuthForm({
   mode,
@@ -23,6 +17,7 @@ export function AuthForm({
   next?: string;
   embedded?: boolean;
 }) {
+  const { dict } = useLocale();
   const action = mode === "login" ? loginAction : registerAction;
   const nextValue = next || "";
   const nextQuery = nextValue
@@ -35,7 +30,7 @@ export function AuthForm({
       {mode === "register" ? (
         <div className="space-y-1.5">
           <label htmlFor="name" className="text-sm font-medium">
-            Name <span className="text-destructive">*</span>
+            {dict.auth.nameLabel} <span className="text-destructive">*</span>
           </label>
           <input
             id="name"
@@ -49,7 +44,7 @@ export function AuthForm({
       ) : null}
       <div className="space-y-1.5">
         <label htmlFor="phone" className="text-sm font-medium">
-          Phone {mode === "register" ? <span className="text-destructive">*</span> : null}
+          {dict.auth.phoneLabel} {mode === "register" ? <span className="text-destructive">*</span> : null}
         </label>
         <input
           id="phone"
@@ -64,14 +59,14 @@ export function AuthForm({
       {mode === "register" ? (
         <div className="space-y-1.5">
           <label htmlFor="profession" className="text-sm font-medium">
-            Profession <span className="text-destructive">*</span>
+            {dict.auth.professionLabel} <span className="text-destructive">*</span>
           </label>
           <input
             id="profession"
             name="profession"
             required
             minLength={2}
-            placeholder="Student, teacher, designer…"
+            placeholder={dict.auth.professionPlaceholder}
             autoComplete="organization-title"
             className="h-10 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
           />
@@ -79,7 +74,7 @@ export function AuthForm({
       ) : null}
       <div className="space-y-1.5">
         <label htmlFor="pin" className="text-sm font-medium">
-          4-digit PIN
+          {dict.auth.pinLabel}
         </label>
         <input
           id="pin"
@@ -95,40 +90,40 @@ export function AuthForm({
           className="h-10 w-full rounded-lg border border-input bg-transparent px-2.5 text-center font-heading text-lg tracking-[0.5em] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
         />
       </div>
-      {error && errors[error] ? (
+      {error && dict.auth.errors[error as keyof typeof dict.auth.errors] ? (
         <p className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-          {errors[error]}
+          {dict.auth.errors[error as keyof typeof dict.auth.errors]}
         </p>
       ) : null}
       <button type="submit" className={cn(buttonVariants({ size: "lg" }), "h-10 w-full")}>
         {mode === "login"
           ? embedded
-            ? "Log in and continue"
-            : "Log in"
+            ? dict.auth.loginSubmitEmbedded
+            : dict.auth.loginSubmit
           : embedded
-            ? "Create account and continue"
-            : "Create account"}
+            ? dict.auth.registerSubmitEmbedded
+            : dict.auth.registerSubmit}
       </button>
       {embedded ? null : (
         <p className="text-center text-sm text-muted-foreground">
           {mode === "login" ? (
             <>
-              New here?{" "}
+              {dict.auth.newHere}{" "}
               <Link
                 href={`/register${nextQuery}`}
                 className="font-medium text-foreground hover:underline"
               >
-                Create an account
+                {dict.auth.createAccountLink}
               </Link>
             </>
           ) : (
             <>
-              Already have an account?{" "}
+              {dict.auth.alreadyHaveAccount}{" "}
               <Link
                 href={`/login${nextQuery}`}
                 className="font-medium text-foreground hover:underline"
               >
-                Log in
+                {dict.auth.loginLink}
               </Link>
             </>
           )}

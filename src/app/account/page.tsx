@@ -3,6 +3,8 @@ import { BookOpen, CircleCheck, Clock, Play, Wallet } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth";
 import { formatBdt } from "@/lib/format";
+import { getDictionary, getLocale } from "@/lib/i18n";
+import { courseTitle } from "@/lib/courses";
 import { getHomepageLearning } from "@/lib/queries";
 import { prisma } from "@/lib/db";
 import { cn } from "@/lib/utils";
@@ -15,14 +17,20 @@ export const metadata = {
 
 export default async function StudentPanelPage() {
   const user = await requireUser("/account");
-  const [learning, recentOrders] = await Promise.all([
+  const [learning, recentOrders, dict, locale] = await Promise.all([
     getHomepageLearning(user.id),
     prisma.order.findMany({
       where: { userId: user.id },
-      include: { items: { include: { course: { select: { title: true } } } } },
+      include: {
+        items: {
+          include: { course: { select: { title: true, banglaTitle: true } } },
+        },
+      },
       orderBy: { createdAt: "desc" },
       take: 3,
     }),
+    getDictionary(),
+    getLocale(),
   ]);
 
   const firstName = user.name.trim().split(/\s+/)[0] || user.name;
@@ -36,20 +44,20 @@ export default async function StudentPanelPage() {
   return (
     <div>
       <p className="text-sm font-medium tracking-[0.18em] text-primary uppercase">
-        Student panel
+        {dict.accountPage.kicker}
       </p>
       <h1 className="mt-2 font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
-        Welcome back, {firstName}
+        {dict.accountPage.welcomeBack(firstName)}
       </h1>
       <p className="mt-2 max-w-xl text-sm text-muted-foreground sm:text-base">
-        Your courses, payments, and progress — in one place.
+        {dict.accountPage.subtitle}
       </p>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Stat label="Unlocked" value={String(learning.ownedSlugs.length)} />
-        <Stat label="In progress" value={String(inProgress)} />
-        <Stat label="Finished" value={String(finished)} />
-        <Stat label="Open orders" value={String(learning.openOrderCount)} />
+        <Stat label={dict.accountPage.statUnlocked} value={String(learning.ownedSlugs.length)} />
+        <Stat label={dict.accountPage.statInProgress} value={String(inProgress)} />
+        <Stat label={dict.accountPage.statFinished} value={String(finished)} />
+        <Stat label={dict.accountPage.statOpenOrders} value={String(learning.openOrderCount)} />
       </div>
 
       {continueItem ? (
@@ -63,7 +71,7 @@ export default async function StudentPanelPage() {
             </span>
             <div className="min-w-0">
               <p className="text-xs font-medium tracking-[0.14em] text-primary uppercase">
-                Continue
+                {dict.accountPage.continueKicker}
               </p>
               <p className="mt-1 truncate font-heading text-lg font-semibold group-hover:text-primary">
                 {continueItem.title}
@@ -77,28 +85,27 @@ export default async function StudentPanelPage() {
             </div>
           </div>
           <div className="flex items-center justify-between gap-3 border-t px-5 py-4 sm:border-t-0 sm:border-l">
-            <span className="text-sm font-medium">{continueItem.pct}% done</span>
+            <span className="text-sm font-medium">{dict.accountPage.percentDone(continueItem.pct)}</span>
             <span className={cn(buttonVariants(), "h-9 rounded-full px-4")}>
-              Resume
+              {dict.accountPage.resume}
             </span>
           </div>
         </Link>
       ) : (
         <div className="mt-6 rounded-2xl border bg-card px-5 py-8">
-          <p className="font-heading text-xl font-semibold">No course unlocked yet</p>
+          <p className="font-heading text-xl font-semibold">{dict.accountPage.noCourseTitle}</p>
           <p className="mt-2 max-w-md text-sm text-muted-foreground">
-            Buy a course, send the payment, paste the TrxID. After an admin
-            confirms it, it shows up in My learning.
+            {dict.accountPage.noCourseBody}
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             <Link href="/courses" className={cn(buttonVariants(), "h-9 rounded-full px-4")}>
-              Browse courses
+              {dict.mobileDock.browseCourses}
             </Link>
             <Link
               href="/account/orders"
               className={cn(buttonVariants({ variant: "outline" }), "h-9 rounded-full px-4")}
             >
-              Orders
+              {dict.nav.orders}
             </Link>
           </div>
         </div>
@@ -107,14 +114,14 @@ export default async function StudentPanelPage() {
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <section className="rounded-2xl border bg-card p-5">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="font-heading text-lg font-semibold">Orders</h2>
+            <h2 className="font-heading text-lg font-semibold">{dict.accountPage.ordersTitle}</h2>
             <Link href="/account/orders" className="text-sm font-medium text-primary hover:underline">
-              All orders
+              {dict.accountPage.allOrders}
             </Link>
           </div>
           {recentOrders.length === 0 ? (
             <p className="mt-4 text-sm text-muted-foreground">
-              Nothing placed yet. Checkout keeps your cart even before you log in.
+              {dict.accountPage.noOrdersYet}
             </p>
           ) : (
             <ul className="mt-4 space-y-3">
@@ -123,7 +130,7 @@ export default async function StudentPanelPage() {
                   <div className="min-w-0">
                     <p className="font-medium">{order.orderId}</p>
                     <p className="truncate text-muted-foreground">
-                      {order.items.map((item) => item.course.title).join(", ")}
+                      {order.items.map((item) => courseTitle(item.course, locale)).join(", ")}
                     </p>
                   </div>
                   <span className="shrink-0 text-muted-foreground">
@@ -137,13 +144,33 @@ export default async function StudentPanelPage() {
 
         <section className="rounded-2xl border bg-card p-5">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="font-heading text-lg font-semibold">Shortcuts</h2>
+            <h2 className="font-heading text-lg font-semibold">{dict.accountPage.shortcutsTitle}</h2>
           </div>
           <div className="mt-4 grid gap-2">
-            <Shortcut href="/learn" icon={BookOpen} label="My learning" hint="Watch unlocked courses" />
-            <Shortcut href="/account/orders" icon={Wallet} label="Paste a TrxID" hint="Open payments" />
-            <Shortcut href="/courses" icon={Clock} label="Browse catalogue" hint="Find the next path" />
-            <Shortcut href="/learn" icon={CircleCheck} label="Finished courses" hint="Rewatch anytime" />
+            <Shortcut
+              href="/learn"
+              icon={BookOpen}
+              label={dict.accountPage.shortcutMyLearning}
+              hint={dict.accountPage.shortcutMyLearningHint}
+            />
+            <Shortcut
+              href="/account/orders"
+              icon={Wallet}
+              label={dict.accountPage.shortcutPasteTrx}
+              hint={dict.accountPage.shortcutPasteTrxHint}
+            />
+            <Shortcut
+              href="/courses"
+              icon={Clock}
+              label={dict.accountPage.shortcutBrowseCatalog}
+              hint={dict.accountPage.shortcutBrowseCatalogHint}
+            />
+            <Shortcut
+              href="/learn"
+              icon={CircleCheck}
+              label={dict.accountPage.shortcutFinished}
+              hint={dict.accountPage.shortcutFinishedHint}
+            />
           </div>
         </section>
       </div>

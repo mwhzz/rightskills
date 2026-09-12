@@ -2,10 +2,11 @@ import { AppHeader } from "@/components/app-header";
 import { MobileDock } from "@/components/mobile-dock";
 import { SiteFooter } from "@/components/site-footer";
 import { getSession } from "@/lib/auth";
+import { getDictionary } from "@/lib/i18n";
 import { getHomepageLearning } from "@/lib/queries";
 
 export async function AppChrome({ children }: { children: React.ReactNode }) {
-  const user = await getSession();
+  const [user, dict] = await Promise.all([getSession(), getDictionary()]);
   const learning = user
     ? await getHomepageLearning(user.id).catch(() => null)
     : null;
@@ -20,7 +21,13 @@ export async function AppChrome({ children }: { children: React.ReactNode }) {
       />
       <MobileDock
         href={continueItem?.href ?? (user ? "/account" : "/courses")}
-        label={continueItem ? "Continue" : user ? "My panel" : "Browse courses"}
+        label={
+          continueItem
+            ? dict.mobileDock.continueLearning
+            : user
+              ? dict.mobileDock.myPanel
+              : dict.mobileDock.browseCourses
+        }
       />
     </>
   );

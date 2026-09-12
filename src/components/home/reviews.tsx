@@ -1,6 +1,7 @@
 import { MediaSlider } from "@/components/home/media-slider";
 import { Reveal } from "@/components/home/reveal";
 import { StarRow } from "@/components/stars";
+import { getDictionary } from "@/lib/i18n";
 import { initialsFromName } from "@/lib/slug";
 import { listLatestReviews, type PublicReview } from "@/lib/reviews";
 
@@ -13,15 +14,16 @@ export async function Reviews() {
   }
   if (live.length === 0) return null;
   const items = live;
+  const dict = await getDictionary();
 
   return (
     <section className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
       <Reveal>
         <p className="text-base font-medium tracking-[0.18em] text-primary uppercase">
-          Reviews
+          {dict.reviews.kicker}
         </p>
         <h2 className="mt-3 font-heading text-4xl font-semibold tracking-tight sm:text-5xl">
-          From students who bought the course
+          {dict.reviews.title}
         </h2>
       </Reveal>
 
@@ -37,6 +39,8 @@ export async function Reviews() {
                   <img
                     src={item.photo}
                     alt={item.name}
+                    loading="lazy"
+                    decoding="async"
                     className="size-12 shrink-0 rounded-full object-cover"
                   />
                 ) : (

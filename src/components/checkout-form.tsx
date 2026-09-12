@@ -5,17 +5,13 @@ import { checkoutAction } from "@/app/actions";
 import { formatBdt } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
+import { useLocale } from "@/components/locale-provider";
 
 type MethodId = "bkash" | "nagad";
 
 const methodNames: Record<MethodId, { en: string; bn: string }> = {
   bkash: { en: "bKash", bn: "বিকাশ" },
   nagad: { en: "Nagad", bn: "নগদ" },
-};
-
-const errorCopy: Record<string, string> = {
-  method: "পেমেন্ট মাধ্যম বেছে নিন।",
-  payer: "যে নাম্বার থেকে টাকা পাঠিয়েছেন সেটি দিন (01XXXXXXXXX)।",
 };
 
 export function CheckoutForm({
@@ -31,6 +27,12 @@ export function CheckoutForm({
   nagadNumber: string;
   defaultPayerNumber: string;
 }) {
+  const { locale, dict } = useLocale();
+  const errorCopy: Record<string, string> = {
+    method: dict.checkoutForm.errorMethod,
+    payer: dict.checkoutForm.errorPayer,
+  };
+
   // Only offer a wallet the admin has actually set a number for.
   const wallets = (
     [
@@ -41,16 +43,16 @@ export function CheckoutForm({
 
   const [method, setMethod] = useState<MethodId>(wallets[0]?.id ?? "bkash");
   const active = wallets.find((wallet) => wallet.id === method) ?? wallets[0];
-  const name = methodNames[active?.id ?? "bkash"];
+  const name = methodNames[active?.id ?? "bkash"][locale];
 
   if (!active) {
     return (
       <div className="rounded-2xl border bg-card p-6">
         <h2 className="font-heading text-2xl font-semibold tracking-tight">
-          পেমেন্ট নাম্বার এখনো সেট করা হয়নি
+          {dict.checkoutForm.noWalletTitle}
         </h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Payment number is not set yet. একটু পরে আবার চেষ্টা করুন।
+          {dict.checkoutForm.noWalletBody}
         </p>
       </div>
     );
@@ -60,10 +62,10 @@ export function CheckoutForm({
     <form action={checkoutAction} className="space-y-5">
       <div className="rounded-2xl border bg-card p-6">
         <h2 className="font-heading text-2xl font-semibold tracking-tight">
-          টাকা পাঠান
+          {dict.checkoutForm.sendMoneyTitle}
         </h2>
         <p className="mt-1.5 text-sm text-muted-foreground">
-          নিচের নাম্বারে {formatBdt(totalBdt)} Send Money করুন।
+          {dict.checkoutForm.sendMoneyBody(formatBdt(totalBdt))}
         </p>
 
         {wallets.length > 1 ? (
@@ -87,7 +89,7 @@ export function CheckoutForm({
                     className="accent-primary"
                   />
                   <span className="font-heading text-lg font-semibold">
-                    {methodNames[wallet.id].en}
+                    {methodNames[wallet.id][locale]}
                   </span>
                 </label>
               );
@@ -99,7 +101,7 @@ export function CheckoutForm({
 
         <div className="mt-4 rounded-xl border bg-muted/40 px-4 py-3.5">
           <p className="text-xs text-muted-foreground">
-            {name.bn} নাম্বার · {formatBdt(totalBdt)}
+            {dict.checkoutForm.numberLabel(name, formatBdt(totalBdt))}
           </p>
           <p className="mt-1 font-heading text-2xl font-semibold tracking-wide">
             {active.number}
@@ -108,7 +110,7 @@ export function CheckoutForm({
 
         <div className="mt-5">
           <label htmlFor="payerNumber" className="text-sm font-medium">
-            আপনার {name.bn} নাম্বার
+            {dict.checkoutForm.yourNumberLabel(name)}
           </label>
           <input
             id="payerNumber"
@@ -122,7 +124,7 @@ export function CheckoutForm({
             className="mt-1.5 h-11 w-full rounded-lg border bg-background px-3 text-sm"
           />
           <p className="mt-1.5 text-xs text-muted-foreground">
-            যে নাম্বার থেকে টাকা পাঠিয়েছেন।
+            {dict.checkoutForm.payerHint}
           </p>
         </div>
       </div>
@@ -137,10 +139,10 @@ export function CheckoutForm({
         type="submit"
         className={cn(buttonVariants({ size: "lg" }), "h-12 w-full")}
       >
-        অর্ডার করুন · {formatBdt(totalBdt)}
+        {dict.checkoutForm.placeOrder(formatBdt(totalBdt))}
       </button>
       <p className="text-center text-sm text-muted-foreground">
-        অর্ডার করার পর আমরা আপনার পেমেন্ট রিভিউ করে কোর্সটি আনলক করে দেবো।
+        {dict.checkoutForm.afterOrderNote}
       </p>
     </form>
   );

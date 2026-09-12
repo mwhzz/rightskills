@@ -1,6 +1,7 @@
 import { formatStudents } from "@/lib/format";
 import { initialsFromName } from "@/lib/slug";
 import { StarRow } from "@/components/stars";
+import { getDictionary } from "@/lib/i18n";
 import type { PublicReview } from "@/lib/reviews";
 
 function ratingBars(rating: number) {
@@ -29,7 +30,7 @@ function barsFromReviews(reviews: PublicReview[]) {
   }));
 }
 
-export function CourseReviews({
+export async function CourseReviews({
   rating,
   reviewCount,
   reviews,
@@ -38,6 +39,7 @@ export function CourseReviews({
   reviewCount: number;
   reviews?: PublicReview[];
 }) {
+  const dict = await getDictionary();
   const live = reviews && reviews.length > 0;
   const items = live ? reviews : [];
   const bars = live ? barsFromReviews(reviews) : ratingBars(rating);
@@ -52,7 +54,7 @@ export function CourseReviews({
   return (
     <section id="reviews" className="scroll-mt-28">
       <h2 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
-        Student reviews
+        {dict.courseReviews.title}
       </h2>
       <div className="mt-8 grid gap-10 lg:grid-cols-[220px_1fr]">
         <div>
@@ -61,14 +63,16 @@ export function CourseReviews({
           </p>
           <StarRow rating={shownRating} starClassName="size-5" className="mt-2" />
           <p className="mt-2 text-base text-muted-foreground">
-            {shownCount ? `${formatStudents(shownCount)} ratings` : "No ratings yet"}
+            {shownCount
+              ? dict.courseReviews.ratingsSuffix(formatStudents(shownCount))
+              : dict.courseReviews.noRatingsYet}
           </p>
         </div>
         <div className="space-y-2.5">
           {bars.map((bar) => (
             <div key={bar.star} className="flex items-center gap-3">
               <span className="w-12 text-sm text-muted-foreground">
-                {bar.star} star
+                {bar.star} {dict.courseReviews.starLabel}
               </span>
               <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-muted">
                 <div
@@ -92,6 +96,8 @@ export function CourseReviews({
                 <img
                   src={item.photo}
                   alt={item.name}
+                  loading="lazy"
+                  decoding="async"
                   className="size-14 rounded-full object-cover"
                 />
               ) : (

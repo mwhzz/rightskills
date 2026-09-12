@@ -6,7 +6,9 @@ import { PaymentSteps } from "@/components/payment-steps";
 import { TrxForm } from "@/components/trx-form";
 import { formatBdt, formatWhen } from "@/lib/format";
 import { requireUser } from "@/lib/auth";
+import { getDictionary, getLocale } from "@/lib/i18n";
 import { getSettings } from "@/lib/queries";
+import { courseTitle } from "@/lib/courses";
 import { prisma } from "@/lib/db";
 import { cn } from "@/lib/utils";
 
@@ -23,32 +25,33 @@ export default async function CheckoutSuccessPage({
 }) {
   const user = await requireUser("/checkout");
   const { order: orderId, submitted, error } = await searchParams;
-  const [settings, order] = await Promise.all([
+  const [settings, order, dict, locale] = await Promise.all([
     getSettings(),
     prisma.order.findFirst({
       where: { orderId: orderId ?? "", userId: user.id },
       include: { items: { include: { course: true } } },
     }),
+    getDictionary(),
+    getLocale(),
   ]);
 
   if (!order) {
     return (
       <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
         <div className="rounded-2xl border bg-card px-6 py-16 text-center">
-          <p className="font-heading text-2xl font-semibold">No order found</p>
+          <p className="font-heading text-2xl font-semibold">{dict.checkoutSuccess.noOrderTitle}</p>
           <p className="mx-auto mt-2 max-w-md text-base text-muted-foreground">
-            If you just placed an order, open My orders. Otherwise start from
-            the cart.
+            {dict.checkoutSuccess.noOrderBody}
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-2">
             <Link href="/account/orders" className={cn(buttonVariants({ size: "lg" }), "h-11")}>
-              My orders
+              {dict.checkoutSuccess.myOrders}
             </Link>
             <Link
               href="/cart"
               className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-11")}
             >
-              Cart
+              {dict.nav.cart}
             </Link>
           </div>
         </div>
@@ -66,19 +69,19 @@ export default async function CheckoutSuccessPage({
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6">
       <p className="text-sm font-medium tracking-[0.18em] text-primary uppercase">
-        {paid ? "Unlocked" : "Send money"}
+        {paid ? dict.checkoutSuccess.unlockedKicker : dict.checkoutSuccess.sendMoneyKicker}
       </p>
       <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-heading text-4xl font-semibold tracking-tight sm:text-5xl">
             {paid
-              ? "Payment confirmed"
+              ? dict.checkoutSuccess.paymentConfirmed
               : waiting
-                ? "TrxID received"
-                : `Send ${formatBdt(order.totalBdt)} via ${methodLabel}`}
+                ? dict.checkoutSuccess.trxIdReceived
+                : dict.checkoutSuccess.sendVia(formatBdt(order.totalBdt), methodLabel)}
           </h1>
           <p className="mt-3 max-w-2xl text-base text-muted-foreground">
-            Order {order.orderId} · placed {formatWhen(order.createdAt)}
+            {dict.checkoutSuccess.orderPlaced(order.orderId, formatWhen(order.createdAt))}
           </p>
         </div>
         {paid ? (
@@ -94,12 +97,12 @@ export default async function CheckoutSuccessPage({
 
       {submitted ? (
         <p className="mt-6 rounded-2xl border bg-primary/5 px-4 py-3 text-sm">
-          TrxID পেয়েছি। আমরা আপনার পেমেন্ট রিভিউ করে কোর্সটি আনলক করে দেবো।
+          {dict.checkoutSuccess.trxReceivedNote}
         </p>
       ) : null}
       {error === "trx" ? (
         <p className="mt-6 rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-          Enter a valid TrxID (at least 4 characters).
+          {dict.checkoutSuccess.invalidTrxError}
         </p>
       ) : null}
 
@@ -107,9 +110,9 @@ export default async function CheckoutSuccessPage({
         <div className="rounded-2xl border bg-card p-6">
           {paid ? (
             <>
-              <p className="font-heading text-xl font-semibold">Open your course</p>
+              <p className="font-heading text-xl font-semibold">{dict.checkoutSuccess.openYourCourse}</p>
               <p className="mt-2 text-sm text-muted-foreground">
-                This order is marked paid. Lessons are on My learning.
+                {dict.checkoutSuccess.paidBody}
               </p>
               <div className="mt-5 flex flex-wrap gap-2">
                 {order.items.map((item) => (
@@ -118,7 +121,7 @@ export default async function CheckoutSuccessPage({
                     href={`/learn/${item.course.slug}`}
                     className={cn(buttonVariants({ size: "lg" }), "h-11")}
                   >
-                    Open {item.course.title}
+                    {dict.checkoutSuccess.openCourse(courseTitle(item.course, locale))}
                   </Link>
                 ))}
               </div>
@@ -126,7 +129,7 @@ export default async function CheckoutSuccessPage({
           ) : (
             <>
               <p className="text-xs tracking-[0.14em] text-muted-foreground uppercase">
-                Send exactly
+                {dict.checkoutSuccess.sendExactly}
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-3">
                 <p className="font-heading text-4xl font-semibold">
@@ -135,16 +138,16 @@ export default async function CheckoutSuccessPage({
                 <CopyValue value={String(order.totalBdt)} />
               </div>
               <p className="mt-6 text-xs tracking-[0.14em] text-muted-foreground uppercase">
-                To {methodLabel}
+                {dict.checkoutSuccess.toMethod(methodLabel)}
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-3">
                 <p className="font-heading text-3xl font-semibold tracking-wide">
-                  {payTo || "Number not set yet — contact support"}
+                  {payTo || dict.checkoutSuccess.numberNotSet}
                 </p>
                 {payTo ? <CopyValue value={payTo} /> : null}
               </div>
               <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
-                <span className="text-muted-foreground">Order ID</span>
+                <span className="text-muted-foreground">{dict.checkoutSuccess.orderIdLabel}</span>
                 <span className="font-mono font-medium">{order.orderId}</span>
                 <CopyValue value={order.orderId} />
               </div>
@@ -154,10 +157,11 @@ export default async function CheckoutSuccessPage({
                 </p>
               ) : null}
               <ol className="mt-5 space-y-2 text-sm text-muted-foreground">
-                <li>১. {methodLabel} খুলে Send Money দিন।</li>
-                <li>২. উপরের নাম্বারে ঠিক এই টাকাটা পাঠান।</li>
-                <li>৩. SMS থেকে TrxID কপি করে এখানে দিন।</li>
-                <li>৪. আমরা রিভিউ করে কোর্সটি আনলক করে দেবো।</li>
+                {dict.checkoutSuccess.steps(methodLabel).map((step, index) => (
+                  <li key={step}>
+                    {index + 1}. {step}
+                  </li>
+                ))}
               </ol>
             </>
           )}
@@ -166,11 +170,11 @@ export default async function CheckoutSuccessPage({
         <div className="space-y-4">
           {!paid ? (
             <div className="rounded-2xl border bg-card p-5">
-              <p className="font-heading text-lg font-semibold">Paste TrxID</p>
+              <p className="font-heading text-lg font-semibold">{dict.checkoutSuccess.pasteTrxId}</p>
               <p className="mt-1 text-sm text-muted-foreground">
                 {waiting
-                  ? "নতুন করে টাকা পাঠালে TrxID বদলে দিতে পারেন।"
-                  : "Send Money শেষ হলেই TrxID টা এখানে দিন।"}
+                  ? dict.checkoutSuccess.pasteTrxIdHintWaiting
+                  : dict.checkoutSuccess.pasteTrxIdHintDefault}
               </p>
               <div className="mt-4">
                 <TrxForm
@@ -184,7 +188,7 @@ export default async function CheckoutSuccessPage({
           ) : null}
 
           <div className="rounded-2xl border bg-card p-5">
-            <p className="font-heading text-lg font-semibold">In this order</p>
+            <p className="font-heading text-lg font-semibold">{dict.checkoutSuccess.inThisOrder}</p>
             <ul className="mt-3 space-y-2 text-sm">
               {order.items.map((item) => (
                 <li
@@ -192,7 +196,7 @@ export default async function CheckoutSuccessPage({
                   className="flex items-center justify-between gap-3 rounded-xl border px-3 py-2"
                 >
                   <span className="min-w-0 truncate font-medium">
-                    {item.course.title}
+                    {courseTitle(item.course, locale)}
                   </span>
                   <span className="shrink-0 text-muted-foreground">
                     {formatBdt(item.priceBdt)}
@@ -208,13 +212,13 @@ export default async function CheckoutSuccessPage({
                   "h-11"
                 )}
               >
-                All orders
+                {dict.checkoutSuccess.allOrders}
               </Link>
               <Link
                 href="/learn"
                 className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-11")}
               >
-                My learning
+                {dict.nav.myLearning}
               </Link>
             </div>
           </div>

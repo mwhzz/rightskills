@@ -4,16 +4,12 @@ import Link from "next/link";
 import { CoursePlayer } from "@/components/course-player";
 import { ReviewForm } from "@/components/review-form";
 import { requireUser } from "@/lib/auth";
+import { getDictionary, getLocale } from "@/lib/i18n";
+import { courseTitle } from "@/lib/courses";
 import { getCourseBySlug, getOwnedSlugsForUser } from "@/lib/queries";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
-
-const reviewCopy: Record<string, { text: string; ok: boolean }> = {
-  saved: { text: "Review saved. It now shows on the course page.", ok: true },
-  rating: { text: "Pick a rating from 1 to 5 stars.", ok: false },
-  short: { text: "Write at least a sentence (12 characters).", ok: false },
-};
 
 export async function generateMetadata({
   params,
@@ -55,16 +51,22 @@ export default async function LearnCoursePage({
       : Promise.resolve(null),
   ]);
 
+  const [dict, locale] = await Promise.all([getDictionary(), getLocale()]);
+  const reviewCopy: Record<string, { text: string; ok: boolean }> = {
+    saved: { text: dict.learnCoursePage.reviewSaved, ok: true },
+    rating: { text: dict.learnCoursePage.reviewRatingError, ok: false },
+    short: { text: dict.learnCoursePage.reviewShortError, ok: false },
+  };
   const flash = review ? reviewCopy[review] : undefined;
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
       <p className="mb-6 text-sm text-muted-foreground">
         <Link href="/learn" className="hover:text-foreground">
-          My learning
+          {dict.nav.myLearning}
         </Link>
         <span className="mx-2">/</span>
-        {course.title}
+        {courseTitle(course, locale)}
       </p>
       <CoursePlayer
         course={course}
@@ -97,17 +99,16 @@ export default async function LearnCoursePage({
           </div>
           <aside className="h-fit rounded-2xl border bg-card p-5 text-sm leading-6 text-muted-foreground">
             <p className="font-heading text-base font-semibold text-foreground">
-              Why review
+              {dict.learnCoursePage.whyReview}
             </p>
             <p className="mt-2">
-              One review per course. Teachers see it on their panel. You can
-              edit it any time from this page.
+              {dict.learnCoursePage.whyReviewBody}
             </p>
             <Link
               href={`/courses/${course.slug}#reviews`}
               className="mt-3 inline-block font-medium text-primary hover:underline"
             >
-              See public reviews
+              {dict.learnCoursePage.seePublicReviews}
             </Link>
           </aside>
         </div>

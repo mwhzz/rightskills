@@ -4,28 +4,34 @@ import { CourseCover } from "@/components/course-cover";
 import { buttonVariants } from "@/components/ui/button";
 import { formatBdt } from "@/lib/format";
 import { getCart } from "@/lib/session";
+import { getDictionary, getLocale } from "@/lib/i18n";
 import { removeFromCartAction } from "@/app/actions";
 import { listPublishedCourses } from "@/lib/queries";
+import { courseTitle } from "@/lib/courses";
 import { cn } from "@/lib/utils";
 
 export async function CartView() {
-  const [cart, courses] = await Promise.all([getCart(), listPublishedCourses()]);
+  const [cart, courses, dict, locale] = await Promise.all([
+    getCart(),
+    listPublishedCourses(),
+    getDictionary(),
+    getLocale(),
+  ]);
   const items = courses.filter((course) => cart.includes(course.slug));
   const cartTotal = items.reduce((sum, course) => sum + course.priceBdt, 0);
 
   if (items.length === 0) {
     return (
       <div className="rounded-xl border border-dashed bg-card px-6 py-16 text-center">
-        <p className="font-heading text-lg font-semibold">Cart is empty</p>
+        <p className="font-heading text-lg font-semibold">{dict.cart.emptyTitle}</p>
         <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-          Pick a course from the catalogue. Pay by bKash or Nagad send-money;
-          access unlocks after an admin confirms your TrxID.
+          {dict.cart.emptyBody}
         </p>
         <Link
           href="/courses"
           className={cn(buttonVariants({ size: "lg" }), "mt-5")}
         >
-          Browse courses
+          {dict.mobileDock.browseCourses}
         </Link>
       </div>
     );
@@ -49,7 +55,7 @@ export async function CartView() {
                   href={`/courses/${course.slug}`}
                   className="font-heading font-semibold hover:text-primary"
                 >
-                  {course.title}
+                  {courseTitle(course, locale)}
                 </Link>
                 <p className="mt-1 text-sm text-muted-foreground">
                   {course.instructor.name} · {course.language}
@@ -64,7 +70,7 @@ export async function CartView() {
                     className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
                   >
                     <Trash2 data-icon="inline-start" />
-                    Remove
+                    {dict.cart.remove}
                   </button>
                 </form>
               </div>
@@ -73,25 +79,25 @@ export async function CartView() {
         ))}
       </ul>
       <aside className="h-fit rounded-xl border bg-card p-5">
-        <h2 className="font-heading text-base font-semibold">Order summary</h2>
+        <h2 className="font-heading text-base font-semibold">{dict.cart.orderSummary}</h2>
         <div className="mt-4 flex justify-between text-sm">
           <span className="text-muted-foreground">
-            {items.length} course{items.length === 1 ? "" : "s"}
+            {dict.catalog.courseCount(items.length)}
           </span>
           <span className="font-medium">{formatBdt(cartTotal)}</span>
         </div>
         <div className="mt-3 flex justify-between border-t pt-3 text-sm">
-          <span className="font-medium">Total</span>
+          <span className="font-medium">{dict.cart.total}</span>
           <span className="font-semibold">{formatBdt(cartTotal)}</span>
         </div>
         <Link
           href="/checkout"
           className={cn(buttonVariants({ size: "lg" }), "mt-5 w-full")}
         >
-          Checkout
+          {dict.cart.checkout}
         </Link>
         <p className="mt-3 text-xs leading-5 text-muted-foreground">
-          You will send money to our bKash or Nagad number, then paste the TrxID.
+          {dict.cart.footerNote}
         </p>
       </aside>
     </div>

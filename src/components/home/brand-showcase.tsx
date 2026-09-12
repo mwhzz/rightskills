@@ -49,6 +49,8 @@ export function BrandShowcase({ brands }: { brands: StudioBrand[] }) {
               <img
                 src={item.image}
                 alt={`${item.name} brand photography`}
+                loading="lazy"
+                decoding="async"
                 className="absolute inset-0 h-full w-full object-cover"
               />
             ) : null}

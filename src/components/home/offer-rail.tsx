@@ -7,11 +7,13 @@ import {
   offerImageSrc,
   type HomeOfferRow,
 } from "@/lib/home-offers";
+import { getDictionary } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-export function OfferRail({ row }: { row: HomeOfferRow }) {
+export async function OfferRail({ row }: { row: HomeOfferRow }) {
   const items = row.items.filter((item) => item.image);
   if (items.length === 0) return null;
+  const dict = await getDictionary();
 
   const cardClass = cn(
     "relative shrink-0 snap-start overflow-hidden rounded-2xl border bg-background",
@@ -21,7 +23,7 @@ export function OfferRail({ row }: { row: HomeOfferRow }) {
 
   return (
     <section
-      aria-label={row.title || "Offers"}
+      aria-label={row.title || dict.offers.ariaFallback}
       className="border-y border-border/80 bg-card/70"
     >
       <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:py-10">
@@ -50,7 +52,7 @@ export function OfferRail({ row }: { row: HomeOfferRow }) {
                 className={cn(cardClass, "transition hover:border-primary/50")}
               >
                 {image}
-                <span className="sr-only">Open offer</span>
+                <span className="sr-only">{dict.offers.openOffer}</span>
               </Link>
             ) : (
               <div key={item.id} className={cardClass}>

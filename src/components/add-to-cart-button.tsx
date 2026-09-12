@@ -5,9 +5,10 @@ import {
 import { buttonVariants } from "@/components/ui/button";
 import { Check, ShoppingBag } from "lucide-react";
 import Link from "next/link";
+import { getDictionary } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-export function AddToCartButton({
+export async function AddToCartButton({
   slug,
   owned,
   inCart,
@@ -16,6 +17,8 @@ export function AddToCartButton({
   owned: boolean;
   inCart: boolean;
 }) {
+  const dict = await getDictionary();
+
   if (owned) {
     return (
       <Link
@@ -23,7 +26,7 @@ export function AddToCartButton({
         className={cn(buttonVariants({ size: "lg" }), "h-12 w-full text-base")}
       >
         <Check data-icon="inline-start" />
-        Go to course
+        {dict.cta.goToCourse}
       </Link>
     );
   }
@@ -38,7 +41,7 @@ export function AddToCartButton({
         )}
       >
         <ShoppingBag data-icon="inline-start" />
-        In cart — checkout
+        {dict.cta.inCartCheckout}
       </Link>
     );
   }
@@ -51,7 +54,7 @@ export function AddToCartButton({
         className={cn(buttonVariants({ size: "lg" }), "h-12 w-full text-base")}
       >
         <ShoppingBag data-icon="inline-start" />
-        Add to cart
+        {dict.cta.addToCart}
       </button>
     </form>
   );
@@ -61,7 +64,8 @@ export function AddToCartButton({
  * Buy now for a course card. The card is one big stretched link, so this sits
  * above it on its own layer and stops the click from opening the card.
  */
-export function CardBuyNowButton({ slug }: { slug: string }) {
+export async function CardBuyNowButton({ slug }: { slug: string }) {
+  const dict = await getDictionary();
   return (
     <form action={buyNowAction} className="relative z-10">
       <input type="hidden" name="slug" value={slug} />
@@ -70,13 +74,13 @@ export function CardBuyNowButton({ slug }: { slug: string }) {
         className={cn(buttonVariants({ size: "sm" }), "h-10 w-full text-sm")}
       >
         <ShoppingBag data-icon="inline-start" />
-        Buy now
+        {dict.cta.buyNow}
       </button>
     </form>
   );
 }
 
-export function BuyNowButton({
+export async function BuyNowButton({
   slug,
   owned,
 }: {
@@ -84,6 +88,7 @@ export function BuyNowButton({
   owned: boolean;
 }) {
   if (owned) return null;
+  const dict = await getDictionary();
 
   return (
     <form action={buyNowAction}>
@@ -95,7 +100,7 @@ export function BuyNowButton({
           "h-12 w-full text-base"
         )}
       >
-        Buy now
+        {dict.cta.buyNow}
       </button>
     </form>
   );

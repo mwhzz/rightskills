@@ -23,16 +23,12 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { logoutAction } from "@/app/actions";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { useLocale } from "@/components/locale-provider";
 import { brand } from "@/lib/brand";
 import { initialsFromName } from "@/lib/slug";
 import { cn } from "@/lib/utils";
 import type { Role } from "@prisma/client";
-
-const links = [
-  { href: "/courses", label: "Courses" },
-  { href: "/instructors", label: "Instructors" },
-  { href: "/brands", label: "Studio" },
-];
 
 export function SiteHeader({
   cartCount = 0,
@@ -42,12 +38,18 @@ export function SiteHeader({
   user?: { name: string; role: Role } | null;
 }) {
   const pathname = usePathname();
+  const { dict } = useLocale();
   const staff = user?.role === "admin" || user?.role === "teacher";
   const [scrolled, setScrolled] = useState(false);
   const loginHref =
     pathname === "/checkout" || pathname === "/cart"
       ? "/login?next=/checkout"
       : "/login";
+  const links = [
+    { href: "/courses", label: dict.nav.courses },
+    { href: "/instructors", label: dict.nav.instructors },
+    { href: "/brands", label: dict.nav.studio },
+  ];
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -105,20 +107,21 @@ export function SiteHeader({
           <input
             type="search"
             name="q"
-            placeholder="Search courses"
-            aria-label="Search courses"
+            placeholder={dict.nav.searchPlaceholder}
+            aria-label={dict.nav.searchAria}
             className="h-9 w-full rounded-full border border-border/80 bg-background/80 pr-3 pl-9 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
           />
         </form>
 
         <div className="ml-auto flex items-center gap-1.5 md:ml-0">
+          <LanguageSwitcher className="hidden md:inline-flex" />
           <Link
             href="/cart"
             className={cn(
               buttonVariants({ variant: "outline", size: "icon" }),
               "relative size-9 rounded-full"
             )}
-            aria-label={cartCount ? `Cart, ${cartCount} items` : "Cart"}
+            aria-label={cartCount ? dict.nav.cartWithCount(cartCount) : dict.nav.cart}
           >
             <ShoppingBag className="size-4" />
             {cartCount > 0 ? (
@@ -134,7 +137,7 @@ export function SiteHeader({
                   buttonVariants({ variant: "outline", size: "icon" }),
                   "size-9 rounded-full"
                 )}
-                aria-label="Account menu"
+                aria-label={dict.nav.accountMenu}
               >
                 <span className="font-heading text-[11px] font-semibold text-primary">
                   {initialsFromName(user.name)}
@@ -149,17 +152,17 @@ export function SiteHeader({
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem render={<Link href="/account" />}>
-                    My panel
+                    {dict.nav.myPanel}
                   </DropdownMenuItem>
                   <DropdownMenuItem render={<Link href="/learn" />}>
-                    My learning
+                    {dict.nav.myLearning}
                   </DropdownMenuItem>
                   <DropdownMenuItem render={<Link href="/account/orders" />}>
-                    Orders
+                    {dict.nav.orders}
                   </DropdownMenuItem>
                   {staff ? (
                     <DropdownMenuItem render={<Link href="/admin" />}>
-                      Studio
+                      {dict.nav.studio}
                     </DropdownMenuItem>
                   ) : null}
                 </DropdownMenuGroup>
@@ -169,7 +172,7 @@ export function SiteHeader({
                     type="submit"
                     className="flex w-full items-center rounded-md px-1.5 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground"
                   >
-                    Log out
+                    {dict.nav.logout}
                   </button>
                 </form>
               </DropdownMenuContent>
@@ -182,7 +185,7 @@ export function SiteHeader({
                 "hidden h-9 rounded-full px-4 md:inline-flex"
               )}
             >
-              Log in
+              {dict.nav.login}
             </Link>
           )}
 
@@ -193,7 +196,7 @@ export function SiteHeader({
                   variant="outline"
                   size="icon"
                   className="size-9 rounded-full lg:hidden"
-                  aria-label="Open menu"
+                  aria-label={dict.nav.openMenu}
                 />
               }
             >
@@ -218,14 +221,14 @@ export function SiteHeader({
                     <input
                       type="search"
                       name="q"
-                      placeholder="Search courses"
-                      aria-label="Search courses"
+                      placeholder={dict.nav.searchPlaceholder}
+                      aria-label={dict.nav.searchAria}
                       className="h-9 w-full rounded-full border bg-background pr-3 pl-9 text-sm outline-none"
                     />
                   </div>
                 </form>
                 <Link href="/" className="rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-muted">
-                  Home
+                  {dict.nav.home}
                 </Link>
                 {links.map((link) => (
                   <Link
@@ -237,21 +240,24 @@ export function SiteHeader({
                   </Link>
                 ))}
                 <Link href="/account" className="rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-muted">
-                  My panel
+                  {dict.nav.myPanel}
                 </Link>
                 <Link href="/learn" className="rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-muted">
-                  My learning
+                  {dict.nav.myLearning}
                 </Link>
                 {user ? (
                   <Link href="/account/orders" className="rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-muted">
-                    Orders
+                    {dict.nav.orders}
                   </Link>
                 ) : null}
                 {staff ? (
                   <Link href="/admin" className="rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-muted">
-                    Studio
+                    {dict.nav.studio}
                   </Link>
                 ) : null}
+                <div className="px-3 pt-2">
+                  <LanguageSwitcher className="w-full" />
+                </div>
               </div>
               <div className="mt-auto border-t px-4 py-4">
                 {user ? (
@@ -260,7 +266,7 @@ export function SiteHeader({
                       type="submit"
                       className={cn(buttonVariants({ variant: "outline" }), "h-10 w-full rounded-full")}
                     >
-                      Log out
+                      {dict.nav.logout}
                     </button>
                   </form>
                 ) : (
@@ -268,7 +274,7 @@ export function SiteHeader({
                     href={loginHref}
                     className={cn(buttonVariants(), "h-10 w-full rounded-full")}
                   >
-                    Log in
+                    {dict.nav.login}
                   </Link>
                 )}
               </div>
