@@ -379,10 +379,13 @@ export const bn: Dictionary = {
     title: "কোর্স কনটেন্ট",
     summary: (sections: number, lectures: number, minutes: number) =>
       `${sections}টি সেকশন · ${lectures}টি লেকচার · মোট ${minutes} মিনিট`,
+    summaryNoMinutes: (sections: number, lectures: number) =>
+      `${sections}টি সেকশন · ${lectures}টি লেকচার`,
     collapseAll: "সব সেকশন সংকুচিত করুন",
     expandAll: "সব সেকশন বিস্তৃত করুন",
     moduleSummary: (lectures: number, minutes: number) =>
       `${lectures}টি লেকচার · ${minutes} মিনিট`,
+    moduleSummaryNoMinutes: (lectures: number) => `${lectures}টি লেকচার`,
     preview: "প্রিভিউ",
     minSuffix: (min: number) => `${min} মিনিট`,
   },

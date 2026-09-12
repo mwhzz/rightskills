@@ -381,10 +381,13 @@ export const en = {
     title: "Course content",
     summary: (sections: number, lectures: number, minutes: number) =>
       `${sections} sections · ${lectures} lectures · ${minutes} min total`,
+    summaryNoMinutes: (sections: number, lectures: number) =>
+      `${sections} sections · ${lectures} lectures`,
     collapseAll: "Collapse all sections",
     expandAll: "Expand all sections",
     moduleSummary: (lectures: number, minutes: number) =>
       `${lectures} lectures · ${minutes} min`,
+    moduleSummaryNoMinutes: (lectures: number) => `${lectures} lectures`,
     preview: "Preview",
     minSuffix: (min: number) => `${min} min`,
   },

@@ -231,7 +231,7 @@ export function CurriculumEditor({
                 name="durationMin"
                 type="number"
                 min={0}
-                defaultValue={10}
+                placeholder="Minutes"
                 className="h-10 w-24 rounded-lg border px-2 text-sm"
               />
               <input

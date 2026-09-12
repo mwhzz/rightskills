@@ -40,7 +40,9 @@ export function CourseCurriculum({ modules }: { modules: Module[] }) {
             {dict.curriculum.title}
           </h2>
           <p className="mt-2 text-base text-muted-foreground">
-            {dict.curriculum.summary(modules.length, lessonTotal, minutes)}
+            {minutes > 0
+              ? dict.curriculum.summary(modules.length, lessonTotal, minutes)
+              : dict.curriculum.summaryNoMinutes(modules.length, lessonTotal)}
           </p>
         </div>
         <button
@@ -77,7 +79,9 @@ export function CourseCurriculum({ modules }: { modules: Module[] }) {
                   {module.title}
                 </span>
                 <span className="hidden text-sm text-muted-foreground sm:inline">
-                  {dict.curriculum.moduleSummary(module.lessons.length, moduleMinutes)}
+                  {moduleMinutes > 0
+                    ? dict.curriculum.moduleSummary(module.lessons.length, moduleMinutes)
+                    : dict.curriculum.moduleSummaryNoMinutes(module.lessons.length)}
                 </span>
               </button>
               {open ? (
@@ -103,10 +107,12 @@ export function CourseCurriculum({ modules }: { modules: Module[] }) {
                           </a>
                         ) : null}
                       </span>
-                      <span className="inline-flex shrink-0 items-center gap-1 text-sm text-muted-foreground">
-                        <Clock className="size-3.5" />
-                        {dict.curriculum.minSuffix(lesson.durationMin)}
-                      </span>
+                      {lesson.durationMin > 0 ? (
+                        <span className="inline-flex shrink-0 items-center gap-1 text-sm text-muted-foreground">
+                          <Clock className="size-3.5" />
+                          {dict.curriculum.minSuffix(lesson.durationMin)}
+                        </span>
+                      ) : null}
                     </li>
                   ))}
                 </ul>
