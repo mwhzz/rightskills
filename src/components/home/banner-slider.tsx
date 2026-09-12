@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import {
@@ -57,16 +58,22 @@ export function BannerSlider({
           {slides.map((banner, i) => {
             if (i !== index) return null;
             const src = bannerImageSrc(banner.image);
-            const image = (
+            const fit = variant === "mobile" ? "object-cover" : "object-contain";
+            const image = src.startsWith("/") ? (
+              <Image
+                src={src}
+                alt=""
+                fill
+                sizes="100vw"
+                className={fit}
+              />
+            ) : (
               <img
                 src={src}
                 alt=""
                 loading="lazy"
                 decoding="async"
-                className={cn(
-                  "absolute inset-0 h-full w-full",
-                  variant === "mobile" ? "object-cover" : "object-contain"
-                )}
+                className={cn("absolute inset-0 h-full w-full", fit)}
               />
             );
             return (

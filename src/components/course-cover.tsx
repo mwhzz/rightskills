@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { Course } from "@/lib/courses";
 import { brand } from "@/lib/brand";
 import { cn } from "@/lib/utils";
@@ -17,15 +18,29 @@ export function CourseCover({
   className?: string;
 }) {
   if (course.cover.image) {
+    // Images we serve ourselves (the common case) get resized/re-encoded by
+    // next/image. An admin-pasted external URL falls back to a plain <img> —
+    // next/image would need that host allow-listed in next.config.ts first.
+    const local = course.cover.image.startsWith("/");
     return (
       <div className={cn("relative overflow-hidden bg-muted", className)}>
-        <img
-          src={course.cover.image}
-          alt=""
-          loading="lazy"
-          decoding="async"
-          className="absolute inset-0 h-full w-full object-cover"
-        />
+        {local ? (
+          <Image
+            src={course.cover.image}
+            alt=""
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
+            className="object-cover"
+          />
+        ) : (
+          <img
+            src={course.cover.image}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        )}
       </div>
     );
   }
