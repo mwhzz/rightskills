@@ -755,6 +755,44 @@ export async function publishCourseAction(formData: FormData) {
   redirect("/admin/courses");
 }
 
+export async function deleteCourseAction(formData: FormData) {
+  const user = await requireRole("admin", "teacher");
+  const id = String(formData.get("id") ?? "");
+  const course = await prisma.course.findUnique({
+    where: { id },
+    include: {
+      modules: { include: { lessons: { include: { resources: true } } } },
+      _count: { select: { orderItems: true } },
+    },
+  });
+  if (!course) redirect("/admin/courses");
+  if (user.role === "teacher" && course.teacherId !== user.id) {
+    redirect("/admin/courses");
+  }
+  if (course._count.orderItems > 0) {
+    redirect(
+      `/admin/courses?error=${encodeURIComponent(
+        "This course has orders and can't be deleted. Unpublish it instead."
+      )}`
+    );
+  }
+
+  await removeCoverImage(id);
+  await removeInstructorPhoto(id);
+  for (const courseModule of course.modules) {
+    for (const lesson of courseModule.lessons) {
+      await removeUpload(lesson.videoPath);
+      for (const resource of lesson.resources) {
+        await removeUpload(resource.filePath);
+      }
+    }
+  }
+
+  await prisma.course.delete({ where: { id } });
+  clearPublicCache();
+  redirect("/admin/courses");
+}
+
 export async function addModuleAction(formData: FormData) {
   const user = await requireRole("admin", "teacher");
   const courseId = String(formData.get("courseId") ?? "");
