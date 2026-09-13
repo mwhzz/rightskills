@@ -78,8 +78,8 @@ export async function CourseBuyCard({
               target="_blank"
               rel="noopener noreferrer"
               className={cn(
-                buttonVariants({ variant: "outline", size: "lg" }),
-                "h-12 w-full text-base"
+                buttonVariants({ size: "lg" }),
+                "h-12 w-full border-[#25D366] bg-[#25D366] text-base text-white hover:bg-[#1ebe57] hover:text-white focus-visible:border-[#128C7E] focus-visible:ring-[#25D366]/40"
               )}
             >
               <MessageCircle data-icon="inline-start" />
