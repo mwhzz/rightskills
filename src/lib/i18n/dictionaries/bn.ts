@@ -474,6 +474,7 @@ export const bn: Dictionary = {
     level: "লেভেল",
     allLevels: "সব লেভেল",
     sort: "সাজান",
+    sortManual: "আমাদের সাজানো",
     sortMostLearners: "সবচেয়ে বেশি শিক্ষার্থী",
     sortHighestRated: "সর্বোচ্চ রেটিং",
     sortPriceAsc: "দাম: কম থেকে বেশি",

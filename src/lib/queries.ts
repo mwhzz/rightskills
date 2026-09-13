@@ -96,7 +96,11 @@ function mapCard(
 export async function listPublishedCourses(): Promise<Course[]> {
   const rows = await loadPublishedCardRows();
   return [...rows]
-    .sort((a, b) => b.students - a.students)
+    .sort(
+      (a, b) =>
+        (a.sortOrder ?? 0) - (b.sortOrder ?? 0) ||
+        b.createdAt.getTime() - a.createdAt.getTime()
+    )
     .map(mapCard);
 }
 
@@ -104,7 +108,11 @@ export async function listFeaturedCourses(take = 6): Promise<Course[]> {
   const rows = await loadPublishedCardRows();
   return rows
     .filter((row) => row.featured)
-    .sort((a, b) => b.students - a.students)
+    .sort(
+      (a, b) =>
+        (a.sortOrder ?? 0) - (b.sortOrder ?? 0) ||
+        b.students - a.students
+    )
     .slice(0, take)
     .map(mapCard);
 }

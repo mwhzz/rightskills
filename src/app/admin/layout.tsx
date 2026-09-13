@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { headers } from "next/headers";
-import { requireRole } from "@/lib/auth";
 import { logoutAction } from "@/app/actions";
 import { BrandMark } from "@/components/brand-mark";
 import { buttonVariants } from "@/components/ui/button";
+import { can, getStaffSession, type StaffKey } from "@/lib/staff";
 import { cn } from "@/lib/utils";
 import { brand } from "@/lib/brand";
 
@@ -14,30 +14,41 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = await requireRole("admin", "teacher");
-  const isAdmin = user.role === "admin";
+  const staff = await getStaffSession();
   const pathname = (await headers()).get("x-pathname") ?? "/admin";
 
-  const links = [
-    { href: "/admin", label: "Dashboard" },
-    { href: "/admin/courses", label: "Courses" },
-    { href: "/admin/students", label: "Students" },
-    { href: "/admin/reviews", label: "Reviews" },
-    ...(isAdmin
-      ? [
-          { href: "/admin/orders", label: "Orders" },
-          { href: "/admin/users", label: "Users" },
-          { href: "/admin/banners", label: "Banners" },
-          { href: "/admin/offers", label: "Offers" },
-          { href: "/admin/settings", label: "Settings" },
-        ]
-      : []),
+  const links: { href: string; label: string; access: StaffKey }[] = [
+    { href: "/admin", label: "Dashboard", access: "courses" },
+    { href: "/admin/courses", label: "Courses", access: "courses" },
+    { href: "/admin/students", label: "Students", access: "students" },
+    { href: "/admin/reviews", label: "Reviews", access: "reviews" },
+    { href: "/admin/orders", label: "Orders", access: "orders" },
+    { href: "/admin/users", label: "Users", access: "users" },
+    { href: "/admin/activity", label: "Activity log", access: "orders" },
+    { href: "/admin/banners", label: "Banners", access: "banners" },
+    { href: "/admin/offers", label: "Offers", access: "offers" },
+    { href: "/admin/settings", label: "Settings", access: "settings" },
   ];
+  const visible = links.filter((link) => {
+    if (link.href === "/admin") return true;
+    if (staff.isTeacher && (link.access === "courses" || link.access === "reviews")) {
+      return true;
+    }
+    if (staff.isTeacher && link.access === "students") return true;
+    if (link.href === "/admin/activity") return !staff.isTeacher;
+    return can(staff.access, link.access);
+  });
 
   function isActive(href: string) {
     if (href === "/admin") return pathname === "/admin";
     return pathname === href || pathname.startsWith(`${href}/`);
   }
+
+  const roleLabel = staff.isTeacher
+    ? "Teacher"
+    : staff.isFull
+      ? "Admin"
+      : "Staff";
 
   return (
     <div className="flex h-full min-h-0 bg-muted/40">
@@ -48,13 +59,11 @@ export default async function AdminLayout({
             <span className="block text-sm font-semibold tracking-tight">
               {brand.name}
             </span>
-            <span className="block text-xs text-muted-foreground">
-              {isAdmin ? "Admin" : "Teacher"}
-            </span>
+            <span className="block text-xs text-muted-foreground">{roleLabel}</span>
           </span>
         </Link>
         <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
-          {links.map((link) => (
+          {visible.map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -88,7 +97,7 @@ export default async function AdminLayout({
         <header className="flex items-center justify-between border-b bg-card px-4 py-3 md:px-6">
           <div className="flex min-w-0 items-center gap-3 overflow-x-auto md:hidden">
             <BrandMark className="size-8 shrink-0 text-primary" />
-            {links.map((link) => (
+            {visible.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -102,7 +111,7 @@ export default async function AdminLayout({
             ))}
           </div>
           <p className="ml-auto text-sm text-muted-foreground">
-            {user.name} · {user.role}
+            {staff.name} · {roleLabel}
           </p>
         </header>
         <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-8">{children}</div>

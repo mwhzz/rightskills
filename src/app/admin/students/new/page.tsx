@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireRole } from "@/lib/auth";
+import { requireAccess } from "@/lib/staff";
 import { prisma } from "@/lib/db";
 import { StudentProfileForm } from "@/components/admin/student-profile-form";
 
@@ -8,7 +8,7 @@ export default async function NewStudentPage({
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
-  await requireRole("admin");
+  await requireAccess("students");
   const { error } = await searchParams;
   const courses = await prisma.course.findMany({
     select: { id: true, title: true },

@@ -39,6 +39,7 @@ model User {
   gender        String           @default("")
   notes         String           @default("") @db.Text
   role          Role             @default(student)
+  staffAccess   String           @default("[\"full\"]") @db.VarChar(500)
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
   coursesTaught Course[]         @relation("TeacherCourses")
@@ -46,6 +47,7 @@ model User {
   enrollments   Enrollment[]
   progress      LessonProgress[]
   reviews       CourseReview[]
+  auditLogs     AuditLog[]
 }
 
 model Course {
@@ -68,6 +70,7 @@ model Course {
   students           Int            @default(0)
   featured           Boolean        @default(false)
   published          Boolean        @default(true)
+  sortOrder          Int            @default(0)
   outcomes           Json
   instructorName     String
   instructorTitle    String
@@ -196,4 +199,17 @@ model Setting {
   payInstructions String @db.Text
   homeBanners     String @db.Text
   homeOffers      String @db.Text
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String
+  target    String   @default("")
+  detail    String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([userId])
 }

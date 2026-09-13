@@ -39,6 +39,7 @@ export function mapCourse(row: CourseRecord): Course {
     reviewCount: row.reviewCount,
     students: row.students,
     featured: row.featured,
+    sortOrder: row.sortOrder ?? 0,
     outcomes: Array.isArray(row.outcomes) ? (row.outcomes as string[]) : [],
     includes: Array.isArray(row.includes) ? (row.includes as string[]) : [],
     instructor: {

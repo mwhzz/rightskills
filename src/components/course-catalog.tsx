@@ -8,10 +8,11 @@ import { cn } from "@/lib/utils";
 import type { Course } from "@/lib/courses";
 import type { CourseProgress } from "@/lib/queries";
 
-type SortId = "popular" | "price-asc" | "price-desc" | "rating";
+type SortId = "manual" | "popular" | "price-asc" | "price-desc" | "rating";
 
 function isSort(value: string | undefined): value is SortId {
   return (
+    value === "manual" ||
     value === "popular" ||
     value === "price-asc" ||
     value === "price-desc" ||
@@ -34,7 +35,7 @@ function catalogHref({
   if (q.trim()) params.set("q", q.trim());
   if (category !== "all") params.set("category", category);
   if (level !== "all") params.set("level", level);
-  if (sort !== "popular") params.set("sort", sort);
+  if (sort !== "manual") params.set("sort", sort);
   const query = params.toString();
   return query ? `/courses?${query}` : "/courses";
 }
@@ -44,7 +45,7 @@ export async function CourseCatalog({
   query = "",
   category = "all",
   level = "all",
-  sort = "popular",
+  sort = "manual",
   ownedSlugs,
   progressBySlug,
 }: {
@@ -62,7 +63,7 @@ export async function CourseCatalog({
     ? (category as CategoryId)
     : "all";
   const activeLevel = levels.includes(level as Level) ? (level as Level) : "all";
-  const activeSort: SortId = isSort(sort) ? sort : "popular";
+  const activeSort: SortId = isSort(sort) ? sort : "manual";
 
   const filtered = courses.filter((course) => {
     const matchesQuery =
@@ -171,6 +172,7 @@ export async function CourseCatalog({
               defaultValue={activeSort}
               className="h-11 rounded-xl border border-input bg-transparent px-3 text-base"
             >
+              <option value="manual">{dict.catalog.sortManual}</option>
               <option value="popular">{dict.catalog.sortMostLearners}</option>
               <option value="rating">{dict.catalog.sortHighestRated}</option>
               <option value="price-asc">{dict.catalog.sortPriceAsc}</option>

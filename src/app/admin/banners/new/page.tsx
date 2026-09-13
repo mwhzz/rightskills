@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireRole } from "@/lib/auth";
+import { requireAccess } from "@/lib/staff";
 import { prisma } from "@/lib/db";
 import { BannerEditorForm } from "@/components/admin/banner-editor-form";
 
@@ -8,7 +8,7 @@ export default async function NewBannerPage({
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
-  await requireRole("admin");
+  await requireAccess("banners");
   const { error } = await searchParams;
   const courses = await prisma.course.findMany({
     where: { published: true },

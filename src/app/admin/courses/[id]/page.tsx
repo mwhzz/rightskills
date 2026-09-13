@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireRole } from "@/lib/auth";
+import { requireAccess } from "@/lib/staff";
 import { prisma } from "@/lib/db";
 import { CourseEditorForm } from "@/components/course-editor-form";
 import { CurriculumEditor } from "@/components/admin/curriculum-editor";
@@ -12,7 +12,7 @@ export default async function EditCoursePage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ error?: string }>;
 }) {
-  const user = await requireRole("admin", "teacher");
+  const user = await requireAccess("courses");
   const { id } = await params;
   const { error } = await searchParams;
   const course = await prisma.course.findUnique({
@@ -31,7 +31,7 @@ export default async function EditCoursePage({
     },
   });
   if (!course) notFound();
-  if (user.role === "teacher" && course.teacherId !== user.id) notFound();
+  if (user.isTeacher && course.teacherId !== user.id) notFound();
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-10">

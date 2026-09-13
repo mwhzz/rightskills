@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireRole } from "@/lib/auth";
+import { requireAccess } from "@/lib/staff";
 import { getSettings } from "@/lib/queries";
 import { SettingsForm } from "@/components/admin/settings-form";
 
@@ -8,7 +8,7 @@ export default async function AdminSettingsPage({
 }: {
   searchParams: Promise<{ saved?: string }>;
 }) {
-  await requireRole("admin");
+  await requireAccess("settings");
   const { saved } = await searchParams;
   const settings = await getSettings();
 

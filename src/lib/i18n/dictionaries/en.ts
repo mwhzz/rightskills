@@ -476,6 +476,7 @@ export const en = {
     level: "Level",
     allLevels: "All levels",
     sort: "Sort",
+    sortManual: "Our order",
     sortMostLearners: "Most learners",
     sortHighestRated: "Highest rated",
     sortPriceAsc: "Price: low to high",

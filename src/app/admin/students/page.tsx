@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { requireRole } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { can, getStaffSession } from "@/lib/staff";
 import { prisma } from "@/lib/db";
 import { formatWhen } from "@/lib/format";
 import { buttonVariants } from "@/components/ui/button";
@@ -10,10 +11,12 @@ export default async function AdminStudentsPage({
 }: {
   searchParams: Promise<{ q?: string; deleted?: string }>;
 }) {
-  const user = await requireRole("admin", "teacher");
+  const staff = await getStaffSession();
+  if (!staff.isTeacher && !can(staff.access, "students")) redirect("/admin");
   const { q: qParam, deleted } = await searchParams;
   const q = (qParam ?? "").trim();
-  const isAdmin = user.role === "admin";
+  const isAdmin = can(staff.access, "students");
+  const user = staff;
 
   const students = await prisma.user.findMany({
     where: {
@@ -54,9 +57,17 @@ export default async function AdminStudentsPage({
           </p>
         </div>
         {isAdmin ? (
-          <Link href="/admin/students/new" className={cn(buttonVariants(), "h-10")}>
-            Add student
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <a
+              href="/admin/students/export"
+              className={cn(buttonVariants({ variant: "outline" }), "h-10")}
+            >
+              Export Excel
+            </a>
+            <Link href="/admin/students/new" className={cn(buttonVariants(), "h-10")}>
+              Add student
+            </Link>
+          </div>
         ) : null}
       </div>
 

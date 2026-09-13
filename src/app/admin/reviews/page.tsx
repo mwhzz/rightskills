@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { StarRow } from "@/components/stars";
-import { requireRole } from "@/lib/auth";
+import { requireAccess } from "@/lib/staff";
 import { prisma } from "@/lib/db";
 import { formatWhen } from "@/lib/format";
 
 export default async function AdminReviewsPage() {
-  const user = await requireRole("admin", "teacher");
+  const user = await requireAccess("reviews");
   const reviews = await prisma.courseReview.findMany({
     where:
-      user.role === "teacher"
+      user.isTeacher
         ? { course: { teacherId: user.id } }
         : undefined,
     include: { user: true, course: true },

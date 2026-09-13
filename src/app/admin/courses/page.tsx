@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { publishCourseAction } from "@/app/actions";
-import { requireRole } from "@/lib/auth";
+import { publishCourseAction, moveCourseAction } from "@/app/actions";
+import { requireAccess } from "@/lib/staff";
 import { prisma } from "@/lib/db";
 import { formatBdt } from "@/lib/format";
 import { StarRow } from "@/components/stars";
@@ -21,10 +21,10 @@ export default async function AdminCoursesPage({
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
-  const user = await requireRole("admin", "teacher");
+  const user = await requireAccess("courses");
   const { error } = await searchParams;
   const courses = await prisma.course.findMany({
-    where: user.role === "teacher" ? { teacherId: user.id } : undefined,
+    where: user.isTeacher ? { teacherId: user.id } : undefined,
     include: {
       teacher: { select: { name: true } },
       _count: {
@@ -36,7 +36,7 @@ export default async function AdminCoursesPage({
         },
       },
     },
-    orderBy: { updatedAt: "desc" },
+    orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
   });
 
   const totals = courses.reduce(
@@ -56,8 +56,8 @@ export default async function AdminCoursesPage({
             Courses
           </h1>
           <p className="mt-1 text-base text-muted-foreground">
-            Add modules, lesson notes, and upload videos. Ratings update when
-            students review from My learning.
+            Add modules, lesson notes, and upload videos. Use the arrows to
+            choose which course shows first on the site.
           </p>
         </div>
         <Link href="/admin/courses/new" className={cn(buttonVariants({ size: "lg" }), "h-11")}>
@@ -145,6 +145,32 @@ export default async function AdminCoursesPage({
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
+                {!user.isTeacher ? (
+                  <div className="mr-1 flex flex-col gap-1">
+                    <form action={moveCourseAction}>
+                      <input type="hidden" name="id" value={course.id} />
+                      <input type="hidden" name="dir" value="up" />
+                      <button
+                        type="submit"
+                        className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+                        aria-label={`Move ${course.title} up`}
+                      >
+                        Up
+                      </button>
+                    </form>
+                    <form action={moveCourseAction}>
+                      <input type="hidden" name="id" value={course.id} />
+                      <input type="hidden" name="dir" value="down" />
+                      <button
+                        type="submit"
+                        className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+                        aria-label={`Move ${course.title} down`}
+                      >
+                        Down
+                      </button>
+                    </form>
+                  </div>
+                ) : null}
                 {course.published ? (
                   <Link
                     href={`/courses/${course.slug}`}

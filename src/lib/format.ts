@@ -1,3 +1,15 @@
+export const DHAKA_TZ = "Asia/Dhaka";
+
+const dhakaWhen: Intl.DateTimeFormatOptions = {
+  timeZone: DHAKA_TZ,
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+  hour12: true,
+};
+
 export function formatBdt(amount: number) {
   return `৳${amount.toLocaleString("en-BD")}`;
 }
@@ -22,13 +34,35 @@ export function formatBytes(bytes: number) {
 }
 
 export function formatWhen(date: Date) {
-  return date.toLocaleString("en-GB", {
+  return date.toLocaleString("en-GB", dhakaWhen);
+}
+
+export function formatDateDhaka(date: Date) {
+  return date.toLocaleDateString("en-GB", {
+    timeZone: DHAKA_TZ,
+    weekday: "short",
     day: "numeric",
     month: "short",
     year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
   });
+}
+
+export function formatTimeDhaka(date: Date) {
+  return date.toLocaleTimeString("en-GB", {
+    timeZone: DHAKA_TZ,
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  });
+}
+
+export function dhakaDayStart(ymd: string) {
+  return new Date(`${ymd}T00:00:00+06:00`);
+}
+
+export function dhakaDayEnd(ymd: string) {
+  return new Date(`${ymd}T23:59:59.999+06:00`);
 }
 
 export function formatAgo(date: Date) {
@@ -39,11 +73,7 @@ export function formatAgo(date: Date) {
   if (hours < 24) return `${hours}h ago`;
   const days = Math.round(hours / 24);
   if (days < 14) return `${days} day${days === 1 ? "" : "s"} ago`;
-  return date.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+  return formatDateDhaka(date);
 }
 
 export function formatMinutes(minutes: number) {

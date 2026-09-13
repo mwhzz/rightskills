@@ -4,7 +4,7 @@ import {
   moveHomeBannerAction,
   toggleHomeBannerAction,
 } from "@/app/actions";
-import { requireRole } from "@/lib/auth";
+import { requireAccess } from "@/lib/staff";
 import { getSettings } from "@/lib/queries";
 import {
   BANNER_MAX,
@@ -19,7 +19,7 @@ export default async function AdminBannersPage({
 }: {
   searchParams: Promise<{ deleted?: string; error?: string }>;
 }) {
-  await requireRole("admin");
+  await requireAccess("banners");
   const { deleted, error } = await searchParams;
   const settings = await getSettings();
   const banners = parseHomeBanners(settings.homeBanners);

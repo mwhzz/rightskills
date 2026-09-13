@@ -18,6 +18,8 @@ import {
   normalizePin,
 } from "@/lib/auth";
 import { getCart, setCartCookie } from "@/lib/session";
+import { requireAccess, serializeAccess, STAFF_KEYS } from "@/lib/staff";
+import { logStaff } from "@/lib/audit";
 import {
   clearPublicCache,
   getOwnedSlugsForUser,
@@ -308,7 +310,7 @@ export async function toggleLessonAction(formData: FormData) {
 }
 
 export async function approveOrderAction(formData: FormData) {
-  await requireRole("admin");
+  await requireAccess("orders");
   const id = String(formData.get("id") ?? "");
   const order = await prisma.order.findUnique({
     where: { id },
@@ -335,16 +337,20 @@ export async function approveOrderAction(formData: FormData) {
       });
     }
   });
+  await logStaff("order.paid", `Marked ${order.orderId} paid`, order.orderId);
   redirect("/admin/orders");
 }
 
 export async function rejectOrderAction(formData: FormData) {
-  await requireRole("admin");
+  await requireAccess("orders");
   const id = String(formData.get("id") ?? "");
+  const order = await prisma.order.findUnique({ where: { id } });
+  if (!order) redirect("/admin/orders");
   await prisma.order.update({
     where: { id },
     data: { status: "rejected" },
   });
+  await logStaff("order.rejected", `Rejected ${order.orderId}`, order.orderId);
   redirect("/admin/orders");
 }
 
@@ -352,7 +358,7 @@ export async function saveSettingsAction(
   _prev: { error: string } | null,
   formData: FormData
 ): Promise<{ error: string } | null> {
-  await requireRole("admin");
+  await requireAccess("settings");
   const bkashRaw = String(formData.get("bkashNumber") ?? "").trim();
   const nagadRaw = String(formData.get("nagadNumber") ?? "").trim();
   const whatsappRaw = String(formData.get("whatsappNumber") ?? "").trim();
@@ -391,6 +397,7 @@ export async function saveSettingsAction(
     },
   });
   clearPublicCache();
+  await logStaff("settings.save", "Updated payment settings");
   redirect("/admin/settings?saved=1");
 }
 
@@ -431,7 +438,7 @@ async function imageFromUpload(
 }
 
 export async function saveHomeBannerAction(formData: FormData) {
-  await requireRole("admin");
+  await requireAccess("banners");
   const existingId = String(formData.get("id") ?? "")
     .replace(/[^a-zA-Z0-9_-]/g, "")
     .slice(0, 40);
@@ -480,7 +487,7 @@ export async function saveHomeBannerAction(formData: FormData) {
 }
 
 export async function deleteHomeBannerAction(formData: FormData) {
-  await requireRole("admin");
+  await requireAccess("banners");
   const id = String(formData.get("id") ?? "");
   if (formData.get("confirm") !== "on") {
     redirect(`/admin/banners/${id}?error=confirm`);
@@ -491,7 +498,7 @@ export async function deleteHomeBannerAction(formData: FormData) {
 }
 
 export async function moveHomeBannerAction(formData: FormData) {
-  await requireRole("admin");
+  await requireAccess("banners");
   const id = String(formData.get("id") ?? "");
   const dir = String(formData.get("dir") ?? "") === "up" ? -1 : 1;
   const items = await readHomeBanners();
@@ -507,7 +514,7 @@ export async function moveHomeBannerAction(formData: FormData) {
 }
 
 export async function toggleHomeBannerAction(formData: FormData) {
-  await requireRole("admin");
+  await requireAccess("banners");
   const id = String(formData.get("id") ?? "");
   const items = await readHomeBanners();
   await writeHomeBanners(
@@ -545,7 +552,7 @@ async function offersFromForm(
 }
 
 export async function saveHomeOffersAction(formData: FormData) {
-  await requireRole("admin");
+  await requireAccess("offers");
   const raw = String(formData.get("offers") ?? "{}");
   let parsed: unknown;
   try {
@@ -580,7 +587,7 @@ export async function saveHomeOffersAction(formData: FormData) {
 }
 
 export async function createTeacherAction(formData: FormData) {
-  await requireRole("admin");
+  await requireAccess("users");
   const name = String(formData.get("name") ?? "").trim();
   const phone = normalizePhone(String(formData.get("phone") ?? ""));
   const pin = normalizePin(String(formData.get("pin") ?? formData.get("password") ?? ""));
@@ -600,11 +607,12 @@ export async function createTeacherAction(formData: FormData) {
       passwordHash: await bcrypt.hash(pin, 12),
     },
   });
+  await logStaff("staff.teacher", `Saved teacher ${name} (${phone})`, phone);
   redirect("/admin/users?created=1");
 }
 
 export async function setUserPinAction(formData: FormData) {
-  await requireRole("admin");
+  await requireAccess("users");
   const phone = normalizePhone(String(formData.get("phone") ?? ""));
   const pin = normalizePin(String(formData.get("pin") ?? ""));
   if (!phone || !pin) redirect("/admin/users?error=1");
@@ -615,6 +623,63 @@ export async function setUserPinAction(formData: FormData) {
     data: { passwordHash: await bcrypt.hash(pin, 12) },
   });
   redirect("/admin/users?pin=1");
+}
+
+export async function createStaffAction(formData: FormData) {
+  const actor = await requireAccess("users");
+  const name = String(formData.get("name") ?? "").trim();
+  const phone = normalizePhone(String(formData.get("phone") ?? ""));
+  const pin = normalizePin(String(formData.get("pin") ?? ""));
+  const keys = STAFF_KEYS.filter((key) => formData.get(`access_${key}`) === "on");
+  if (!name || !phone || !pin) redirect("/admin/users?error=1");
+  if (keys.includes("full") && !actor.isFull) {
+    redirect("/admin/users?error=1");
+  }
+  const staffAccess = serializeAccess(keys.length ? keys : ["orders"]);
+  await prisma.user.upsert({
+    where: { phone },
+    update: {
+      name,
+      role: Role.admin,
+      staffAccess,
+      passwordHash: await bcrypt.hash(pin, 12),
+    },
+    create: {
+      name,
+      phone,
+      role: Role.admin,
+      staffAccess,
+      passwordHash: await bcrypt.hash(pin, 12),
+    },
+  });
+  await logStaff("staff.create", `Saved staff ${name} (${phone}) · ${staffAccess}`, phone);
+  redirect("/admin/users?staff=1");
+}
+
+export async function updateStaffAccessAction(formData: FormData) {
+  const actor = await requireAccess("users");
+  const id = String(formData.get("id") ?? "");
+  const keys = STAFF_KEYS.filter((key) => formData.get(`access_${key}`) === "on");
+  const target = await prisma.user.findUnique({ where: { id } });
+  if (!target || target.role !== "admin") redirect("/admin/users?error=1");
+  if (keys.includes("full") && !actor.isFull) redirect("/admin/users?error=1");
+  if (target.id === actor.id && actor.isFull && !keys.includes("full")) {
+    const otherFull = await prisma.user.count({
+      where: {
+        role: "admin",
+        id: { not: actor.id },
+        staffAccess: { contains: "full" },
+      },
+    });
+    if (otherFull === 0) redirect("/admin/users?error=last");
+  }
+  const staffAccess = serializeAccess(keys.length ? keys : ["orders"]);
+  await prisma.user.update({
+    where: { id },
+    data: { staffAccess },
+  });
+  await logStaff("staff.access", `Updated access for ${target.name} · ${staffAccess}`, target.phone);
+  redirect("/admin/users?access=1");
 }
 
 async function grantCourseIfNew(userId: string, courseId: string) {
@@ -639,7 +704,7 @@ function studentFormRedirect(path: string, error?: string): never {
 }
 
 export async function createStudentAction(formData: FormData) {
-  await requireRole("admin");
+  await requireAccess("students");
   const parsed = parseStudentProfile(formData, {
     requirePhone: true,
     includeNotes: true,
@@ -667,11 +732,12 @@ export async function createStudentAction(formData: FormData) {
     },
   });
   await grantCourseIfNew(user.id, String(formData.get("courseId") ?? ""));
+  await logStaff("student.create", `Created student ${user.name}`, user.phone);
   redirect(`/admin/students/${user.id}?created=1`);
 }
 
 export async function updateStudentAction(formData: FormData) {
-  await requireRole("admin");
+  await requireAccess("students");
   const id = String(formData.get("id") ?? "");
   const existing = await prisma.user.findUnique({ where: { id } });
   if (!existing || existing.role !== "student") redirect("/admin/students");
@@ -710,7 +776,7 @@ export async function updateStudentAction(formData: FormData) {
 }
 
 export async function deleteStudentAction(formData: FormData) {
-  await requireRole("admin");
+  await requireAccess("students");
   const id = String(formData.get("id") ?? "");
   const confirm = String(formData.get("confirm") ?? "") === "on";
   const existing = await prisma.user.findUnique({
@@ -774,7 +840,7 @@ export async function saveCourseAction(
   _prev: SaveCourseState,
   formData: FormData
 ): Promise<SaveCourseState> {
-  const user = await requireRole("admin", "teacher");
+  const user = await requireAccess("courses");
   const id = String(formData.get("id") ?? "");
   const title = String(formData.get("title") ?? "").trim();
   const banglaTitle = String(formData.get("banglaTitle") ?? "").trim();
@@ -918,13 +984,15 @@ export async function saveCourseAction(
       data: { ...data, instructorPhoto, coverImage, slug: existing.slug },
     });
     clearPublicCache();
+    await logStaff("course.save", `Updated course ${title}`, existing.slug);
     redirect(`/admin/courses/${id}`);
   }
 
   const clash = await prisma.course.findUnique({ where: { slug } });
   if (clash) slug = `${slug}-${Date.now().toString(36)}`;
+  const maxOrder = await prisma.course.aggregate({ _max: { sortOrder: true } });
   const created = await prisma.course.create({
-    data: { ...data, slug },
+    data: { ...data, slug, sortOrder: (maxOrder._max.sortOrder ?? 0) + 1 },
   });
   const createdMedia: { instructorPhoto?: string; coverImage?: string } = {};
   try {
@@ -953,11 +1021,45 @@ export async function saveCourseAction(
     };
   }
   clearPublicCache();
+  await logStaff("course.save", `Created course ${title}`, created.slug);
   redirect(`/admin/courses/${created.id}`);
 }
 
+export async function moveCourseAction(formData: FormData) {
+  const staff = await requireAccess("courses");
+  if (staff.isTeacher) redirect("/admin/courses");
+  const id = String(formData.get("id") ?? "");
+  const dir = String(formData.get("dir") ?? "") === "up" ? -1 : 1;
+  const courses = await prisma.course.findMany({
+    orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+    select: { id: true, title: true },
+  });
+  const index = courses.findIndex((course) => course.id === id);
+  const target = index + dir;
+  if (index < 0 || target < 0 || target >= courses.length) {
+    redirect("/admin/courses");
+  }
+  const next = [...courses];
+  [next[index], next[target]] = [next[target], next[index]];
+  await prisma.$transaction(
+    next.map((course, sortOrder) =>
+      prisma.course.update({
+        where: { id: course.id },
+        data: { sortOrder: sortOrder + 1 },
+      })
+    )
+  );
+  clearPublicCache();
+  await logStaff(
+    "course.reorder",
+    `Moved ${courses[index].title} ${dir < 0 ? "up" : "down"}`,
+    courses[index].id
+  );
+  redirect("/admin/courses");
+}
+
 export async function publishCourseAction(formData: FormData) {
-  const user = await requireRole("admin", "teacher");
+  const user = await requireAccess("courses");
   const id = String(formData.get("id") ?? "");
   const existing = await prisma.course.findUnique({ where: { id } });
   if (!existing) redirect("/admin/courses");
@@ -976,7 +1078,7 @@ export async function publishCourseAction(formData: FormData) {
 }
 
 export async function deleteCourseAction(formData: FormData) {
-  const user = await requireRole("admin", "teacher");
+  const user = await requireAccess("courses");
   const id = String(formData.get("id") ?? "");
   const course = await prisma.course.findUnique({
     where: { id },
@@ -1014,7 +1116,7 @@ export async function deleteCourseAction(formData: FormData) {
 }
 
 export async function addModuleAction(formData: FormData) {
-  const user = await requireRole("admin", "teacher");
+  const user = await requireAccess("courses");
   const courseId = String(formData.get("courseId") ?? "");
   const title = String(formData.get("title") ?? "").trim();
   const course = await prisma.course.findUnique({ where: { id: courseId } });
@@ -1072,7 +1174,7 @@ async function saveLessonFiles(lessonId: string, formData: FormData) {
 }
 
 export async function addLessonAction(formData: FormData) {
-  const user = await requireRole("admin", "teacher");
+  const user = await requireAccess("courses");
   const moduleId = String(formData.get("moduleId") ?? "");
   const courseId = String(formData.get("courseId") ?? "");
   const title = String(formData.get("title") ?? "").trim();
@@ -1117,7 +1219,7 @@ export async function addLessonAction(formData: FormData) {
 }
 
 export async function updateLessonAction(formData: FormData) {
-  const user = await requireRole("admin", "teacher");
+  const user = await requireAccess("courses");
   const lessonId = String(formData.get("lessonId") ?? "");
   const courseId = String(formData.get("courseId") ?? "");
   const lesson = await prisma.lesson.findUnique({
@@ -1152,7 +1254,7 @@ export async function updateLessonAction(formData: FormData) {
 }
 
 export async function removeLessonVideoAction(formData: FormData) {
-  const user = await requireRole("admin", "teacher");
+  const user = await requireAccess("courses");
   const lessonId = String(formData.get("lessonId") ?? "");
   const courseId = String(formData.get("courseId") ?? "");
   const lesson = await prisma.lesson.findUnique({
@@ -1172,7 +1274,7 @@ export async function removeLessonVideoAction(formData: FormData) {
 }
 
 export async function deleteLessonResourceAction(formData: FormData) {
-  const user = await requireRole("admin", "teacher");
+  const user = await requireAccess("courses");
   const resourceId = String(formData.get("resourceId") ?? "");
   const courseId = String(formData.get("courseId") ?? "");
   const resource = await prisma.lessonResource.findUnique({

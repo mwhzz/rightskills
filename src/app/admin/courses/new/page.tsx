@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { requireRole } from "@/lib/auth";
+import { requireAccess } from "@/lib/staff";
 import { CourseEditorForm } from "@/components/course-editor-form";
 
 export default async function NewCoursePage() {
-  await requireRole("admin", "teacher");
+  await requireAccess("courses");
   return (
     <div className="mx-auto w-full max-w-6xl">
       <p className="text-sm text-muted-foreground">

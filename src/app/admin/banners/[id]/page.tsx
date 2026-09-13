@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { deleteHomeBannerAction } from "@/app/actions";
-import { requireRole } from "@/lib/auth";
+import { requireAccess } from "@/lib/staff";
 import { prisma } from "@/lib/db";
 import { getSettings } from "@/lib/queries";
 import { parseHomeBanners } from "@/lib/home-banners";
@@ -16,7 +16,7 @@ export default async function EditBannerPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ error?: string; saved?: string }>;
 }) {
-  await requireRole("admin");
+  await requireAccess("banners");
   const { id } = await params;
   const { error, saved } = await searchParams;
   const [settings, courses] = await Promise.all([

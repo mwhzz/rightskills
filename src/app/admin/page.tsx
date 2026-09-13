@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireRole } from "@/lib/auth";
+import { getStaffSession } from "@/lib/staff";
 import { prisma } from "@/lib/db";
 import { formatBdt, formatWhen } from "@/lib/format";
 import { OrderStatusBadge } from "@/components/order-status";
@@ -8,13 +8,13 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export default async function AdminHomePage() {
-  const user = await requireRole("admin", "teacher");
-  const isAdmin = user.role === "admin";
-  const courseWhere = user.role === "teacher" ? { teacherId: user.id } : undefined;
+  const user = await getStaffSession();
+  const isAdmin = !user.isTeacher;
+  const courseWhere = user.isTeacher ? { teacherId: user.id } : undefined;
   const reviewWhere =
-    user.role === "teacher" ? { course: { teacherId: user.id } } : undefined;
+    user.isTeacher ? { course: { teacherId: user.id } } : undefined;
   const enrollWhere =
-    user.role === "teacher" ? { course: { teacherId: user.id } } : undefined;
+    user.isTeacher ? { course: { teacherId: user.id } } : undefined;
 
   const [
     pending,

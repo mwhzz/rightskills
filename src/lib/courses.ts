@@ -75,6 +75,7 @@ export type Course = {
   reviewCount: number;
   students: number;
   featured?: boolean;
+  sortOrder?: number;
   outcomes: string[];
   includes?: string[];
   modules: Module[];

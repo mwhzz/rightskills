@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { deleteStudentAction } from "@/app/actions";
-import { requireRole } from "@/lib/auth";
+import { requireAccess } from "@/lib/staff";
 import { prisma } from "@/lib/db";
 import { StudentProfileForm } from "@/components/admin/student-profile-form";
 import { buttonVariants } from "@/components/ui/button";
@@ -15,7 +15,7 @@ export default async function StudentDetailPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ error?: string; saved?: string; created?: string }>;
 }) {
-  await requireRole("admin");
+  await requireAccess("students");
   const { id } = await params;
   const { error, saved, created } = await searchParams;
   const [student, courses] = await Promise.all([

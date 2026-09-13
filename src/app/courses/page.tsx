@@ -64,7 +64,7 @@ export default async function CoursesPage({
           query={params.q ?? ""}
           category={initialCategory ?? "all"}
           level={params.level ?? "all"}
-          sort={params.sort ?? "popular"}
+          sort={params.sort ?? "manual"}
           ownedSlugs={learning?.ownedSlugs}
           progressBySlug={learning?.progressBySlug}
         />

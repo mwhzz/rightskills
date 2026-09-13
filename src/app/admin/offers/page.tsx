@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireRole } from "@/lib/auth";
+import { requireAccess } from "@/lib/staff";
 import { getSettings } from "@/lib/queries";
 import { parseHomeOffers } from "@/lib/home-offers";
 import { OffersForm } from "@/components/admin/offers-form";
@@ -9,7 +9,7 @@ export default async function AdminOffersPage({
 }: {
   searchParams: Promise<{ saved?: string; error?: string }>;
 }) {
-  await requireRole("admin");
+  await requireAccess("offers");
   const { saved, error } = await searchParams;
   const settings = await getSettings();
 
