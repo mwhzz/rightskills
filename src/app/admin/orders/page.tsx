@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireAccess } from "@/lib/staff";
 import { prisma } from "@/lib/db";
-import { dhakaDayEnd, dhakaDayStart, formatBdt, formatDateDhaka, formatTimeDhaka } from "@/lib/format";
+import { dhakaDayEnd, dhakaDayStart, formatBdt, formatWhen, shiftDhakaYmd, ymdInDhaka } from "@/lib/format";
 import { approveOrderAction, rejectOrderAction } from "@/app/actions";
 import { OrderStatusBadge } from "@/components/order-status";
 import { buttonVariants } from "@/components/ui/button";
@@ -102,13 +102,17 @@ export default async function AdminOrdersPage({
     }),
   ]);
 
+  const today = ymdInDhaka();
+  const yesterday = shiftDhakaYmd(today, -1);
+  const last7 = shiftDhakaYmd(today, -6);
+  const dateActive = Boolean(from || to);
+
   return (
     <div className="mx-auto w-full max-w-6xl">
       <h1 className="font-heading text-3xl font-semibold tracking-tight">Orders</h1>
       <p className="mt-2 max-w-2xl text-base text-muted-foreground">
         Check the paid-from number against your bKash or Nagad app, then mark
-        paid to unlock the course. Reject if nothing matches. Times are Bangladesh
-        time.
+        paid to unlock the course. Reject if nothing matches.
       </p>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -121,44 +125,41 @@ export default async function AdminOrdersPage({
       </div>
       <p className="mt-2 text-sm text-muted-foreground">{rejected} rejected</p>
 
-      <form className="mt-6 grid gap-3 rounded-2xl border bg-card p-4 sm:grid-cols-2 lg:grid-cols-4" action="/admin/orders">
+      <form
+        className="mt-6 flex flex-col gap-3 lg:flex-row lg:items-center"
+        action="/admin/orders"
+      >
         <input
           name="q"
           defaultValue={q}
-          placeholder="Search name, paid-from number, order ID, TrxID"
-          className="h-11 rounded-lg border bg-background px-3 text-sm lg:col-span-2"
+          placeholder="Search name, number, order ID, TrxID"
+          className="h-11 min-w-0 flex-1 rounded-lg border bg-background px-3 text-sm"
         />
-        <label className="text-sm text-muted-foreground">
-          From
+        <div className="flex flex-wrap items-center gap-2">
           <input
             type="date"
             name="from"
             defaultValue={from}
-            className="mt-1 h-11 w-full rounded-lg border bg-background px-3 text-sm text-foreground"
+            aria-label="From date"
+            className="h-11 w-[10.5rem] rounded-lg border bg-background px-3 text-sm"
           />
-        </label>
-        <label className="text-sm text-muted-foreground">
-          To
+          <span className="text-sm text-muted-foreground">to</span>
           <input
             type="date"
             name="to"
             defaultValue={to}
-            className="mt-1 h-11 w-full rounded-lg border bg-background px-3 text-sm text-foreground"
+            aria-label="To date"
+            className="h-11 w-[10.5rem] rounded-lg border bg-background px-3 text-sm"
           />
-        </label>
-        {status ? <input type="hidden" name="status" value={status} /> : null}
-        {needsReview ? <input type="hidden" name="status" value="needs_review" /> : null}
-        <div className="flex flex-wrap gap-2 sm:col-span-2 lg:col-span-4">
-          <button type="submit" className={cn(buttonVariants({ variant: "outline" }), "h-11")}>
-            Filter
+          {status ? <input type="hidden" name="status" value={status} /> : null}
+          {needsReview ? <input type="hidden" name="status" value="needs_review" /> : null}
+          <button type="submit" className={cn(buttonVariants(), "h-11")}>
+            Search
           </button>
-          <Link href={ordersHref({ status: currentStatus })} className={cn(buttonVariants({ variant: "ghost" }), "h-11")}>
-            Clear dates
-          </Link>
         </div>
       </form>
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-4 flex flex-wrap items-center gap-2">
         {statuses.map((item) => {
           const href = ordersHref({
             status: item.id,
@@ -182,6 +183,41 @@ export default async function AdminOrdersPage({
             </Link>
           );
         })}
+        <span className="mx-1 hidden h-4 w-px bg-border sm:inline-block" />
+        {[
+          { label: "Today", from: today, to: today },
+          { label: "Yesterday", from: yesterday, to: yesterday },
+          { label: "Last 7 days", from: last7, to: today },
+        ].map((preset) => {
+          const active = from === preset.from && to === preset.to;
+          return (
+            <Link
+              key={preset.label}
+              href={ordersHref({
+                status: currentStatus,
+                q,
+                from: preset.from,
+                to: preset.to,
+              })}
+              className={cn(
+                "rounded-full border px-3 py-1.5 text-sm",
+                active
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:border-primary/40"
+              )}
+            >
+              {preset.label}
+            </Link>
+          );
+        })}
+        {dateActive ? (
+          <Link
+            href={ordersHref({ status: currentStatus, q })}
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            Clear dates
+          </Link>
+        ) : null}
       </div>
 
       {orders.length === 0 ? (
@@ -195,13 +231,10 @@ export default async function AdminOrdersPage({
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="font-heading text-lg font-semibold">{order.orderId}</p>
-                  <p className="mt-1 text-sm font-medium">
-                    {formatDateDhaka(order.createdAt)}
-                  </p>
-                  <p className="font-mono text-sm text-muted-foreground">
-                    {formatTimeDhaka(order.createdAt)}
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {formatWhen(order.createdAt)}
                     {order.updatedAt.getTime() !== order.createdAt.getTime()
-                      ? ` · updated ${formatDateDhaka(order.updatedAt)} ${formatTimeDhaka(order.updatedAt)}`
+                      ? ` · updated ${formatWhen(order.updatedAt)}`
                       : ""}
                   </p>
                 </div>

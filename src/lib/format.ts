@@ -57,6 +57,14 @@ export function formatTimeDhaka(date: Date) {
   });
 }
 
+export function ymdInDhaka(date = new Date()) {
+  return date.toLocaleDateString("en-CA", { timeZone: DHAKA_TZ });
+}
+
+export function shiftDhakaYmd(ymd: string, days: number) {
+  return ymdInDhaka(new Date(Date.parse(`${ymd}T12:00:00+06:00`) + days * 86_400_000));
+}
+
 export function dhakaDayStart(ymd: string) {
   return new Date(`${ymd}T00:00:00+06:00`);
 }
