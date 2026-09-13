@@ -40,7 +40,11 @@ import {
 } from "@/lib/uploads";
 import { initialsFromName, slugify } from "@/lib/slug";
 import {
+  BANNER_MAX,
   clampBannerDuration,
+  newBannerId,
+  parseHomeBanners,
+  sanitizeBannerHref,
   sanitizeBannerImage,
   type HomeBanner,
 } from "@/lib/home-banners";
@@ -205,7 +209,7 @@ export async function checkoutAction(formData: FormData) {
       totalBdt,
       method,
       payerNumber,
-      status: "pending",
+      status: "awaiting_review",
       items: {
         create: dbCourses.map((course) => ({
           courseId: course.id,
@@ -380,64 +384,16 @@ export async function saveSettingsAction(
   redirect("/admin/settings?saved=1");
 }
 
-async function bannersFromForm(
-  value: unknown,
-  device: "desktop" | "mobile",
-  formData: FormData
-): Promise<HomeBanner[]> {
-  if (!Array.isArray(value)) return [];
-  const banners: HomeBanner[] = [];
-  for (const [index, item] of value.slice(0, 8).entries()) {
-    if (!item || typeof item !== "object") continue;
-    const row = item as Record<string, unknown>;
-    const rawId = String(row.id ?? `${device}-${index}`);
-    const id = rawId.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 40) || `${device}-${index}`;
-    const file = formData.get(`file-${device}-${rawId}`) ?? formData.get(`file-${device}-${id}`);
-    let image = sanitizeBannerImage(String(row.image ?? ""));
-    if (isUploadFile(file)) {
-      try {
-        image = await saveBannerImage(`${device}-${id}`, file);
-      } catch {
-        redirect("/admin/banners?error=photo");
-      }
-    }
-    if (!image) continue;
-    const hrefRaw = String(row.href ?? "").trim();
-    const href =
-      hrefRaw.startsWith("/") || hrefRaw.startsWith("https://")
-        ? hrefRaw.slice(0, 200)
-        : "";
-    banners.push({
-      id,
-      image,
-      href,
-      durationSec: clampBannerDuration(row.durationSec),
-    });
-  }
-  return banners;
+async function readHomeBanners(): Promise<HomeBanner[]> {
+  const settings = await getSettings();
+  return parseHomeBanners(settings.homeBanners);
 }
 
-export async function saveHomeBannersAction(formData: FormData) {
-  await requireRole("admin");
-  const raw = String(formData.get("banners") ?? "{}");
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    redirect("/admin/banners?error=json");
-  }
-  const row =
-    parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {};
-  const desktop = await bannersFromForm(row.desktop, "desktop", formData);
-  const mobile = await bannersFromForm(row.mobile, "mobile", formData);
-  if (desktop.length === 0 && mobile.length === 0) {
-    redirect("/admin/banners?error=empty");
-  }
-
-  const payload = { desktop, mobile };
+async function writeHomeBanners(items: HomeBanner[]) {
+  const payload = JSON.stringify({ items: items.slice(0, BANNER_MAX) });
   await prisma.setting.upsert({
     where: { id: "default" },
-    update: { homeBanners: JSON.stringify(payload) },
+    update: { homeBanners: payload },
     create: {
       id: "default",
       bkashNumber: "",
@@ -445,12 +401,111 @@ export async function saveHomeBannersAction(formData: FormData) {
       whatsappNumber: "",
       payInstructions:
         "Send the exact amount to the number below. Use your order ID as the reference, then paste the TrxID on your orders page.",
-      homeBanners: JSON.stringify(payload),
+      homeBanners: payload,
       homeOffers: "{}",
     },
   });
   clearPublicCache();
-  redirect("/admin/banners?saved=1");
+}
+
+async function imageFromUpload(
+  file: FormDataEntryValue | null,
+  id: string
+): Promise<string | null> {
+  if (!isUploadFile(file)) return null;
+  try {
+    return await saveBannerImage(id, file);
+  } catch {
+    return "__photo_error__";
+  }
+}
+
+export async function saveHomeBannerAction(formData: FormData) {
+  await requireRole("admin");
+  const existingId = String(formData.get("id") ?? "")
+    .replace(/[^a-zA-Z0-9_-]/g, "")
+    .slice(0, 40);
+  const items = await readHomeBanners();
+  const current = existingId ? items.find((item) => item.id === existingId) : null;
+  const id = current?.id || newBannerId();
+
+  if (!current && items.length >= BANNER_MAX) {
+    redirect("/admin/banners?error=full");
+  }
+
+  const desktopUpload = await imageFromUpload(formData.get("file-desktop"), `desk-${id}`);
+  const mobileUpload = await imageFromUpload(formData.get("file-mobile"), `mob-${id}`);
+  if (desktopUpload === "__photo_error__" || mobileUpload === "__photo_error__") {
+    redirect(current ? `/admin/banners/${id}?error=photo` : "/admin/banners/new?error=photo");
+  }
+
+  const removeMobile = formData.get("removeMobile") === "on";
+  const desktopImage =
+    desktopUpload ||
+    sanitizeBannerImage(String(formData.get("desktopImage") ?? current?.desktopImage ?? ""));
+  if (!desktopImage) {
+    redirect(current ? `/admin/banners/${id}?error=empty` : "/admin/banners/new?error=empty");
+  }
+
+  let mobileImage = removeMobile
+    ? ""
+    : mobileUpload ||
+      sanitizeBannerImage(String(formData.get("mobileImage") ?? current?.mobileImage ?? ""));
+  if (mobileImage === desktopImage) mobileImage = "";
+
+  const next: HomeBanner = {
+    id,
+    desktopImage,
+    mobileImage,
+    href: sanitizeBannerHref(String(formData.get("href") ?? "")),
+    durationSec: clampBannerDuration(formData.get("durationSec")),
+    active: formData.get("active") === "on",
+  };
+
+  const updated = current
+    ? items.map((item) => (item.id === id ? next : item))
+    : [...items, next];
+  await writeHomeBanners(updated);
+  redirect(`/admin/banners/${id}?saved=1`);
+}
+
+export async function deleteHomeBannerAction(formData: FormData) {
+  await requireRole("admin");
+  const id = String(formData.get("id") ?? "");
+  if (formData.get("confirm") !== "on") {
+    redirect(`/admin/banners/${id}?error=confirm`);
+  }
+  const items = await readHomeBanners();
+  await writeHomeBanners(items.filter((item) => item.id !== id));
+  redirect("/admin/banners?deleted=1");
+}
+
+export async function moveHomeBannerAction(formData: FormData) {
+  await requireRole("admin");
+  const id = String(formData.get("id") ?? "");
+  const dir = String(formData.get("dir") ?? "") === "up" ? -1 : 1;
+  const items = await readHomeBanners();
+  const index = items.findIndex((item) => item.id === id);
+  const target = index + dir;
+  if (index < 0 || target < 0 || target >= items.length) {
+    redirect("/admin/banners");
+  }
+  const next = [...items];
+  [next[index], next[target]] = [next[target], next[index]];
+  await writeHomeBanners(next);
+  redirect("/admin/banners");
+}
+
+export async function toggleHomeBannerAction(formData: FormData) {
+  await requireRole("admin");
+  const id = String(formData.get("id") ?? "");
+  const items = await readHomeBanners();
+  await writeHomeBanners(
+    items.map((item) =>
+      item.id === id ? { ...item, active: !item.active } : item
+    )
+  );
+  redirect("/admin/banners");
 }
 
 async function offersFromForm(

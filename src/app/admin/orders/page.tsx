@@ -8,10 +8,9 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { OrderStatus } from "@prisma/client";
 
-const statuses: { id: "all" | OrderStatus; label: string }[] = [
+const statuses: { id: "all" | "needs_review" | OrderStatus; label: string }[] = [
   { id: "all", label: "All" },
-  { id: "awaiting_review", label: "Needs review" },
-  { id: "pending", label: "Waiting for TrxID" },
+  { id: "needs_review", label: "Needs review" },
   { id: "paid", label: "Paid" },
   { id: "rejected", label: "Rejected" },
 ];
@@ -23,14 +22,22 @@ export default async function AdminOrdersPage({
 }) {
   await requireRole("admin");
   const { status: statusParam, q: qParam } = await searchParams;
+  const needsReview =
+    statusParam === "needs_review" || statusParam === "awaiting_review";
   const status =
-    statuses.some((item) => item.id === statusParam) && statusParam !== "all"
+    !needsReview &&
+    statuses.some((item) => item.id === statusParam) &&
+    statusParam !== "all"
       ? (statusParam as OrderStatus)
       : undefined;
   const q = (qParam ?? "").trim();
 
   const where = {
-    ...(status ? { status } : {}),
+    ...(needsReview
+      ? { status: { in: ["pending", "awaiting_review"] as OrderStatus[] } }
+      : status
+        ? { status }
+        : {}),
     ...(q
       ? {
           OR: [
@@ -68,13 +75,12 @@ export default async function AdminOrdersPage({
     <div className="mx-auto w-full max-w-6xl">
       <h1 className="font-heading text-3xl font-semibold tracking-tight">Orders</h1>
       <p className="mt-2 max-w-2xl text-base text-muted-foreground">
-        Check the paid-from number and TrxID against your bKash or Nagad app,
-        then mark paid to unlock the courses. Reject if nothing matches.
+        Check the paid-from number against your bKash or Nagad app, then mark
+        paid to unlock the course. Reject if nothing matches.
       </p>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Needs review" value={awaiting} />
-        <Stat label="Waiting for TrxID" value={pending} />
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <Stat label="Needs review" value={pending + awaiting} />
         <Stat label="Paid orders" value={paid} />
         <Stat
           label="Paid volume"
@@ -91,6 +97,7 @@ export default async function AdminOrdersPage({
           className="h-11 flex-1 rounded-lg border bg-background px-3 text-sm"
         />
         {status ? <input type="hidden" name="status" value={status} /> : null}
+        {needsReview ? <input type="hidden" name="status" value="needs_review" /> : null}
         <button type="submit" className={cn(buttonVariants({ variant: "outline" }), "h-11")}>
           Search
         </button>
@@ -104,7 +111,9 @@ export default async function AdminOrdersPage({
                 ? `/admin/orders?q=${encodeURIComponent(q)}`
                 : "/admin/orders"
               : `/admin/orders?status=${item.id}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
-          const active = (status ?? "all") === item.id;
+          const active = needsReview
+            ? item.id === "needs_review"
+            : (status ?? "all") === item.id;
           return (
             <Link
               key={item.id}
@@ -201,11 +210,7 @@ export default async function AdminOrdersPage({
                 <div className="mt-4 flex flex-wrap gap-2">
                   <form action={approveOrderAction}>
                     <input type="hidden" name="id" value={order.id} />
-                    <button
-                      type="submit"
-                      disabled={!order.trxId}
-                      className={cn(buttonVariants({ size: "sm" }))}
-                    >
+                    <button type="submit" className={cn(buttonVariants({ size: "sm" }))}>
                       Mark paid
                     </button>
                   </form>
@@ -218,11 +223,6 @@ export default async function AdminOrdersPage({
                       Reject
                     </button>
                   </form>
-                  {!order.trxId ? (
-                    <p className="self-center text-xs text-muted-foreground">
-                      Wait for the student to paste a TrxID before marking paid.
-                    </p>
-                  ) : null}
                 </div>
               ) : null}
             </li>

@@ -1,14 +1,22 @@
-export type HomeBanner = {
+export type BannerSlide = {
   id: string;
   image: string;
   href: string;
   durationSec: number;
 };
 
-export type HomeBannerSet = {
-  desktop: HomeBanner[];
-  mobile: HomeBanner[];
+export type HomeBanner = {
+  id: string;
+  desktopImage: string;
+  mobileImage: string;
+  href: string;
+  durationSec: number;
+  active: boolean;
 };
+
+export type HomeBannerSet = HomeBanner[];
+
+export const BANNER_MAX = 12;
 
 export const BANNER_RECOMMENDED = {
   desktop: { width: 1920, height: 480, label: "1920 × 480 px" },
@@ -20,31 +28,32 @@ export const bannerFrameClass = {
   mobile: "aspect-[16/9]",
 } as const;
 
-export const defaultHomeBanners: HomeBannerSet = {
-  desktop: [],
-  mobile: [],
-};
+export const defaultHomeBanners: HomeBannerSet = [];
 
 export function isStockBanner(image: string) {
   const path = image.trim();
-  return (
-    path.startsWith("/brands/") ||
-    path.startsWith("/instructors/")
-  );
+  return path.startsWith("/brands/") || path.startsWith("/instructors/");
 }
 
 export function bannersForViewport(
   banners: HomeBannerSet,
   device: "desktop" | "mobile"
-) {
-  if (device === "desktop") return banners.desktop;
-  const customMobile = banners.mobile.filter((item) => !isStockBanner(item.image));
-  if (customMobile.length) return customMobile;
-  const customDesktop = banners.desktop.filter(
-    (item) => !isStockBanner(item.image)
-  );
-  if (customDesktop.length) return customDesktop;
-  return banners.mobile.length ? banners.mobile : banners.desktop;
+): BannerSlide[] {
+  return banners
+    .filter((item) => item.active && !isStockBanner(item.desktopImage))
+    .map((item) => {
+      const image =
+        device === "mobile" && item.mobileImage && !isStockBanner(item.mobileImage)
+          ? item.mobileImage
+          : item.desktopImage;
+      return {
+        id: item.id,
+        image,
+        href: item.href,
+        durationSec: item.durationSec,
+      };
+    })
+    .filter((item) => Boolean(item.image) && !isStockBanner(item.image));
 }
 
 export function bannerImageSrc(image: string) {
@@ -60,57 +69,83 @@ export function clampBannerDuration(value: unknown) {
   return Math.min(30, Math.max(2, Math.round(n)));
 }
 
+export function sanitizeBannerHref(value: string) {
+  const href = value.trim();
+  if (href.startsWith("/") || href.startsWith("https://")) return href.slice(0, 200);
+  return "";
+}
+
+export function newBannerId() {
+  return `b${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`.replace(
+    /[^a-zA-Z0-9_-]/g,
+    ""
+  ).slice(0, 40);
+}
+
 export function parseHomeBanners(raw: string | null | undefined): HomeBannerSet {
   if (!raw || !raw.trim() || raw.trim() === "[]") return defaultHomeBanners;
   try {
     const parsed = JSON.parse(raw) as unknown;
-    if (Array.isArray(parsed)) {
-      const list = withoutStock(
-        parsed
-          .map((item, index) => normalizeBanner(item, `legacy-${index}`))
-          .filter((item): item is HomeBanner => item !== null)
-      );
-      if (list.length === 0) return defaultHomeBanners;
-      return { desktop: list, mobile: list };
-    }
-    if (!parsed || typeof parsed !== "object") return defaultHomeBanners;
-    const row = parsed as Record<string, unknown>;
-    const desktop = withoutStock(listFrom(row.desktop, "desk"));
-    const mobile = withoutStock(listFrom(row.mobile, "mob"));
-    if (desktop.length === 0 && mobile.length === 0) return defaultHomeBanners;
-    return {
-      desktop: desktop.length ? desktop : mobile,
-      mobile: mobile.length ? mobile : desktop,
-    };
+    const items = extractItems(parsed)
+      .map((item, index) => normalizePairedBanner(item, `banner-${index}`))
+      .filter((item): item is HomeBanner => item !== null)
+      .filter((item) => !isStockBanner(item.desktopImage));
+    return items.slice(0, BANNER_MAX);
   } catch {
     return defaultHomeBanners;
   }
 }
 
-function withoutStock(list: HomeBanner[]) {
-  return list.filter((item) => !isStockBanner(item.image));
+function extractItems(parsed: unknown): unknown[] {
+  if (Array.isArray(parsed)) return parsed;
+  if (!parsed || typeof parsed !== "object") return [];
+  const row = parsed as Record<string, unknown>;
+  if (Array.isArray(row.items)) return row.items;
+  const desktop = Array.isArray(row.desktop) ? row.desktop : [];
+  const mobile = Array.isArray(row.mobile) ? row.mobile : [];
+  if (desktop.length === 0 && mobile.length === 0) return [];
+  const count = Math.max(desktop.length, mobile.length);
+  const zipped: unknown[] = [];
+  for (let i = 0; i < count; i += 1) {
+    const desk = asRecord(desktop[i]);
+    const mob = asRecord(mobile[i]);
+    const desktopImage = String(desk?.image ?? mob?.image ?? "");
+    if (!desktopImage) continue;
+    zipped.push({
+      id: String(desk?.id ?? mob?.id ?? `banner-${i}`),
+      desktopImage,
+      mobileImage: String(mob?.image ?? ""),
+      href: String(desk?.href ?? mob?.href ?? ""),
+      durationSec: desk?.durationSec ?? mob?.durationSec ?? 5,
+      active: true,
+    });
+  }
+  return zipped;
 }
 
-function listFrom(value: unknown, prefix: string) {
-  if (!Array.isArray(value)) return [];
-  return value
-    .map((item, index) => normalizeBanner(item, `${prefix}-${index}`))
-    .filter((item): item is HomeBanner => item !== null);
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== "object") return null;
+  return value as Record<string, unknown>;
 }
 
-function normalizeBanner(item: unknown, fallbackId: string): HomeBanner | null {
+function normalizePairedBanner(item: unknown, fallbackId: string): HomeBanner | null {
   if (!item || typeof item !== "object") return null;
   const row = item as Record<string, unknown>;
-  const image = sanitizeBannerImage(String(row.image ?? ""));
-  if (!image) return null;
-  const hrefRaw = String(row.href ?? "").trim();
-  const href =
-    hrefRaw.startsWith("/") || hrefRaw.startsWith("https://") ? hrefRaw : "";
+  const desktopImage = sanitizeBannerImage(
+    String(row.desktopImage ?? row.image ?? "")
+  );
+  if (!desktopImage) return null;
+  let mobileImage = sanitizeBannerImage(String(row.mobileImage ?? ""));
+  if (mobileImage === desktopImage) mobileImage = "";
   return {
-    id: String(row.id ?? fallbackId).slice(0, 40),
-    image,
-    href,
+    id: String(row.id ?? fallbackId)
+      .replace(/[^a-zA-Z0-9_-]/g, "")
+      .slice(0, 40) || fallbackId,
+    desktopImage,
+    mobileImage,
+    href: sanitizeBannerHref(String(row.href ?? "")),
     durationSec: clampBannerDuration(row.durationSec),
+    active: row.active !== false,
   };
 }
 

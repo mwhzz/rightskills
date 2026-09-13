@@ -2,7 +2,7 @@ import { getDictionary } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 export const orderStatusLabel: Record<string, string> = {
-  pending: "Waiting for TrxID",
+  pending: "Needs review",
   awaiting_review: "Needs review",
   paid: "Paid",
   rejected: "Rejected",
@@ -30,8 +30,8 @@ export async function OrderStatusBadge({
       className={cn(
         "inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium",
         status === "paid" && "bg-primary/10 text-primary",
-        status === "awaiting_review" && "bg-amber-100 text-amber-900",
-        status === "pending" && "bg-muted text-muted-foreground",
+        (status === "awaiting_review" || status === "pending") &&
+          "bg-amber-100 text-amber-900",
         status === "rejected" && "bg-destructive/10 text-destructive"
       )}
     >

@@ -29,7 +29,9 @@ export default async function AdminHomePage() {
     recentReviews,
   ] = await Promise.all([
     isAdmin
-      ? prisma.order.count({ where: { status: "awaiting_review" } })
+      ? prisma.order.count({
+          where: { status: { in: ["pending", "awaiting_review"] } },
+        })
       : Promise.resolve(0),
     isAdmin ? prisma.order.count({ where: { status: "paid" } }) : Promise.resolve(0),
     prisma.course.count({ where: courseWhere }),

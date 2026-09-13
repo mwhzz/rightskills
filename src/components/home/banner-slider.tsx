@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import {
   bannerFrameClass,
   bannerImageSrc,
-  type HomeBanner,
+  type BannerSlide,
 } from "@/lib/home-banners";
 
 export function BannerSlider({
@@ -15,7 +15,7 @@ export function BannerSlider({
   label,
   variant,
 }: {
-  banners: HomeBanner[];
+  banners: BannerSlide[];
   label: string;
   variant: "desktop" | "mobile";
 }) {
