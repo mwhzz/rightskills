@@ -246,6 +246,27 @@ export const en = {
   studentShell: {
     studentPanel: "Student panel",
     overview: "Overview",
+    profile: "Profile",
+  },
+  profilePage: {
+    title: "Your profile",
+    subtitle: "Keep your details up to date so we can match WhatsApp orders and unlock courses.",
+    saved: "Profile saved.",
+    error: "Check the highlighted fields and try again.",
+    loginPhone: "Login phone",
+    loginPhoneHint: "Used to log in. Ask support if you need this changed.",
+    name: "Full name",
+    email: "Email",
+    whatsapp: "WhatsApp number",
+    profession: "Profession",
+    district: "District / city",
+    address: "Address",
+    gender: "Gender",
+    genderNone: "Prefer not to say",
+    genderMale: "Male",
+    genderFemale: "Female",
+    genderOther: "Other",
+    save: "Save profile",
   },
   trxForm: {
     placeholder: "Paste TrxID from bKash or Nagad",
@@ -284,6 +305,8 @@ export const en = {
     pasteTrxIdHintDefault: "Once you've sent the money, paste the TrxID here.",
     inThisOrder: "In this order",
     allOrders: "All orders",
+    thankYou:
+      "ধন্যবাদ আপনাকে। আপনার পেমেন্ট নাম্বার মিলিয়ে শীঘ্রই কোর্স আনলক করে দেয়া হবে।",
   },
   loginPage: {
     title: "Log in",
@@ -399,6 +422,10 @@ export const en = {
     taughtIn: (language: string) => `Taught in ${language}`,
     watchOnDesktopOrPhone: "Watch on desktop or phone",
     lifetimeAccess: "Lifetime access on your account",
+    orderOnWhatsApp: "Order on WhatsApp",
+    whatsappOrderHint: "Message us — we will match your payment and unlock the course.",
+    whatsappOrderMessage: (title: string, price: string) =>
+      `Hello, I want to take "${title}". Price ${price}.`,
   },
   courseDetail: {
     coursesBreadcrumb: "Courses",

@@ -32,6 +32,7 @@ export default async function AdminSettingsPage({
         <SettingsForm
           bkashNumber={settings.bkashNumber}
           nagadNumber={settings.nagadNumber}
+          whatsappNumber={settings.whatsappNumber}
           payInstructions={settings.payInstructions}
           saved={saved === "1"}
         />

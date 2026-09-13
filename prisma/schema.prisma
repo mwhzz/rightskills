@@ -33,6 +33,11 @@ model User {
   name          String
   profession    String           @default("")
   email         String?
+  whatsapp      String           @default("")
+  district      String           @default("")
+  address       String           @default("") @db.Text
+  gender        String           @default("")
+  notes         String           @default("") @db.Text
   role          Role             @default(student)
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
@@ -187,6 +192,7 @@ model Setting {
   id              String @id @default("default")
   bkashNumber     String @default("")
   nagadNumber     String @default("")
+  whatsappNumber  String @default("")
   payInstructions String @db.Text
   homeBanners     String @db.Text
   homeOffers      String @db.Text

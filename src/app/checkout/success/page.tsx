@@ -3,7 +3,6 @@ import { CheckCircle2, Wallet } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { CopyValue } from "@/components/copy-value";
 import { PaymentSteps } from "@/components/payment-steps";
-import { TrxForm } from "@/components/trx-form";
 import { formatBdt, formatWhen } from "@/lib/format";
 import { requireUser } from "@/lib/auth";
 import { getDictionary, getLocale } from "@/lib/i18n";
@@ -21,10 +20,10 @@ export const metadata = {
 export default async function CheckoutSuccessPage({
   searchParams,
 }: {
-  searchParams: Promise<{ order?: string; submitted?: string; error?: string }>;
+  searchParams: Promise<{ order?: string }>;
 }) {
   const user = await requireUser("/checkout");
-  const { order: orderId, submitted, error } = await searchParams;
+  const { order: orderId } = await searchParams;
   const [settings, order, dict, locale] = await Promise.all([
     getSettings(),
     prisma.order.findFirst({
@@ -63,8 +62,6 @@ export default async function CheckoutSuccessPage({
     order.method === "nagad" ? settings.nagadNumber : settings.bkashNumber;
   const methodLabel = order.method === "nagad" ? "Nagad" : "bKash";
   const paid = order.status === "paid";
-  const waiting = order.status === "awaiting_review";
-  const currentStep: 1 | 2 | 3 = paid ? 3 : 2;
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6">
@@ -76,9 +73,7 @@ export default async function CheckoutSuccessPage({
           <h1 className="font-heading text-4xl font-semibold tracking-tight sm:text-5xl">
             {paid
               ? dict.checkoutSuccess.paymentConfirmed
-              : waiting
-                ? dict.checkoutSuccess.trxIdReceived
-                : dict.checkoutSuccess.sendVia(formatBdt(order.totalBdt), methodLabel)}
+              : dict.checkoutSuccess.sendVia(formatBdt(order.totalBdt), methodLabel)}
           </h1>
           <p className="mt-3 max-w-2xl text-base text-muted-foreground">
             {dict.checkoutSuccess.orderPlaced(order.orderId, formatWhen(order.createdAt))}
@@ -91,19 +86,10 @@ export default async function CheckoutSuccessPage({
         )}
       </div>
 
-      <div className="mt-8">
-        <PaymentSteps current={currentStep} />
-      </div>
-
-      {submitted ? (
-        <p className="mt-6 rounded-2xl border bg-primary/5 px-4 py-3 text-sm">
-          {dict.checkoutSuccess.trxReceivedNote}
-        </p>
-      ) : null}
-      {error === "trx" ? (
-        <p className="mt-6 rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-          {dict.checkoutSuccess.invalidTrxError}
-        </p>
+      {paid ? (
+        <div className="mt-8">
+          <PaymentSteps current={3} />
+        </div>
       ) : null}
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_0.9fr]">
@@ -151,42 +137,14 @@ export default async function CheckoutSuccessPage({
                 <span className="font-mono font-medium">{order.orderId}</span>
                 <CopyValue value={order.orderId} />
               </div>
-              {settings.payInstructions ? (
-                <p className="mt-5 text-sm leading-6 text-muted-foreground">
-                  {settings.payInstructions}
-                </p>
-              ) : null}
-              <ol className="mt-5 space-y-2 text-sm text-muted-foreground">
-                {dict.checkoutSuccess.steps(methodLabel).map((step, index) => (
-                  <li key={step}>
-                    {index + 1}. {step}
-                  </li>
-                ))}
-              </ol>
+              <p className="mt-6 rounded-2xl border border-primary/20 bg-primary/5 px-4 py-4 text-base leading-7">
+                {dict.checkoutSuccess.thankYou}
+              </p>
             </>
           )}
         </div>
 
         <div className="space-y-4">
-          {!paid ? (
-            <div className="rounded-2xl border bg-card p-5">
-              <p className="font-heading text-lg font-semibold">{dict.checkoutSuccess.pasteTrxId}</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {waiting
-                  ? dict.checkoutSuccess.pasteTrxIdHintWaiting
-                  : dict.checkoutSuccess.pasteTrxIdHintDefault}
-              </p>
-              <div className="mt-4">
-                <TrxForm
-                  orderId={order.orderId}
-                  defaultTrxId={order.trxId}
-                  defaultPayerNumber={order.payerNumber}
-                  from="success"
-                />
-              </div>
-            </div>
-          ) : null}
-
           <div className="rounded-2xl border bg-card p-5">
             <p className="font-heading text-lg font-semibold">{dict.checkoutSuccess.inThisOrder}</p>
             <ul className="mt-3 space-y-2 text-sm">

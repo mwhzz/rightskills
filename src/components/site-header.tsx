@@ -154,6 +154,9 @@ export function SiteHeader({
                   <DropdownMenuItem render={<Link href="/account" />}>
                     {dict.nav.myPanel}
                   </DropdownMenuItem>
+                  <DropdownMenuItem render={<Link href="/account/profile" />}>
+                    {dict.studentShell.profile}
+                  </DropdownMenuItem>
                   <DropdownMenuItem render={<Link href="/learn" />}>
                     {dict.nav.myLearning}
                   </DropdownMenuItem>
@@ -241,6 +244,9 @@ export function SiteHeader({
                 ))}
                 <Link href="/account" className="rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-muted">
                   {dict.nav.myPanel}
+                </Link>
+                <Link href="/account/profile" className="rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-muted">
+                  {dict.studentShell.profile}
                 </Link>
                 <Link href="/learn" className="rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-muted">
                   {dict.nav.myLearning}

@@ -247,6 +247,27 @@ export const bn: Dictionary = {
   studentShell: {
     studentPanel: "শিক্ষার্থী প্যানেল",
     overview: "ওভারভিউ",
+    profile: "প্রোফাইল",
+  },
+  profilePage: {
+    title: "আপনার প্রোফাইল",
+    subtitle: "WhatsApp অর্ডার মিলিয়ে কোর্স আনলক করতে আপনার তথ্য আপডেট রাখুন।",
+    saved: "প্রোফাইল সেভ হয়েছে।",
+    error: "ফিল্ডগুলো দেখে আবার চেষ্টা করুন।",
+    loginPhone: "লগইন ফোন",
+    loginPhoneHint: "লগইনের জন্য ব্যবহৃত। বদলাতে সাপোর্টে যোগাযোগ করুন।",
+    name: "পূর্ণ নাম",
+    email: "ইমেইল",
+    whatsapp: "WhatsApp নাম্বার",
+    profession: "পেশা",
+    district: "জেলা / শহর",
+    address: "ঠিকানা",
+    gender: "লিঙ্গ",
+    genderNone: "বলতে চাই না",
+    genderMale: "পুরুষ",
+    genderFemale: "নারী",
+    genderOther: "অন্যান্য",
+    save: "প্রোফাইল সেভ করুন",
   },
   trxForm: {
     placeholder: "বিকাশ বা নগদ থেকে TrxID পেস্ট করুন",
@@ -284,6 +305,8 @@ export const bn: Dictionary = {
     pasteTrxIdHintDefault: "Send Money শেষ হলেই TrxID টা এখানে দিন।",
     inThisOrder: "এই অর্ডারে যা আছে",
     allOrders: "সব অর্ডার",
+    thankYou:
+      "ধন্যবাদ আপনাকে। আপনার পেমেন্ট নাম্বার মিলিয়ে শীঘ্রই কোর্স আনলক করে দেয়া হবে।",
   },
   loginPage: {
     title: "লগ ইন",
@@ -397,6 +420,10 @@ export const bn: Dictionary = {
     taughtIn: (language: string) => `${language} ভাষায় শেখানো হয়`,
     watchOnDesktopOrPhone: "ডেস্কটপ বা ফোনে দেখুন",
     lifetimeAccess: "আপনার অ্যাকাউন্টে লাইফটাইম অ্যাক্সেস",
+    orderOnWhatsApp: "WhatsApp-এ অর্ডার করুন",
+    whatsappOrderHint: "মেসেজ পাঠান — আমরা পেমেন্ট মিলিয়ে কোর্স আনলক করে দেবো।",
+    whatsappOrderMessage: (title: string, price: string) =>
+      `আসসালামু আলাইকুম, আমি "${title}" কোর্সটি নিতে চাই। দাম ${price}।`,
   },
   courseDetail: {
     coursesBreadcrumb: "কোর্স",

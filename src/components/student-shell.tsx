@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, LayoutDashboard, LogOut, Receipt } from "lucide-react";
+import { BookOpen, LayoutDashboard, LogOut, Receipt, UserRound } from "lucide-react";
 import { logoutAction } from "@/app/actions";
 import { useLocale } from "@/components/locale-provider";
 import type { Role } from "@prisma/client";
@@ -21,6 +21,7 @@ export function StudentShell({
   const first = user.name.trim().split(/\s+/)[0] || user.name;
   const links = [
     { href: "/account", label: dict.studentShell.overview, icon: LayoutDashboard },
+    { href: "/account/profile", label: dict.studentShell.profile, icon: UserRound },
     { href: "/learn", label: dict.nav.myLearning, icon: BookOpen },
     { href: "/account/orders", label: dict.nav.orders, icon: Receipt },
   ];

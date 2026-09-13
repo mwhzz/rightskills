@@ -267,6 +267,7 @@ export async function getSettings() {
         id: "default",
         bkashNumber: "",
         nagadNumber: "",
+        whatsappNumber: "",
         payInstructions:
           "Send the exact amount to the number below. Use your order ID as the reference, then paste the TrxID on your orders page.",
         homeBanners: "[]",

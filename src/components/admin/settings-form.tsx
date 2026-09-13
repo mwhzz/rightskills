@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { CheckCircle2, Smartphone, Wallet } from "lucide-react";
+import { CheckCircle2, MessageCircle, Smartphone, Wallet } from "lucide-react";
 import { saveSettingsAction } from "@/app/actions";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,16 +16,19 @@ const fieldClass =
 export function SettingsForm({
   bkashNumber,
   nagadNumber,
+  whatsappNumber,
   payInstructions,
   saved,
 }: {
   bkashNumber: string;
   nagadNumber: string;
+  whatsappNumber: string;
   payInstructions: string;
   saved?: boolean;
 }) {
   const [bkash, setBkash] = useState(bkashNumber);
   const [nagad, setNagad] = useState(nagadNumber);
+  const [whatsapp, setWhatsapp] = useState(whatsappNumber);
   const [instructions, setInstructions] = useState(payInstructions);
   const [method, setMethod] = useState<"bkash" | "nagad">("bkash");
   const [state, formAction, pending] = useActionState(saveSettingsAction, null);
@@ -101,6 +104,40 @@ export function SettingsForm({
               />
               <p className="text-xs text-muted-foreground">11-digit BD mobile</p>
             </div>
+          </div>
+        </section>
+
+        <section className="rounded-2xl border bg-card p-5 sm:p-6">
+          <div className="flex items-start gap-3">
+            <span className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <MessageCircle className="size-5" />
+            </span>
+            <div>
+              <h2 className="font-heading text-xl font-semibold tracking-tight">
+                WhatsApp orders
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Shown on course pages. Students tap to message this number with
+                the course name and price.
+              </p>
+            </div>
+          </div>
+          <div className="mt-5 max-w-md space-y-2">
+            <Label htmlFor="whatsappNumber" className="text-sm">
+              WhatsApp number
+            </Label>
+            <Input
+              id="whatsappNumber"
+              name="whatsappNumber"
+              inputMode="numeric"
+              placeholder="01XXXXXXXXX"
+              value={whatsapp}
+              onValueChange={setWhatsapp}
+              className={fieldClass}
+            />
+            <p className="text-xs text-muted-foreground">
+              11-digit BD mobile. Leave empty to hide the button.
+            </p>
           </div>
         </section>
 

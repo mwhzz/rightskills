@@ -53,6 +53,7 @@ import {
 } from "@/lib/home-offers";
 import { categories, levels } from "@/lib/courses";
 import { normalizeVideoInput } from "@/lib/video";
+import { parseStudentProfile } from "@/lib/student-profile";
 import { refreshCourseRating } from "@/lib/reviews";
 
 function authFail(mode: "login" | "register", code: string, next: string): never {
@@ -340,14 +341,19 @@ export async function saveSettingsAction(
   await requireRole("admin");
   const bkashRaw = String(formData.get("bkashNumber") ?? "").trim();
   const nagadRaw = String(formData.get("nagadNumber") ?? "").trim();
+  const whatsappRaw = String(formData.get("whatsappNumber") ?? "").trim();
   const payInstructions = String(formData.get("payInstructions") ?? "").trim();
   const bkashNumber = bkashRaw ? normalizePhone(bkashRaw) : "";
   const nagadNumber = nagadRaw ? normalizePhone(nagadRaw) : "";
+  const whatsappNumber = whatsappRaw ? normalizePhone(whatsappRaw) : "";
   if (bkashRaw && !bkashNumber) {
     return { error: "Enter a valid bKash number (01XXXXXXXXX)." };
   }
   if (nagadRaw && !nagadNumber) {
     return { error: "Enter a valid Nagad number (01XXXXXXXXX)." };
+  }
+  if (whatsappRaw && !whatsappNumber) {
+    return { error: "Enter a valid WhatsApp number (01XXXXXXXXX)." };
   }
   if (!payInstructions) {
     return { error: "Add the instructions students read after checkout." };
@@ -357,12 +363,14 @@ export async function saveSettingsAction(
     update: {
       bkashNumber: bkashNumber ?? "",
       nagadNumber: nagadNumber ?? "",
+      whatsappNumber: whatsappNumber ?? "",
       payInstructions,
     },
     create: {
       id: "default",
       bkashNumber: bkashNumber ?? "",
       nagadNumber: nagadNumber ?? "",
+      whatsappNumber: whatsappNumber ?? "",
       payInstructions,
       homeBanners: "[]",
       homeOffers: "{}",
@@ -434,6 +442,7 @@ export async function saveHomeBannersAction(formData: FormData) {
       id: "default",
       bkashNumber: "",
       nagadNumber: "",
+      whatsappNumber: "",
       payInstructions:
         "Send the exact amount to the number below. Use your order ID as the reference, then paste the TrxID on your orders page.",
       homeBanners: JSON.stringify(payload),
@@ -494,6 +503,7 @@ export async function saveHomeOffersAction(formData: FormData) {
       id: "default",
       bkashNumber: "",
       nagadNumber: "",
+      whatsappNumber: "",
       payInstructions:
         "Send the exact amount to the number below. Use your order ID as the reference, then paste the TrxID on your orders page.",
       homeBanners: "[]",
@@ -540,6 +550,151 @@ export async function setUserPinAction(formData: FormData) {
     data: { passwordHash: await bcrypt.hash(pin, 12) },
   });
   redirect("/admin/users?pin=1");
+}
+
+async function grantCourseIfNew(userId: string, courseId: string) {
+  if (!courseId) return;
+  const course = await prisma.course.findUnique({ where: { id: courseId } });
+  if (!course) return;
+  try {
+    await prisma.enrollment.create({ data: { userId, courseId } });
+    await prisma.course.update({
+      where: { id: courseId },
+      data: { students: { increment: 1 } },
+    });
+    clearPublicCache();
+  } catch {
+    /* already enrolled */
+  }
+}
+
+function studentFormRedirect(path: string, error?: string): never {
+  const query = error ? `?error=${error}` : "";
+  redirect(`${path}${query}`);
+}
+
+export async function createStudentAction(formData: FormData) {
+  await requireRole("admin");
+  const parsed = parseStudentProfile(formData, {
+    requirePhone: true,
+    includeNotes: true,
+  });
+  if ("error" in parsed) studentFormRedirect("/admin/students/new", parsed.error);
+  const pin = normalizePin(String(formData.get("pin") ?? ""));
+  if (!pin) studentFormRedirect("/admin/students/new", "pin");
+
+  const exists = await prisma.user.findUnique({ where: { phone: parsed.data.phone } });
+  if (exists) studentFormRedirect("/admin/students/new", "taken");
+
+  const user = await prisma.user.create({
+    data: {
+      name: parsed.data.name,
+      phone: parsed.data.phone,
+      whatsapp: parsed.data.whatsapp,
+      email: parsed.data.email,
+      profession: parsed.data.profession,
+      district: parsed.data.district,
+      address: parsed.data.address,
+      gender: parsed.data.gender,
+      notes: parsed.data.notes,
+      role: Role.student,
+      passwordHash: await bcrypt.hash(pin, 12),
+    },
+  });
+  await grantCourseIfNew(user.id, String(formData.get("courseId") ?? ""));
+  redirect(`/admin/students/${user.id}?created=1`);
+}
+
+export async function updateStudentAction(formData: FormData) {
+  await requireRole("admin");
+  const id = String(formData.get("id") ?? "");
+  const existing = await prisma.user.findUnique({ where: { id } });
+  if (!existing || existing.role !== "student") redirect("/admin/students");
+
+  const parsed = parseStudentProfile(formData, {
+    requirePhone: true,
+    includeNotes: true,
+  });
+  if ("error" in parsed) studentFormRedirect(`/admin/students/${id}`, parsed.error);
+
+  if (parsed.data.phone !== existing.phone) {
+    const taken = await prisma.user.findUnique({
+      where: { phone: parsed.data.phone },
+    });
+    if (taken) studentFormRedirect(`/admin/students/${id}`, "taken");
+  }
+
+  const pin = normalizePin(String(formData.get("pin") ?? ""));
+  await prisma.user.update({
+    where: { id },
+    data: {
+      name: parsed.data.name,
+      phone: parsed.data.phone,
+      whatsapp: parsed.data.whatsapp,
+      email: parsed.data.email,
+      profession: parsed.data.profession,
+      district: parsed.data.district,
+      address: parsed.data.address,
+      gender: parsed.data.gender,
+      notes: parsed.data.notes,
+      ...(pin ? { passwordHash: await bcrypt.hash(pin, 12) } : {}),
+    },
+  });
+  await grantCourseIfNew(id, String(formData.get("courseId") ?? ""));
+  redirect(`/admin/students/${id}?saved=1`);
+}
+
+export async function deleteStudentAction(formData: FormData) {
+  await requireRole("admin");
+  const id = String(formData.get("id") ?? "");
+  const confirm = String(formData.get("confirm") ?? "") === "on";
+  const existing = await prisma.user.findUnique({
+    where: { id },
+    include: { enrollments: true },
+  });
+  if (!existing || existing.role !== "student") redirect("/admin/students");
+  if (!confirm) redirect(`/admin/students/${id}?error=confirm`);
+
+  await prisma.$transaction(async (tx) => {
+    for (const row of existing.enrollments) {
+      await tx.course.updateMany({
+        where: { id: row.courseId, students: { gt: 0 } },
+        data: { students: { decrement: 1 } },
+      });
+    }
+    await tx.user.delete({ where: { id } });
+  });
+  clearPublicCache();
+  redirect("/admin/students?deleted=1");
+}
+
+export async function updateOwnProfileAction(formData: FormData) {
+  const user = await requireUser("/account/profile");
+  const parsed = parseStudentProfile(formData, {
+    requirePhone: false,
+    includeNotes: false,
+  });
+  if ("error" in parsed) redirect(`/account/profile?error=${parsed.error}`);
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      name: parsed.data.name,
+      whatsapp: parsed.data.whatsapp,
+      email: parsed.data.email,
+      profession: parsed.data.profession,
+      district: parsed.data.district,
+      address: parsed.data.address,
+      gender: parsed.data.gender,
+    },
+  });
+  await createSession({
+    id: user.id,
+    phone: user.phone,
+    name: parsed.data.name,
+    role: user.role,
+  });
+  redirect("/account/profile?saved=1");
 }
 
 export type SaveCourseState = { error: string } | null;

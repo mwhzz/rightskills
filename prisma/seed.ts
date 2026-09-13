@@ -26,6 +26,7 @@ async function main() {
       id: "default",
       bkashNumber: "01700000000",
       nagadNumber: "01800000000",
+      whatsappNumber: "",
       payInstructions:
         "Send Money the exact order total. Put the order ID in the reference. Then open My orders and paste the TrxID.",
       homeBanners: "[]",

@@ -1,11 +1,15 @@
-import { Check, Infinity, Languages, MonitorPlay, Smartphone } from "lucide-react";
+import { Check, Infinity, Languages, MessageCircle, MonitorPlay, Smartphone } from "lucide-react";
 import { AddToCartButton, BuyNowButton } from "@/components/add-to-cart-button";
 import { CourseCover } from "@/components/course-cover";
 import { VideoFrame } from "@/components/video-frame";
+import { buttonVariants } from "@/components/ui/button";
 import { courseHours, courseTitle, lessonCount, defaultPurchaseNote, type Course } from "@/lib/courses";
 import { formatBdt } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
+import { getSettings } from "@/lib/queries";
 import { videoEmbed } from "@/lib/video";
+import { whatsappChatUrl } from "@/lib/whatsapp";
+import { cn } from "@/lib/utils";
 
 export async function CourseBuyCard({
   course,
@@ -23,7 +27,19 @@ export async function CourseBuyCard({
           (1 - course.priceBdt / course.originalPriceBdt) * 100
         )
       : 0;
-  const [dict, locale] = await Promise.all([getDictionary(), getLocale()]);
+  const [dict, locale, settings] = await Promise.all([
+    getDictionary(),
+    getLocale(),
+    getSettings().catch(() => null),
+  ]);
+  const title = courseTitle(course, locale);
+  const whatsappHref =
+    !owned && settings?.whatsappNumber
+      ? whatsappChatUrl(
+          settings.whatsappNumber,
+          dict.buyCard.whatsappOrderMessage(title, formatBdt(course.priceBdt))
+        )
+      : null;
 
   return (
     <div className="overflow-hidden rounded-3xl border bg-card shadow-[0_20px_60px_-28px_rgba(180,70,20,0.28)]">
@@ -56,7 +72,26 @@ export async function CourseBuyCard({
         <div className="mt-5 space-y-2.5">
           <AddToCartButton slug={course.slug} owned={owned} inCart={inCart} />
           <BuyNowButton slug={course.slug} owned={owned} />
+          {whatsappHref ? (
+            <a
+              href={whatsappHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                buttonVariants({ variant: "outline", size: "lg" }),
+                "h-12 w-full text-base"
+              )}
+            >
+              <MessageCircle data-icon="inline-start" />
+              {dict.buyCard.orderOnWhatsApp}
+            </a>
+          ) : null}
         </div>
+        {whatsappHref ? (
+          <p className="mt-2 text-xs leading-5 text-muted-foreground">
+            {dict.buyCard.whatsappOrderHint}
+          </p>
+        ) : null}
         <ul className="mt-6 space-y-3 text-base">
           <li className="flex items-center gap-3">
             <MonitorPlay className="size-5 text-primary" />
