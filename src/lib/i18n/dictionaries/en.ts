@@ -111,6 +111,7 @@ export const en = {
       `Lesson ${index} of ${total} · ${duration}`,
     markNotDone: "Mark as not done",
     markComplete: "Mark complete",
+    saving: "Saving…",
     resources: "Resources",
     previous: "Previous",
     nextLesson: "Next lesson",

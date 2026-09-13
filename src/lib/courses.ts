@@ -28,11 +28,35 @@ export type Lesson = {
   resources?: LessonResourceFile[];
 };
 
+export type PublicCurriculumModule = {
+  id: string;
+  title: string;
+  lessons: {
+    id: string;
+    title: string;
+    durationMin: number;
+    preview?: boolean;
+  }[];
+};
+
 export type Module = {
   id: string;
   title: string;
   lessons: Lesson[];
 };
+
+export function toPublicCurriculum(modules: Module[]): PublicCurriculumModule[] {
+  return modules.map((module) => ({
+    id: module.id,
+    title: module.title,
+    lessons: module.lessons.map((lesson) => ({
+      id: lesson.id,
+      title: lesson.title,
+      durationMin: lesson.durationMin,
+      preview: lesson.preview,
+    })),
+  }));
+}
 
 export type Course = {
   slug: string;

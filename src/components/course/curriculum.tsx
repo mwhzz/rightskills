@@ -3,10 +3,14 @@
 import { useState } from "react";
 import { ChevronDown, Clock, Lock, PlayCircle } from "lucide-react";
 import { useLocale } from "@/components/locale-provider";
-import type { Module } from "@/lib/courses";
+import type { PublicCurriculumModule } from "@/lib/courses";
 import { cn } from "@/lib/utils";
 
-export function CourseCurriculum({ modules }: { modules: Module[] }) {
+export function CourseCurriculum({
+  modules,
+}: {
+  modules: PublicCurriculumModule[];
+}) {
   const { dict } = useLocale();
   const [openIds, setOpenIds] = useState<Set<string>>(
     () => new Set(modules[0] ? [modules[0].id] : [])

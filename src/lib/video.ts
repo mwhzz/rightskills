@@ -55,8 +55,20 @@ function safeId(value: string) {
   return /^[A-Za-z0-9_-]{6,20}$/.test(value) ? value : "";
 }
 
-export function youtubeEmbedSrc(id: string) {
-  return `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1&playsinline=1`;
+export function youtubeEmbedSrc(id: string, locked = false) {
+  const params = new URLSearchParams({
+    rel: "0",
+    modestbranding: "1",
+    playsinline: "1",
+    iv_load_policy: "3",
+    cc_load_policy: "0",
+  });
+  if (locked) {
+    params.set("controls", "0");
+    params.set("disablekb", "1");
+    params.set("fs", "0");
+  }
+  return `https://www.youtube-nocookie.com/embed/${id}?${params.toString()}`;
 }
 
 export function youtubeThumbnail(id: string) {

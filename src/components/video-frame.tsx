@@ -1,4 +1,7 @@
-import { videoEmbed } from "@/lib/video";
+"use client";
+
+import { ProtectedYouTube } from "@/components/protected-youtube";
+import { videoEmbed, youtubeId } from "@/lib/video";
 import { cn } from "@/lib/utils";
 
 /**
@@ -13,6 +16,9 @@ export function VideoFrame({
   className,
   autoPlay = false,
   playerKey,
+  protect = false,
+  lessonId,
+  videoId,
 }: {
   filePath?: string | null;
   url?: string | null;
@@ -20,6 +26,9 @@ export function VideoFrame({
   className?: string;
   autoPlay?: boolean;
   playerKey?: string;
+  protect?: boolean;
+  lessonId?: string;
+  videoId?: string;
 }) {
   const frame = cn("aspect-video w-full", className);
 
@@ -29,13 +38,32 @@ export function VideoFrame({
         key={playerKey}
         className={frame}
         controls
+        controlsList={protect ? "nodownload noremoteplayback" : undefined}
+        disablePictureInPicture={protect}
         playsInline
         preload="metadata"
         autoPlay={autoPlay}
         src={filePath}
         aria-label={title}
+        onContextMenu={protect ? (event) => event.preventDefault() : undefined}
       />
     );
+  }
+
+  if (protect) {
+    const id = videoId || youtubeId(url ?? "");
+    if (lessonId || id) {
+      return (
+        <ProtectedYouTube
+          key={playerKey}
+          playerKey={playerKey}
+          lessonId={lessonId}
+          videoId={lessonId ? undefined : id}
+          title={title}
+          className={frame}
+        />
+      );
+    }
   }
 
   const embed = videoEmbed(url);
@@ -61,11 +89,14 @@ export function VideoFrame({
       key={playerKey}
       className={frame}
       controls
+      controlsList={protect ? "nodownload noremoteplayback" : undefined}
+      disablePictureInPicture={protect}
       playsInline
       preload="metadata"
       autoPlay={autoPlay}
       src={embed.src}
       aria-label={title}
+      onContextMenu={protect ? (event) => event.preventDefault() : undefined}
     />
   );
 }

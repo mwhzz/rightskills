@@ -45,7 +45,12 @@ export async function CourseBuyCard({
     <div className="overflow-hidden rounded-3xl border bg-card shadow-[0_20px_60px_-28px_rgba(180,70,20,0.28)]">
       <div id="preview" className="bg-zinc-950">
         {preview ? (
-          <VideoFrame url={course.promoVideoUrl} title={dict.buyCard.previewOf(courseTitle(course, locale))} />
+          <VideoFrame
+            protect
+            videoId={preview.kind === "youtube" ? preview.id : undefined}
+            url={preview.kind === "youtube" ? undefined : course.promoVideoUrl}
+            title={dict.buyCard.previewOf(courseTitle(course, locale))}
+          />
         ) : (
           <CourseCover course={course} className="aspect-video" />
         )}

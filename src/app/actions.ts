@@ -282,8 +282,15 @@ export async function toggleLessonAction(formData: FormData) {
   const user = await requireUser("/learn");
   const slug = String(formData.get("slug") ?? "");
   const lessonId = String(formData.get("lessonId") ?? "");
+  const next = `/learn/${slug}${lessonId ? `?lesson=${encodeURIComponent(lessonId)}` : ""}`;
   const owned = await getOwnedSlugsForUser(user.id);
-  if (!owned.includes(slug) || !lessonId) return;
+  if (!owned.includes(slug) || !lessonId) redirect(next);
+
+  const lesson = await prisma.lesson.findFirst({
+    where: { id: lessonId, module: { course: { slug } } },
+    select: { id: true },
+  });
+  if (!lesson) redirect(next);
 
   const existing = await prisma.lessonProgress.findUnique({
     where: { userId_lessonId: { userId: user.id, lessonId } },
@@ -295,6 +302,9 @@ export async function toggleLessonAction(formData: FormData) {
       data: { userId: user.id, lessonId, completed: true },
     });
   }
+  revalidatePath(`/learn/${slug}`);
+  revalidatePath("/learn");
+  redirect(next);
 }
 
 export async function approveOrderAction(formData: FormData) {

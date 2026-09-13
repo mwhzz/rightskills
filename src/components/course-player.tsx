@@ -7,7 +7,7 @@ import {
   FileText,
   Lock,
 } from "lucide-react";
-import { toggleLessonAction } from "@/app/actions";
+import { MarkLessonButton } from "@/components/mark-lesson-button";
 import { VideoFrame } from "@/components/video-frame";
 import { buttonVariants } from "@/components/ui/button";
 import { getDictionary, getLocale } from "@/lib/i18n";
@@ -106,12 +106,13 @@ export async function CoursePlayer({
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <section className="min-w-0">
-          <div className="overflow-hidden rounded-2xl bg-zinc-950 shadow-sm">
+          <div className="isolate overflow-hidden rounded-2xl bg-zinc-950 shadow-sm">
             {active.videoPath || active.videoUrl ? (
               <VideoFrame
                 playerKey={active.id}
                 filePath={active.videoPath ? `/api/lessons/${active.id}/video` : null}
-                url={active.videoUrl}
+                lessonId={active.videoPath ? undefined : active.id}
+                protect
                 title={active.title}
               />
             ) : (
@@ -134,7 +135,7 @@ export async function CoursePlayer({
             )}
           </div>
 
-          <div className="mt-5 rounded-2xl border bg-card p-5 sm:p-6">
+          <div className="relative z-10 mt-5 rounded-2xl border bg-card p-5 sm:p-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <p className="text-xs font-medium tracking-[0.14em] text-muted-foreground uppercase">
@@ -151,22 +152,14 @@ export async function CoursePlayer({
                   )}
                 </p>
               </div>
-              <form action={toggleLessonAction}>
-                <input type="hidden" name="slug" value={course.slug} />
-                <input type="hidden" name="lessonId" value={active.id} />
-                <button
-                  type="submit"
-                  className={cn(
-                    buttonVariants({
-                      variant: activeDone ? "outline" : "default",
-                      size: "lg",
-                    }),
-                    "h-11"
-                  )}
-                >
-                  {activeDone ? dict.coursePlayer.markNotDone : dict.coursePlayer.markComplete}
-                </button>
-              </form>
+              <MarkLessonButton
+                slug={course.slug}
+                lessonId={active.id}
+                done={activeDone}
+                completeLabel={dict.coursePlayer.markComplete}
+                notDoneLabel={dict.coursePlayer.markNotDone}
+                savingLabel={dict.coursePlayer.saving}
+              />
             </div>
             {active.body ? (
               <p className="mt-5 max-w-3xl text-base leading-7 whitespace-pre-wrap text-muted-foreground">

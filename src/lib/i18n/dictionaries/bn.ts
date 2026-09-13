@@ -113,6 +113,7 @@ export const bn: Dictionary = {
       `লেসন ${total}টির মধ্যে ${index} · ${duration}`,
     markNotDone: "সম্পন্ন নয় হিসেবে চিহ্নিত করুন",
     markComplete: "সম্পন্ন হিসেবে চিহ্নিত করুন",
+    saving: "সেভ হচ্ছে…",
     resources: "রিসোর্স",
     previous: "আগের",
     nextLesson: "পরবর্তী লেসন",

@@ -24,6 +24,7 @@ import {
   courseTitle,
   levelLabel,
   lessonCount,
+  toPublicCurriculum,
   type Course,
 } from "@/lib/courses";
 import { getCart } from "@/lib/session";
@@ -249,7 +250,7 @@ export default async function CourseDetailPage({
             </ul>
           </section>
 
-          <CourseCurriculum modules={course.modules} />
+          <CourseCurriculum modules={toPublicCurriculum(course.modules)} />
 
           <section>
             <h2 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
