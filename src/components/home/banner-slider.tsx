@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import {
@@ -48,34 +47,23 @@ export function BannerSlider({
     >
       <div
         className={cn(
-          "relative mx-auto w-full max-w-7xl overflow-hidden bg-background shadow-[0_18px_50px_-28px_rgba(80,40,10,0.4)]",
+          "relative mx-auto w-full max-w-7xl overflow-hidden bg-muted shadow-[0_18px_50px_-28px_rgba(80,40,10,0.4)]",
           variant === "mobile" ? "rounded-[1.15rem]" : "rounded-[1.4rem]"
         )}
       >
         <div className={cn("relative w-full", bannerFrameClass[variant])}>
           {slides.map((banner, i) => {
             const src = bannerImageSrc(banner.image);
-            const fit = variant === "mobile" ? "object-cover" : "object-contain";
             const active = i === index;
-            const image = src.startsWith("/") ? (
-              <Image
-                src={src}
-                alt=""
-                fill
-                sizes="100vw"
-                priority={i === 0}
-                className={cn(fit, "transition-opacity duration-700 ease-in-out")}
-              />
-            ) : (
+            const image = (
               <img
                 src={src}
                 alt=""
+                draggable={false}
+                fetchPriority={i === 0 ? "high" : "low"}
                 loading={i === 0 ? "eager" : "lazy"}
                 decoding="async"
-                className={cn(
-                  "absolute inset-0 h-full w-full transition-opacity duration-700 ease-in-out",
-                  fit
-                )}
+                className="absolute inset-0 h-full w-full object-cover"
               />
             );
             return (
@@ -90,7 +78,11 @@ export function BannerSlider({
                 )}
               >
                 {banner.href ? (
-                  <Link href={banner.href} className="absolute inset-0 block" tabIndex={active ? 0 : -1}>
+                  <Link
+                    href={banner.href}
+                    className="absolute inset-0 block"
+                    tabIndex={active ? 0 : -1}
+                  >
                     {image}
                     <span className="sr-only">Open banner</span>
                   </Link>

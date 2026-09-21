@@ -224,10 +224,7 @@ function UploadCard({
           <img
             src={preview}
             alt=""
-            className={cn(
-              "absolute inset-0 h-full w-full",
-              device === "mobile" ? "object-cover" : "object-contain"
-            )}
+            className="absolute inset-0 h-full w-full object-cover"
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center px-4 text-center text-sm text-muted-foreground">
