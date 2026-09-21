@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { saveHomeBannerAction } from "@/app/actions";
 import { buttonVariants } from "@/components/ui/button";
@@ -150,9 +151,7 @@ export function BannerEditorForm({
       </section>
 
       <div className="flex flex-wrap gap-2">
-        <button type="submit" className={cn(buttonVariants({ size: "lg" }), "h-11")}>
-          {banner ? "Save banner" : "Add banner"}
-        </button>
+        <SaveBannerButton label={banner ? "Save banner" : "Add banner"} />
         <Link
           href="/admin/banners"
           className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-11")}
@@ -161,6 +160,19 @@ export function BannerEditorForm({
         </Link>
       </div>
     </form>
+  );
+}
+
+function SaveBannerButton({ label }: { label: string }) {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className={cn(buttonVariants({ size: "lg" }), "h-11")}
+    >
+      {pending ? "Saving…" : label}
+    </button>
   );
 }
 

@@ -49,37 +49,48 @@ export function BannerSlider({
       <div
         className={cn(
           "relative mx-auto w-full max-w-7xl overflow-hidden bg-background shadow-[0_18px_50px_-28px_rgba(80,40,10,0.4)]",
-          variant === "mobile"
-            ? "rounded-[1.15rem]"
-            : "rounded-[1.4rem]"
+          variant === "mobile" ? "rounded-[1.15rem]" : "rounded-[1.4rem]"
         )}
       >
         <div className={cn("relative w-full", bannerFrameClass[variant])}>
           {slides.map((banner, i) => {
-            if (i !== index) return null;
             const src = bannerImageSrc(banner.image);
             const fit = variant === "mobile" ? "object-cover" : "object-contain";
+            const active = i === index;
             const image = src.startsWith("/") ? (
               <Image
                 src={src}
                 alt=""
                 fill
                 sizes="100vw"
-                className={fit}
+                priority={i === 0}
+                className={cn(fit, "transition-opacity duration-700 ease-in-out")}
               />
             ) : (
               <img
                 src={src}
                 alt=""
-                loading="lazy"
+                loading={i === 0 ? "eager" : "lazy"}
                 decoding="async"
-                className={cn("absolute inset-0 h-full w-full", fit)}
+                className={cn(
+                  "absolute inset-0 h-full w-full transition-opacity duration-700 ease-in-out",
+                  fit
+                )}
               />
             );
             return (
-              <article key={banner.id} className="absolute inset-0">
+              <article
+                key={`${banner.id}-${i}`}
+                aria-hidden={!active}
+                className={cn(
+                  "absolute inset-0 transition-opacity duration-700 ease-in-out motion-reduce:duration-0",
+                  active
+                    ? "z-[1] opacity-100"
+                    : "z-0 opacity-0 pointer-events-none"
+                )}
+              >
                 {banner.href ? (
-                  <Link href={banner.href} className="absolute inset-0 block">
+                  <Link href={banner.href} className="absolute inset-0 block" tabIndex={active ? 0 : -1}>
                     {image}
                     <span className="sr-only">Open banner</span>
                   </Link>
@@ -94,10 +105,10 @@ export function BannerSlider({
             <div className="absolute inset-x-0 bottom-3 z-10 flex justify-center gap-1.5">
               {slides.map((item, dot) => (
                 <button
-                  key={item.id}
+                  key={`${item.id}-dot-${dot}`}
                   type="button"
                   aria-label={`Show banner ${dot + 1}`}
-                  aria-current={dot === index}
+                  aria-current={dot === index ? true : undefined}
                   onClick={() => setIndex(dot)}
                   className={cn(
                     "size-1.5 rounded-full transition",

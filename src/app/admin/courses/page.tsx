@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { publishCourseAction, moveCourseAction } from "@/app/actions";
+import { publishCourseAction } from "@/app/actions";
 import { requireAccess } from "@/lib/staff";
 import { prisma } from "@/lib/db";
 import { formatBdt } from "@/lib/format";
@@ -7,6 +7,9 @@ import { StarRow } from "@/components/stars";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { DeleteCourseButton } from "@/components/admin/delete-course-button";
+import { MoveCourseButtons } from "@/components/admin/move-course-buttons";
+
+export const dynamic = "force-dynamic";
 
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat("en-GB", {
@@ -91,7 +94,7 @@ export default async function AdminCoursesPage({
         </p>
       ) : (
         <ul className="mt-6 space-y-3">
-          {courses.map((course) => (
+          {courses.map((course, index) => (
             <li
               key={course.id}
               className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border bg-card px-5 py-4"
@@ -146,30 +149,12 @@ export default async function AdminCoursesPage({
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 {!user.isTeacher ? (
-                  <div className="mr-1 flex flex-col gap-1">
-                    <form action={moveCourseAction}>
-                      <input type="hidden" name="id" value={course.id} />
-                      <input type="hidden" name="dir" value="up" />
-                      <button
-                        type="submit"
-                        className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-                        aria-label={`Move ${course.title} up`}
-                      >
-                        Up
-                      </button>
-                    </form>
-                    <form action={moveCourseAction}>
-                      <input type="hidden" name="id" value={course.id} />
-                      <input type="hidden" name="dir" value="down" />
-                      <button
-                        type="submit"
-                        className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-                        aria-label={`Move ${course.title} down`}
-                      >
-                        Down
-                      </button>
-                    </form>
-                  </div>
+                  <MoveCourseButtons
+                    id={course.id}
+                    title={course.title}
+                    isFirst={index === 0}
+                    isLast={index === courses.length - 1}
+                  />
                 ) : null}
                 {course.published ? (
                   <Link

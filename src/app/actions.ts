@@ -402,8 +402,8 @@ export async function saveSettingsAction(
 }
 
 async function readHomeBanners(): Promise<HomeBanner[]> {
-  const settings = await getSettings();
-  return parseHomeBanners(settings.homeBanners);
+  const settings = await prisma.setting.findUnique({ where: { id: "default" } });
+  return parseHomeBanners(settings?.homeBanners);
 }
 
 async function writeHomeBanners(items: HomeBanner[]) {
@@ -423,6 +423,8 @@ async function writeHomeBanners(items: HomeBanner[]) {
     },
   });
   clearPublicCache();
+  revalidatePath("/", "layout");
+  revalidatePath("/admin/banners");
 }
 
 async function imageFromUpload(
@@ -1042,6 +1044,14 @@ export async function moveCourseAction(formData: FormData) {
   const next = [...courses];
   [next[index], next[target]] = [next[target], next[index]];
   await prisma.$transaction(
+    next.flatMap((course, sortOrder) => [
+      prisma.course.update({
+        where: { id: course.id },
+        data: { sortOrder: (sortOrder + 1) * 1000 },
+      }),
+    ])
+  );
+  await prisma.$transaction(
     next.map((course, sortOrder) =>
       prisma.course.update({
         where: { id: course.id },
@@ -1050,6 +1060,9 @@ export async function moveCourseAction(formData: FormData) {
     )
   );
   clearPublicCache();
+  revalidatePath("/admin/courses");
+  revalidatePath("/", "layout");
+  revalidatePath("/courses");
   await logStaff(
     "course.reorder",
     `Moved ${courses[index].title} ${dir < 0 ? "up" : "down"}`,
@@ -1131,6 +1144,62 @@ export async function addModuleAction(formData: FormData) {
   await prisma.module.create({
     data: { courseId, title, sortOrder: (last?.sortOrder ?? -1) + 1 },
   });
+  clearPublicCache();
+  revalidatePath(`/admin/courses/${courseId}`);
+  redirect(`/admin/courses/${courseId}`);
+}
+
+export async function updateModuleAction(formData: FormData) {
+  const user = await requireAccess("courses");
+  const courseId = String(formData.get("courseId") ?? "");
+  const moduleId = String(formData.get("moduleId") ?? "");
+  const title = String(formData.get("title") ?? "").trim();
+  const courseModule = await prisma.module.findUnique({
+    where: { id: moduleId },
+    include: { course: true },
+  });
+  if (!courseModule || courseModule.courseId !== courseId || !title) {
+    redirect(courseMediaPath(courseId));
+  }
+  if (user.role === "teacher" && courseModule.course.teacherId !== user.id) {
+    redirect("/admin/courses");
+  }
+  await prisma.module.update({ where: { id: moduleId }, data: { title } });
+  clearPublicCache();
+  revalidatePath(`/admin/courses/${courseId}`);
+  revalidatePath(`/courses/${courseModule.course.slug}`);
+  revalidatePath(`/learn/${courseModule.course.slug}`);
+  redirect(`/admin/courses/${courseId}`);
+}
+
+export async function deleteModuleAction(formData: FormData) {
+  const user = await requireAccess("courses");
+  const courseId = String(formData.get("courseId") ?? "");
+  const moduleId = String(formData.get("moduleId") ?? "");
+  const courseModule = await prisma.module.findUnique({
+    where: { id: moduleId },
+    include: {
+      course: true,
+      lessons: { include: { resources: true } },
+    },
+  });
+  if (!courseModule || courseModule.courseId !== courseId) {
+    redirect(courseMediaPath(courseId));
+  }
+  if (user.role === "teacher" && courseModule.course.teacherId !== user.id) {
+    redirect("/admin/courses");
+  }
+  for (const lesson of courseModule.lessons) {
+    await removeUpload(lesson.videoPath);
+    for (const resource of lesson.resources) {
+      await removeUpload(resource.filePath);
+    }
+  }
+  await prisma.module.delete({ where: { id: moduleId } });
+  clearPublicCache();
+  revalidatePath(`/admin/courses/${courseId}`);
+  revalidatePath(`/courses/${courseModule.course.slug}`);
+  revalidatePath(`/learn/${courseModule.course.slug}`);
   redirect(`/admin/courses/${courseId}`);
 }
 
@@ -1270,6 +1339,33 @@ export async function removeLessonVideoAction(formData: FormData) {
     where: { id: lessonId },
     data: { videoPath: null, videoName: null, videoBytes: null },
   });
+  redirect(courseMediaPath(courseId));
+}
+
+export async function deleteLessonAction(formData: FormData) {
+  const user = await requireAccess("courses");
+  const lessonId = String(formData.get("lessonId") ?? "");
+  const courseId = String(formData.get("courseId") ?? "");
+  const lesson = await prisma.lesson.findUnique({
+    where: { id: lessonId },
+    include: {
+      resources: true,
+      module: { include: { course: true } },
+    },
+  });
+  if (!lesson) redirect("/admin/courses");
+  if (user.role === "teacher" && lesson.module.course.teacherId !== user.id) {
+    redirect("/admin/courses");
+  }
+  await removeUpload(lesson.videoPath);
+  for (const resource of lesson.resources) {
+    await removeUpload(resource.filePath);
+  }
+  await prisma.lesson.delete({ where: { id: lessonId } });
+  clearPublicCache();
+  revalidatePath(`/admin/courses/${courseId}`);
+  revalidatePath(`/courses/${lesson.module.course.slug}`);
+  revalidatePath(`/learn/${lesson.module.course.slug}`);
   redirect(courseMediaPath(courseId));
 }
 

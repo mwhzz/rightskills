@@ -5,7 +5,10 @@ import {
   deleteLessonResourceAction,
   removeLessonVideoAction,
   updateLessonAction,
+  updateModuleAction,
 } from "@/app/actions";
+import { DeleteLessonButton } from "@/components/admin/delete-lesson-button";
+import { DeleteModuleButton } from "@/components/admin/delete-module-button";
 import { MediaFields } from "@/components/admin/media-fields";
 import { VideoFrame } from "@/components/video-frame";
 import { buttonVariants } from "@/components/ui/button";
@@ -68,9 +71,32 @@ export function CurriculumEditor({
             <p className="text-xs tracking-[0.16em] text-primary uppercase">
               Module {moduleIndex + 1}
             </p>
-            <h3 className="mt-1 font-heading text-xl font-semibold">
-              {module.title}
-            </h3>
+            <div className="mt-2 flex flex-wrap items-start gap-2">
+              <form
+                action={updateModuleAction}
+                className="flex min-w-0 flex-1 flex-wrap items-center gap-2"
+              >
+                <input type="hidden" name="courseId" value={courseId} />
+                <input type="hidden" name="moduleId" value={module.id} />
+                <input
+                  name="title"
+                  required
+                  defaultValue={module.title}
+                  className="h-11 min-w-0 flex-1 rounded-lg border bg-background px-3 font-heading text-lg font-semibold"
+                />
+                <button
+                  type="submit"
+                  className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-11")}
+                >
+                  Save
+                </button>
+              </form>
+              <DeleteModuleButton
+                courseId={courseId}
+                moduleId={module.id}
+                moduleTitle={module.title}
+              />
+            </div>
             <ul className="mt-4 space-y-4">
               {module.lessons.map((lesson) => (
                 <li key={lesson.id} className="rounded-2xl border bg-background p-4">
@@ -182,18 +208,25 @@ export function CurriculumEditor({
                       Save lesson
                     </button>
                   </form>
-                  {lesson.videoPath ? (
-                    <form action={removeLessonVideoAction} className="mt-2">
-                      <input type="hidden" name="lessonId" value={lesson.id} />
-                      <input type="hidden" name="courseId" value={courseId} />
-                      <button
-                        type="submit"
-                        className="text-xs text-muted-foreground hover:text-destructive"
-                      >
-                        Remove video
-                      </button>
-                    </form>
-                  ) : null}
+                  <div className="mt-2 flex flex-wrap items-center gap-3">
+                    {lesson.videoPath ? (
+                      <form action={removeLessonVideoAction}>
+                        <input type="hidden" name="lessonId" value={lesson.id} />
+                        <input type="hidden" name="courseId" value={courseId} />
+                        <button
+                          type="submit"
+                          className="text-xs text-muted-foreground hover:text-destructive"
+                        >
+                          Remove video
+                        </button>
+                      </form>
+                    ) : null}
+                    <DeleteLessonButton
+                      courseId={courseId}
+                      lessonId={lesson.id}
+                      lessonTitle={lesson.title}
+                    />
+                  </div>
                   {lesson.resources.map((resource) => (
                     <form
                       key={resource.id}
