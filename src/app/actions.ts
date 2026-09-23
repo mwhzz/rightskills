@@ -162,14 +162,108 @@ export async function buyNowAction(formData: FormData) {
   const slug = String(formData.get("slug") ?? "");
   const course = await getPublishedCourse(slug);
   if (!course) return;
+  redirect(`/courses/${slug}?buy=1`);
+}
+
+export async function courseCheckoutAction(formData: FormData) {
+  const slug = String(formData.get("slug") ?? "").trim();
+  const back = (code: string): never =>
+    redirect(`/courses/${encodeURIComponent(slug)}?buy=1&error=${code}`);
+
+  const name = String(formData.get("name") ?? "").trim();
+  const phone = normalizePhone(String(formData.get("phone") ?? ""));
+  const email = String(formData.get("email") ?? "").trim().slice(0, 120);
+  const profession = String(formData.get("profession") ?? "").trim();
+  const method = String(formData.get("method") ?? "bkash");
+
+  if (!slug) redirect("/courses");
+  if (name.length < 2) back("name");
+  if (!phone) back("phone");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) back("email");
+  if (profession.length < 2) back("profession");
+  if (method !== "bkash" && method !== "nagad") back("method");
+
+  const course = await prisma.course.findFirst({
+    where: { slug, published: true },
+  });
+  if (!course) redirect("/courses");
+
+  const settings = await getSettings();
+  const wallet =
+    method === "nagad" ? settings.nagadNumber?.trim() : settings.bkashNumber?.trim();
+  if (!wallet) back("method");
+
   const session = await getSession();
+  let userId = "";
+
   if (session) {
-    const owned = await getOwnedSlugsForUser(session.id);
+    const me = await prisma.user.findUnique({ where: { id: session.id } });
+    if (!me || me.role !== "student") back("taken");
+    if (me.phone !== phone) {
+      const taken = await prisma.user.findUnique({ where: { phone } });
+      if (taken) back("taken");
+    }
+    const owned = await getOwnedSlugsForUser(me.id);
     if (owned.includes(slug)) redirect(`/learn/${slug}`);
+    await prisma.user.update({
+      where: { id: me.id },
+      data: { name, phone, profession, email },
+    });
+    await createSession({ id: me.id, phone, name, role: me.role });
+    userId = me.id;
+  } else {
+    const existing = await prisma.user.findUnique({ where: { phone } });
+    if (existing) {
+      if (existing.role !== "student") back("taken");
+      const owned = await getOwnedSlugsForUser(existing.id);
+      if (owned.includes(slug)) back("owned");
+      await prisma.user.update({
+        where: { id: existing.id },
+        data: { name, profession, email },
+      });
+      await createSession({
+        id: existing.id,
+        phone: existing.phone,
+        name,
+        role: existing.role,
+      });
+      userId = existing.id;
+    } else {
+      const pin = String(Math.floor(1000 + Math.random() * 9000));
+      const created = await prisma.user.create({
+        data: {
+          name,
+          phone,
+          profession,
+          email,
+          passwordHash: await bcrypt.hash(pin, 12),
+          role: Role.student,
+        },
+      });
+      await createSession({
+        id: created.id,
+        phone,
+        name,
+        role: Role.student,
+      });
+      userId = created.id;
+    }
   }
-  const cart = await getCart();
-  if (!cart.includes(slug)) await setCartCookie([...cart, slug]);
-  redirect("/checkout");
+
+  const order = await prisma.order.create({
+    data: {
+      orderId: makeOrderId(),
+      userId,
+      totalBdt: course.priceBdt,
+      method,
+      payerNumber: phone,
+      status: "awaiting_review",
+      items: {
+        create: [{ courseId: course.id, priceBdt: course.priceBdt }],
+      },
+    },
+  });
+  redirect(`/checkout/success?order=${order.orderId}`);
 }
 
 export async function removeFromCartAction(formData: FormData) {

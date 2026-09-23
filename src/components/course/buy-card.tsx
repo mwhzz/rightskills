@@ -1,5 +1,6 @@
 import { Check, Infinity, Languages, MessageCircle, MonitorPlay, Smartphone } from "lucide-react";
-import { AddToCartButton, BuyNowButton } from "@/components/add-to-cart-button";
+import { AddToCartButton } from "@/components/add-to-cart-button";
+import { CourseCheckoutDialog } from "@/components/course/checkout-dialog";
 import { CourseCover } from "@/components/course-cover";
 import { VideoFrame } from "@/components/video-frame";
 import { buttonVariants } from "@/components/ui/button";
@@ -7,6 +8,8 @@ import { courseHours, courseTitle, lessonCount, defaultPurchaseNote, type Course
 import { formatBdt } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { getSettings } from "@/lib/queries";
+import { getSession } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 import { videoEmbed } from "@/lib/video";
 import { whatsappChatUrl } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
@@ -15,10 +18,12 @@ export async function CourseBuyCard({
   course,
   owned,
   inCart,
+  checkout,
 }: {
   course: Course;
   owned: boolean;
   inCart: boolean;
+  checkout?: { open: boolean; error?: string };
 }) {
   const preview = videoEmbed(course.promoVideoUrl);
   const discount =
@@ -27,11 +32,20 @@ export async function CourseBuyCard({
           (1 - course.priceBdt / course.originalPriceBdt) * 100
         )
       : 0;
-  const [dict, locale, settings] = await Promise.all([
+  const [dict, locale, settings, session] = await Promise.all([
     getDictionary(),
     getLocale(),
     getSettings().catch(() => null),
+    getSession().catch(() => null),
   ]);
+  const profile = session
+    ? await prisma.user
+        .findUnique({
+          where: { id: session.id },
+          select: { name: true, phone: true, email: true, profession: true },
+        })
+        .catch(() => null)
+    : null;
   const title = courseTitle(course, locale);
   const whatsappHref =
     !owned && settings?.whatsappNumber
@@ -76,7 +90,26 @@ export async function CourseBuyCard({
         </p>
         <div className="mt-5 space-y-2.5">
           <AddToCartButton slug={course.slug} owned={owned} inCart={inCart} />
-          <BuyNowButton slug={course.slug} owned={owned} />
+          {owned ? null : (
+            <CourseCheckoutDialog
+              slug={course.slug}
+              title={title}
+              priceLabel={formatBdt(course.priceBdt)}
+              originalPriceLabel={
+                course.originalPriceBdt ? formatBdt(course.originalPriceBdt) : undefined
+              }
+              bkashNumber={settings?.bkashNumber ?? ""}
+              nagadNumber={settings?.nagadNumber ?? ""}
+              defaults={{
+                name: profile?.name ?? "",
+                phone: profile?.phone ?? "",
+                email: profile?.email ?? "",
+                profession: profile?.profession ?? "",
+              }}
+              initialOpen={checkout?.open ?? false}
+              error={checkout?.error}
+            />
+          )}
           {whatsappHref ? (
             <a
               href={whatsappHref}

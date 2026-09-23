@@ -544,6 +544,26 @@ export const en = {
       },
     ],
   },
+  courseCheckout: {
+    lifetime: "Lifetime access",
+    name: "Name",
+    phone: "Mobile number",
+    email: "Email",
+    profession: "Profession",
+    professionPlaceholder: "Student, teacher, designer…",
+    sendTo: (method: string, amount: string) => `Send ${amount} to this ${method} number`,
+    placeOrder: "Place order",
+    after: "We review the payment, then unlock the course.",
+    errors: {
+      name: "Enter your name.",
+      phone: "Enter a valid mobile number (01XXXXXXXXX).",
+      email: "Enter a valid email.",
+      profession: "Enter your profession.",
+      method: "Payment number is not set yet.",
+      owned: "This course is already unlocked on this number.",
+      taken: "This number cannot be used for checkout.",
+    },
+  },
 };
 
 export type Dictionary = typeof en;

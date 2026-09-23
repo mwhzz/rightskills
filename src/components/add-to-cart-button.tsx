@@ -1,6 +1,5 @@
 import {
   addToCartAction,
-  buyNowAction,
 } from "@/app/actions";
 import { buttonVariants } from "@/components/ui/button";
 import { Check, ShoppingBag } from "lucide-react";
@@ -67,41 +66,11 @@ export async function AddToCartButton({
 export async function CardBuyNowButton({ slug }: { slug: string }) {
   const dict = await getDictionary();
   return (
-    <form action={buyNowAction} className="relative z-10">
-      <input type="hidden" name="slug" value={slug} />
-      <button
-        type="submit"
-        className={cn(buttonVariants({ size: "sm" }), "h-10 w-full text-sm")}
-      >
+    <Link href={`/courses/${slug}?buy=1`} className="relative z-10">
+      <span className={cn(buttonVariants({ size: "sm" }), "h-10 w-full text-sm")}>
         <ShoppingBag data-icon="inline-start" />
         {dict.cta.buyNow}
-      </button>
-    </form>
-  );
-}
-
-export async function BuyNowButton({
-  slug,
-  owned,
-}: {
-  slug: string;
-  owned: boolean;
-}) {
-  if (owned) return null;
-  const dict = await getDictionary();
-
-  return (
-    <form action={buyNowAction}>
-      <input type="hidden" name="slug" value={slug} />
-      <button
-        type="submit"
-        className={cn(
-          buttonVariants({ size: "lg", variant: "outline" }),
-          "h-12 w-full text-base"
-        )}
-      >
-        {dict.cta.buyNow}
-      </button>
-    </form>
+      </span>
+    </Link>
   );
 }

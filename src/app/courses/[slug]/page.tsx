@@ -83,10 +83,13 @@ export async function generateMetadata({
 
 export default async function CourseDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ buy?: string; error?: string }>;
 }) {
   const { slug } = await params;
+  const { buy, error } = await searchParams;
   const course = await loadCourse(slug);
   if (!course) notFound();
 
@@ -195,7 +198,12 @@ export default async function CourseDetailPage({
 
           <aside className="lg:row-span-2">
             <div className="lg:sticky lg:top-24">
-              <CourseBuyCard course={course} owned={owned} inCart={inCart} />
+              <CourseBuyCard
+                course={course}
+                owned={owned}
+                inCart={inCart}
+                checkout={{ open: buy === "1", error }}
+              />
             </div>
           </aside>
 
