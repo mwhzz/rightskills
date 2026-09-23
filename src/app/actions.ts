@@ -177,11 +177,11 @@ export async function courseCheckoutAction(formData: FormData) {
   const method = String(formData.get("method") ?? "bkash");
 
   if (!slug) redirect("/courses");
-  if (name.length < 2) back("name");
-  if (!phone) back("phone");
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) back("email");
-  if (profession.length < 2) back("profession");
-  if (method !== "bkash" && method !== "nagad") back("method");
+  if (name.length < 2) return back("name");
+  if (!phone) return back("phone");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return back("email");
+  if (profession.length < 2) return back("profession");
+  if (method !== "bkash" && method !== "nagad") return back("method");
 
   const course = await prisma.course.findFirst({
     where: { slug, published: true },
@@ -191,17 +191,17 @@ export async function courseCheckoutAction(formData: FormData) {
   const settings = await getSettings();
   const wallet =
     method === "nagad" ? settings.nagadNumber?.trim() : settings.bkashNumber?.trim();
-  if (!wallet) back("method");
+  if (!wallet) return back("method");
 
   const session = await getSession();
   let userId = "";
 
   if (session) {
     const me = await prisma.user.findUnique({ where: { id: session.id } });
-    if (!me || me.role !== "student") back("taken");
+    if (!me || me.role !== "student") return back("taken");
     if (me.phone !== phone) {
       const taken = await prisma.user.findUnique({ where: { phone } });
-      if (taken) back("taken");
+      if (taken) return back("taken");
     }
     const owned = await getOwnedSlugsForUser(me.id);
     if (owned.includes(slug)) redirect(`/learn/${slug}`);
@@ -214,9 +214,9 @@ export async function courseCheckoutAction(formData: FormData) {
   } else {
     const existing = await prisma.user.findUnique({ where: { phone } });
     if (existing) {
-      if (existing.role !== "student") back("taken");
+      if (existing.role !== "student") return back("taken");
       const owned = await getOwnedSlugsForUser(existing.id);
-      if (owned.includes(slug)) back("owned");
+      if (owned.includes(slug)) return back("owned");
       await prisma.user.update({
         where: { id: existing.id },
         data: { name, profession, email },
