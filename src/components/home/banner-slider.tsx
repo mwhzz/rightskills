@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type TransitionEvent } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import {
@@ -19,10 +19,14 @@ export function BannerSlider({
   variant: "desktop" | "mobile";
 }) {
   const slides = banners.filter((item) => item.image);
-  const [index, setIndex] = useState(0);
+  const realCount = slides.length;
+  const loop = realCount > 1;
+  const track = loop ? [...slides, slides[0]] : slides;
+  const [position, setPosition] = useState(0);
+  const [motion, setMotion] = useState(true);
   const [paused, setPaused] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
-  const slide = slides[index] ?? slides[0];
+  const active = realCount > 0 ? position % realCount : 0;
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -33,20 +37,49 @@ export function BannerSlider({
   }, []);
 
   useEffect(() => {
-    if (index >= slides.length) setIndex(0);
-  }, [index, slides.length]);
+    if (motion) return;
+    let inner = 0;
+    const outer = window.requestAnimationFrame(() => {
+      inner = window.requestAnimationFrame(() => setMotion(true));
+    });
+    return () => {
+      window.cancelAnimationFrame(outer);
+      window.cancelAnimationFrame(inner);
+    };
+  }, [motion]);
 
   useEffect(() => {
-    if (slides.length < 2 || paused || reduceMotion || !slide) return;
+    if (!loop || paused || reduceMotion || !motion || position >= realCount) return;
+    const wait = (slides[position]?.durationSec ?? 5) * 1000;
     const timer = window.setTimeout(() => {
-      setIndex((current) => (current + 1) % slides.length);
-    }, slide.durationSec * 1000);
+      setMotion(true);
+      setPosition((current) => current + 1);
+    }, wait);
     return () => window.clearTimeout(timer);
-  }, [paused, reduceMotion, slide, slides.length]);
+  }, [loop, motion, paused, position, realCount, reduceMotion, slides]);
 
-  if (!slide) return null;
+  function onTrackEnd(event: TransitionEvent<HTMLDivElement>) {
+    if (event.target !== event.currentTarget || event.propertyName !== "transform") return;
+    if (position < realCount) return;
+    setMotion(false);
+    setPosition(0);
+  }
 
-  const count = slides.length;
+  function show(dot: number) {
+    if (dot === active && position < realCount) return;
+    if (loop && active === realCount - 1 && dot === 0) {
+      setMotion(true);
+      setPosition(realCount);
+      return;
+    }
+    setMotion(true);
+    setPosition(dot);
+  }
+
+  if (realCount === 0) return null;
+
+  const trackCount = track.length;
+  const glide = motion && !reduceMotion;
 
   return (
     <section
@@ -63,41 +96,42 @@ export function BannerSlider({
       >
         <div className={cn("relative w-full overflow-hidden", bannerFrameClass[variant])}>
           <div
-            className="flex h-full"
+            className="flex h-full will-change-transform"
+            onTransitionEnd={onTrackEnd}
             style={{
-              width: `${count * 100}%`,
-              transform: `translate3d(-${(index * 100) / count}%, 0, 0)`,
-              transition: reduceMotion
-                ? "none"
-                : "transform 700ms cubic-bezier(0.22, 1, 0.36, 1)",
+              width: `${trackCount * 100}%`,
+              transform: `translate3d(-${(position * 100) / trackCount}%, 0, 0)`,
+              transition: glide
+                ? "transform 1150ms cubic-bezier(0.4, 0, 0.2, 1)"
+                : "none",
             }}
           >
-            {slides.map((banner, i) => {
+            {track.map((banner, i) => {
               const src = bannerImageSrc(banner.image);
-              const active = i === index;
+              const current = i === position;
               const image = (
                 <img
                   src={src}
                   alt=""
                   draggable={false}
                   fetchPriority={i === 0 ? "high" : "auto"}
-                  loading={i <= 1 ? "eager" : "lazy"}
+                  loading="eager"
                   decoding="async"
-                  className="absolute inset-0 h-full w-full object-cover"
+                  className="pointer-events-none absolute inset-0 h-full w-full object-cover"
                 />
               );
               return (
                 <article
                   key={`${banner.id}-${i}`}
-                  aria-hidden={!active}
+                  aria-hidden={!current}
                   className="relative h-full shrink-0"
-                  style={{ width: `${100 / count}%` }}
+                  style={{ width: `${100 / trackCount}%` }}
                 >
                   {banner.href ? (
                     <Link
                       href={banner.href}
                       className="absolute inset-0 block"
-                      tabIndex={active ? 0 : -1}
+                      tabIndex={current ? 0 : -1}
                     >
                       {image}
                       <span className="sr-only">Open banner</span>
@@ -110,18 +144,18 @@ export function BannerSlider({
             })}
           </div>
 
-          {count > 1 ? (
+          {realCount > 1 ? (
             <div className="absolute inset-x-0 bottom-3 z-10 flex justify-center gap-1.5">
               {slides.map((item, dot) => (
                 <button
                   key={`${item.id}-dot-${dot}`}
                   type="button"
                   aria-label={`Show banner ${dot + 1}`}
-                  aria-current={dot === index ? true : undefined}
-                  onClick={() => setIndex(dot)}
+                  aria-current={dot === active ? true : undefined}
+                  onClick={() => show(dot)}
                   className={cn(
                     "size-1.5 rounded-full transition",
-                    dot === index
+                    dot === active
                       ? "bg-primary"
                       : "bg-foreground/25 hover:bg-foreground/50"
                   )}
