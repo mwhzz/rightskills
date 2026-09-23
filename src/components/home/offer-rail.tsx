@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { OfferSlider } from "@/components/home/offer-slider";
 import { Reveal } from "@/components/home/reveal";
@@ -38,9 +37,7 @@ export async function OfferRail({ row }: { row: HomeOfferRow }) {
         <OfferSlider>
           {items.map((item) => {
             const src = offerImageSrc(item.image);
-            const image = src.startsWith("/") ? (
-              <Image src={src} alt="" fill sizes="320px" className="object-cover" />
-            ) : (
+            const image = (
               <img
                 src={src}
                 alt=""

@@ -527,6 +527,18 @@ export async function toggleHomeBannerAction(formData: FormData) {
   redirect("/admin/banners");
 }
 
+export async function setHomeBannerDurationAction(formData: FormData) {
+  await requireAccess("banners");
+  const id = String(formData.get("id") ?? "");
+  const durationSec = clampBannerDuration(formData.get("durationSec"));
+  const items = await readHomeBanners();
+  if (!items.some((item) => item.id === id)) redirect("/admin/banners");
+  await writeHomeBanners(
+    items.map((item) => (item.id === id ? { ...item, durationSec } : item))
+  );
+  redirect("/admin/banners");
+}
+
 async function offersFromForm(
   value: unknown,
   formData: FormData

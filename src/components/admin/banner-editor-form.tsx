@@ -128,7 +128,7 @@ export function BannerEditorForm({
             />
           </label>
           <label className="block space-y-1.5">
-            <span className="text-sm font-medium">Seconds on screen</span>
+            <span className="text-sm font-medium">Show for (seconds)</span>
             <Input
               name="durationSec"
               type="number"
@@ -137,6 +137,9 @@ export function BannerEditorForm({
               defaultValue={String(banner?.durationSec ?? 5)}
               className={fieldClass}
             />
+            <span className="block text-xs text-muted-foreground">
+              How long this banner stays before the next one slides in. 2–30 seconds.
+            </span>
           </label>
           <label className="flex items-center gap-2 pt-7 text-sm font-medium">
             <input

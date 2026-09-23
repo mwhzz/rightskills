@@ -1,10 +1,10 @@
-import { createReadStream } from "node:fs";
-import { stat } from "node:fs/promises";
-import { Readable } from "node:stream";
+import { readFile, stat } from "node:fs/promises";
 import { NextResponse } from "next/server";
 import { absoluteUploadPath, imageContentType } from "@/lib/uploads";
 
 export const runtime = "nodejs";
+
+const FOLDERS = new Set(["instructors", "banners", "covers", "offers"]);
 
 export async function GET(
   _request: Request,
@@ -14,7 +14,7 @@ export async function GET(
   const relative = parts.join("/");
   if (
     parts.length < 2 ||
-    !["instructors", "banners", "covers", "offers"].includes(parts[0] ?? "") ||
+    !FOLDERS.has(parts[0] ?? "") ||
     relative.includes("..")
   ) {
     return new NextResponse("Not found", { status: 404 });
@@ -22,16 +22,23 @@ export async function GET(
 
   const filePath = absoluteUploadPath(relative);
   const fileStat = await stat(filePath).catch(() => null);
-  if (!fileStat) {
+  if (!fileStat?.isFile()) {
     return new NextResponse("Missing file", { status: 404 });
   }
 
-  const stream = createReadStream(filePath);
-  return new NextResponse(Readable.toWeb(stream) as unknown as ReadableStream, {
+  // Read the whole file before responding. A live stream plus Content-Length
+  // was sometimes cut off, so the browser kept a blank image until reload.
+  const body = await readFile(filePath).catch(() => null);
+  if (!body || body.length === 0) {
+    return new NextResponse("Missing file", { status: 404 });
+  }
+
+  return new NextResponse(new Uint8Array(body), {
     headers: {
       "Content-Type": imageContentType(relative),
-      "Content-Length": String(fileStat.size),
-      "Cache-Control": "public, max-age=31536000, immutable",
+      "Content-Length": String(body.length),
+      "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800",
+      "X-Content-Type-Options": "nosniff",
     },
   });
 }

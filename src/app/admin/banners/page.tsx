@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import {
   moveHomeBannerAction,
+  setHomeBannerDurationAction,
   toggleHomeBannerAction,
 } from "@/app/actions";
 import { requireAccess } from "@/lib/staff";
@@ -76,6 +77,7 @@ export default async function AdminBannersPage({
                 <th className="px-4 py-3 font-medium">Mobile</th>
                 <th className="px-4 py-3 font-medium">Link</th>
                 <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium">Seconds</th>
                 <th className="px-4 py-3 font-medium">Order</th>
                 <th className="px-4 py-3 font-medium" />
               </tr>
@@ -114,6 +116,26 @@ export default async function AdminBannersPage({
                         )}
                       >
                         {banner.active ? "Active" : "Off"}
+                      </button>
+                    </form>
+                  </td>
+                  <td className="px-4 py-3 align-middle">
+                    <form action={setHomeBannerDurationAction} className="flex items-center gap-1.5">
+                      <input type="hidden" name="id" value={banner.id} />
+                      <input
+                        name="durationSec"
+                        type="number"
+                        min={2}
+                        max={30}
+                        defaultValue={banner.durationSec}
+                        aria-label={`Seconds for banner ${index + 1}`}
+                        className="h-9 w-16 rounded-lg border bg-background px-2 text-sm"
+                      />
+                      <button
+                        type="submit"
+                        className="text-xs font-medium text-primary hover:underline"
+                      >
+                        Save
                       </button>
                     </form>
                   </td>
