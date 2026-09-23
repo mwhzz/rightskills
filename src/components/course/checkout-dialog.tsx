@@ -95,40 +95,42 @@ export function CourseCheckoutDialog({
             </p>
           </div>
 
-          <div className="space-y-3.5 px-6 pt-1 pb-6">
-            <Field label={copy.name} name="name" defaultValue={defaults.name} autoComplete="name" required />
-            <Field
-              label={copy.phone}
-              name="phone"
-              defaultValue={defaults.phone}
-              type="tel"
-              inputMode="numeric"
-              placeholder="01XXXXXXXXX"
-              autoComplete="tel"
-              required
-            />
-            <Field
-              label={copy.email}
-              name="email"
-              defaultValue={defaults.email}
-              type="email"
-              placeholder="you@email.com"
-              autoComplete="email"
-              required
-            />
-            <Field
-              label={copy.profession}
-              name="profession"
-              defaultValue={defaults.profession}
-              placeholder={copy.professionPlaceholder}
-              autoComplete="organization-title"
-              required
-            />
+          <div className="space-y-4 px-6 pt-1 pb-6">
+            <div className="overflow-hidden rounded-2xl bg-white ring-1 ring-[#e7d8cb]">
+              <Field label={copy.name} name="name" defaultValue={defaults.name} autoComplete="name" required />
+              <Field
+                label={copy.phone}
+                name="phone"
+                defaultValue={defaults.phone}
+                type="tel"
+                inputMode="numeric"
+                placeholder="01XXXXXXXXX"
+                autoComplete="tel"
+                required
+              />
+              <Field
+                label={copy.email}
+                name="email"
+                defaultValue={defaults.email}
+                type="email"
+                placeholder="you@email.com"
+                autoComplete="email"
+                required
+              />
+              <Field
+                label={copy.profession}
+                name="profession"
+                defaultValue={defaults.profession}
+                placeholder={copy.professionPlaceholder}
+                autoComplete="organization-title"
+                required
+              />
+            </div>
 
             {active ? (
-              <div className="pt-1">
+              <div>
                 {wallets.length > 1 ? (
-                  <div className="grid grid-cols-2 gap-2 rounded-2xl bg-[#fff1e6] p-1">
+                  <div className="mb-3 grid grid-cols-2 gap-2 rounded-2xl bg-[#fff1e6] p-1">
                     {wallets.map((wallet) => {
                       const selected = method === wallet.id;
                       return (
@@ -157,12 +159,18 @@ export function CourseCheckoutDialog({
                 ) : (
                   <input type="hidden" name="method" value={active.id} />
                 )}
-                <div className="mt-3 rounded-2xl bg-white px-4 py-3.5 shadow-[inset_0_0_0_1px_rgba(80,40,10,0.08)]">
-                  <p className="text-xs text-muted-foreground">
-                    {copy.sendTo(active.label, priceLabel)}
+                <div className="rounded-2xl bg-[#2a1810] px-4 py-4 text-[#fff6ee]">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="rounded-full bg-primary px-2.5 py-0.5 text-[11px] font-semibold tracking-wide text-white">
+                      {active.label}
+                    </span>
+                    <span className="text-sm font-medium text-[#f6d7c2]">{priceLabel}</span>
+                  </div>
+                  <p className="mt-3 font-heading text-[1.85rem] leading-none font-semibold tracking-[0.08em]">
+                    {formatWallet(active.number)}
                   </p>
-                  <p className="mt-1 font-heading text-[1.7rem] leading-none font-semibold tracking-[0.04em]">
-                    {active.number}
+                  <p className="mt-2 text-xs text-[#e8cbb6]">
+                    {copy.sendTo(active.label, priceLabel)}
                   </p>
                 </div>
               </div>
@@ -205,8 +213,8 @@ function Field({
   required?: boolean;
 }) {
   return (
-    <label className="block">
-      <span className="text-[0.8rem] font-medium text-foreground/80">{label}</span>
+    <label className="block border-t border-[#f1e4d8] px-4 py-2.5 first:border-t-0 focus-within:bg-[#fff8f2]">
+      <span className="text-[11px] font-medium tracking-wide text-[#8d7363]">{label}</span>
       <input
         name={name}
         type={type}
@@ -215,10 +223,16 @@ function Field({
         placeholder={placeholder}
         autoComplete={autoComplete}
         inputMode={inputMode}
-        className="mt-1.5 h-12 w-full rounded-2xl bg-white px-4 text-[15px] shadow-[inset_0_0_0_1px_rgba(80,40,10,0.1)] outline-none placeholder:text-muted-foreground/60 focus:shadow-[inset_0_0_0_1.5px_var(--primary)]"
+        className="mt-0.5 h-7 w-full bg-transparent text-[15px] text-foreground outline-none placeholder:text-[#c3b1a3]"
       />
     </label>
   );
+}
+
+function formatWallet(number: string) {
+  const digits = number.replace(/\s+/g, "");
+  if (!/^01\d{9}$/.test(digits)) return number;
+  return `${digits.slice(0, 5)} ${digits.slice(5, 8)} ${digits.slice(8)}`;
 }
 
 function SubmitButton({ label, disabled }: { label: string; disabled?: boolean }) {
