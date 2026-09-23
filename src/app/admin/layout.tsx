@@ -20,6 +20,7 @@ export default async function AdminLayout({
   const links: { href: string; label: string; access: StaffKey }[] = [
     { href: "/admin", label: "Dashboard", access: "courses" },
     { href: "/admin/courses", label: "Courses", access: "courses" },
+    { href: "/admin/just-added", label: "Just added", access: "courses" },
     { href: "/admin/students", label: "Students", access: "students" },
     { href: "/admin/reviews", label: "Reviews", access: "reviews" },
     { href: "/admin/orders", label: "Orders", access: "orders" },
@@ -31,6 +32,7 @@ export default async function AdminLayout({
   ];
   const visible = links.filter((link) => {
     if (link.href === "/admin") return true;
+    if (staff.isTeacher && link.href === "/admin/just-added") return false;
     if (staff.isTeacher && (link.access === "courses" || link.access === "reviews")) {
       return true;
     }

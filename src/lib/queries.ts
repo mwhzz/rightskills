@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { parseHomeBanners, type HomeBannerSet } from "@/lib/home-banners";
+import { justAddedOrder } from "@/lib/home-just-added";
 import { parseHomeOffers, type HomeOfferRow } from "@/lib/home-offers";
 import { prisma } from "@/lib/db";
 import { mapCourse, type CourseRecord } from "@/lib/catalog";
@@ -117,12 +118,20 @@ export async function listFeaturedCourses(take = 6): Promise<Course[]> {
     .map(mapCard);
 }
 
-export async function listNewestCourses(take = 3): Promise<Course[]> {
+export async function listNewestCourses(savedIds: string[] = []): Promise<Course[]> {
   const rows = await loadPublishedCardRows();
-  return [...rows]
-    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-    .slice(0, take)
-    .map(mapCard);
+  const newestFirst = [...rows].sort(
+    (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+  );
+  const order = justAddedOrder(
+    savedIds,
+    newestFirst.map((row) => row.id)
+  );
+  const byId = new Map(newestFirst.map((row) => [row.id, row]));
+  return order.flatMap((id) => {
+    const row = byId.get(id);
+    return row ? [mapCard(row)] : [];
+  });
 }
 
 export async function listPopularCourses(take = 3): Promise<Course[]> {

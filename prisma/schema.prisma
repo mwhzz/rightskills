@@ -199,6 +199,7 @@ model Setting {
   payInstructions String @db.Text
   homeBanners     String @db.Text
   homeOffers      String @db.Text
+  homeJustAdded   String @default("") @db.Text
 }
 
 model AuditLog {

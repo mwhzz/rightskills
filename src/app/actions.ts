@@ -57,6 +57,11 @@ import {
   OFFER_MAX_ITEMS,
   type HomeOffer,
 } from "@/lib/home-offers";
+import {
+  justAddedOrder,
+  parseHomeJustAdded,
+  type HomeJustAdded,
+} from "@/lib/home-just-added";
 import { categories, levels } from "@/lib/courses";
 import { normalizeVideoInput } from "@/lib/video";
 import { parseStudentProfile } from "@/lib/student-profile";
@@ -1129,8 +1134,99 @@ export async function saveCourseAction(
     };
   }
   clearPublicCache();
+  if (data.published) await rememberJustAddedCourse(created.id);
   await logStaff("course.save", `Created course ${title}`, created.slug);
   redirect(`/admin/courses/${created.id}`);
+}
+
+async function readJustAdded(): Promise<HomeJustAdded> {
+  const settings = await prisma.setting.findUnique({ where: { id: "default" } });
+  return parseHomeJustAdded(settings?.homeJustAdded);
+}
+
+async function writeJustAdded(next: HomeJustAdded) {
+  const payload = JSON.stringify({
+    title: next.title,
+    titleBn: next.titleBn,
+    courseIds: next.courseIds.slice(0, 24),
+  });
+  await prisma.setting.upsert({
+    where: { id: "default" },
+    update: { homeJustAdded: payload },
+    create: {
+      id: "default",
+      bkashNumber: "",
+      nagadNumber: "",
+      whatsappNumber: "",
+      payInstructions:
+        "Send the exact amount to the number below. Use your order ID as the reference, then paste the TrxID on your orders page.",
+      homeBanners: "[]",
+      homeOffers: "{}",
+      homeJustAdded: payload,
+    },
+  });
+  clearPublicCache();
+  revalidatePath("/", "layout");
+  revalidatePath("/admin/just-added");
+}
+
+async function publishedNewestIds() {
+  const courses = await prisma.course.findMany({
+    where: { published: true },
+    orderBy: { createdAt: "desc" },
+    select: { id: true, title: true },
+  });
+  return courses;
+}
+
+async function rememberJustAddedCourse(id: string) {
+  const saved = await readJustAdded();
+  if (saved.courseIds.length === 0 || saved.courseIds.includes(id)) return;
+  await writeJustAdded({ ...saved, courseIds: [id, ...saved.courseIds] });
+}
+
+export async function saveJustAddedTitleAction(formData: FormData) {
+  const staff = await requireAccess("courses");
+  if (staff.isTeacher) redirect("/admin/courses");
+  const title = String(formData.get("title") ?? "").trim().slice(0, 80);
+  const titleBn = String(formData.get("titleBn") ?? "").trim().slice(0, 80);
+  const saved = await readJustAdded();
+  const published = await publishedNewestIds();
+  const courseIds = justAddedOrder(
+    saved.courseIds,
+    published.map((course) => course.id)
+  );
+  await writeJustAdded({ title, titleBn, courseIds });
+  await logStaff("home.justAdded", "Updated the Just added row name");
+  redirect("/admin/just-added?saved=1");
+}
+
+export async function moveJustAddedCourseAction(formData: FormData) {
+  const staff = await requireAccess("courses");
+  if (staff.isTeacher) redirect("/admin/courses");
+  const id = String(formData.get("id") ?? "");
+  const dir = String(formData.get("dir") ?? "") === "up" ? -1 : 1;
+  const saved = await readJustAdded();
+  const published = await publishedNewestIds();
+  const order = justAddedOrder(
+    saved.courseIds,
+    published.map((course) => course.id)
+  );
+  const index = order.indexOf(id);
+  const target = index + dir;
+  if (index < 0 || target < 0 || target >= order.length) {
+    redirect("/admin/just-added");
+  }
+  const next = [...order];
+  [next[index], next[target]] = [next[target], next[index]];
+  await writeJustAdded({ ...saved, courseIds: next });
+  const title = published.find((course) => course.id === id)?.title ?? "course";
+  await logStaff(
+    "home.justAdded",
+    `Moved ${title} ${dir < 0 ? "forward" : "back"} in Just added`,
+    id
+  );
+  redirect("/admin/just-added");
 }
 
 export async function moveCourseAction(formData: FormData) {

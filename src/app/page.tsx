@@ -6,11 +6,13 @@ import { Instructors } from "@/components/home/instructors";
 import { OfferRail } from "@/components/home/offer-rail";
 import { Reviews } from "@/components/home/reviews";
 import { getSession } from "@/lib/auth";
-import { getDictionary } from "@/lib/i18n";
+import { getDictionary, getLocale } from "@/lib/i18n";
+import { parseHomeJustAdded } from "@/lib/home-just-added";
 import {
   getHomepageLearning,
   getHomeBanners,
   getHomeOffers,
+  getSettings,
   listFeaturedCourses,
   listNewestCourses,
   listPopularCourses,
@@ -24,28 +26,39 @@ export const dynamic = "force-dynamic";
 
 async function loadHome() {
   try {
+    const settings = await getSettings();
+    const justAdded = parseHomeJustAdded(settings.homeJustAdded);
     const [featured, newest, popular, published] = await Promise.all([
       listFeaturedCourses(3),
-      listNewestCourses(3),
+      listNewestCourses(justAdded.courseIds),
       listPopularCourses(3),
       listPublishedCourses(),
     ]);
-    return { featured, newest, popular, published };
+    return { featured, newest, popular, published, justAdded };
   } catch {
-    return { featured: [], newest: [], popular: [], published: [] };
+    return {
+      featured: [],
+      newest: [],
+      popular: [],
+      published: [],
+      justAdded: parseHomeJustAdded(null),
+    };
   }
 }
 
 export default async function HomePage() {
   const session = await getSession();
-  const [{ featured, newest, popular, published }, learning, banners, offers, dict] =
+  const [{ featured, newest, popular, published, justAdded }, learning, banners, offers, dict, locale] =
     await Promise.all([
       loadHome(),
       session ? getHomepageLearning(session.id).catch(() => null) : null,
       getHomeBanners().catch(() => defaultHomeBanners),
       getHomeOffers().catch(() => defaultHomeOffers),
       getDictionary(),
+      getLocale(),
     ]);
+  const justAddedTitle =
+    (locale === "bn" ? justAdded.titleBn : justAdded.title) || dict.home.justAddedTitle;
 
   const ownedSlugs = learning?.ownedSlugs;
   const progressBySlug = learning?.progressBySlug;
@@ -72,7 +85,7 @@ export default async function HomePage() {
             progressBySlug={progressBySlug}
           />
           <CourseRail
-            title={dict.home.justAddedTitle}
+            title={justAddedTitle}
             description={dict.home.justAddedDescription}
             href="/courses"
             courses={newest}
