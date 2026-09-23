@@ -1,8 +1,9 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useFormStatus } from "react-dom";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { moveJustAddedCourseAction } from "@/app/actions";
-import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export function JustAddedMoveButtons({
@@ -17,16 +18,20 @@ export function JustAddedMoveButtons({
   isLast: boolean;
 }) {
   return (
-    <div className="flex gap-1">
+    <div className="flex shrink-0 overflow-hidden rounded-full bg-[#fff4eb] ring-1 ring-[#f0d8c4]">
       <form action={moveJustAddedCourseAction}>
         <input type="hidden" name="id" value={id} />
         <input type="hidden" name="dir" value="up" />
-        <MoveButton label="Forward" ariaLabel={`Move ${title} forward`} disabled={isFirst} />
+        <MoveButton label="Move forward" disabled={isFirst}>
+          <ChevronUp className="size-4" />
+        </MoveButton>
       </form>
-      <form action={moveJustAddedCourseAction}>
+      <form action={moveJustAddedCourseAction} className="border-l border-[#f0d8c4]">
         <input type="hidden" name="id" value={id} />
         <input type="hidden" name="dir" value="down" />
-        <MoveButton label="Back" ariaLabel={`Move ${title} back`} disabled={isLast} />
+        <MoveButton label="Move back" disabled={isLast}>
+          <ChevronDown className="size-4" />
+        </MoveButton>
       </form>
     </div>
   );
@@ -34,22 +39,25 @@ export function JustAddedMoveButtons({
 
 function MoveButton({
   label,
-  ariaLabel,
   disabled,
+  children,
 }: {
   label: string;
-  ariaLabel: string;
   disabled: boolean;
+  children: ReactNode;
 }) {
   const { pending } = useFormStatus();
   return (
     <button
       type="submit"
       disabled={disabled || pending}
-      className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-      aria-label={ariaLabel}
+      aria-label={label}
+      className={cn(
+        "flex size-10 items-center justify-center text-foreground/70 transition hover:bg-white hover:text-foreground",
+        "disabled:pointer-events-none disabled:text-foreground/20"
+      )}
     >
-      {pending ? "…" : label}
+      {pending ? <span className="text-xs">…</span> : children}
     </button>
   );
 }
