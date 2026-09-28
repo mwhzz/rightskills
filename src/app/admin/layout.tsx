@@ -79,29 +79,29 @@ export default async function AdminLayout({
   return (
     <div className="flex h-full min-h-0 bg-[#f6f0ea]">
       <aside className="hidden h-full w-[16.5rem] shrink-0 flex-col bg-[#2a1810] text-[#fff6ee] md:flex">
-        <Link href="/admin" className="flex items-center gap-3 px-5 pt-6 pb-5">
-          <span className="flex size-11 items-center justify-center rounded-2xl bg-[#fff6ee]">
-            <BrandMark className="size-7" />
+        <Link href="/admin" className="flex items-center gap-2.5 px-4 pt-4 pb-3">
+          <span className="flex size-9 items-center justify-center rounded-xl bg-[#fff6ee]">
+            <BrandMark className="size-6" />
           </span>
           <span className="min-w-0">
-            <span className="block font-heading text-[15px] leading-tight font-semibold tracking-tight">
+            <span className="block font-heading text-sm leading-tight font-semibold tracking-tight">
               Right Skills
             </span>
-            <span className="mt-0.5 block text-xs text-[#e4c4ae]">{roleLabel}</span>
+            <span className="block text-[11px] text-[#e4c4ae]">{roleLabel}</span>
           </span>
         </Link>
 
-        <nav className="flex flex-1 flex-col gap-5 overflow-y-auto px-3 pb-4">
+        <nav className="flex flex-1 flex-col gap-3 px-2.5 pb-2">
           {home ? <NavLink link={home} active={isActive(home.href)} /> : null}
           {groups.map((group) => {
             const items = visible.filter((link) => link.group === group);
             if (items.length === 0) return null;
             return (
               <div key={group}>
-                <p className="px-3 pb-1.5 text-[11px] font-medium tracking-[0.16em] text-[#c9a08a] uppercase">
+                <p className="px-2.5 pb-0.5 text-[10px] font-medium tracking-[0.16em] text-[#c9a08a] uppercase">
                   {group}
                 </p>
-                <div className="flex flex-col gap-0.5">
+                <div className="flex flex-col">
                   {items.map((link) => (
                     <NavLink key={link.href} link={link} active={isActive(link.href)} />
                   ))}
@@ -111,30 +111,28 @@ export default async function AdminLayout({
           })}
         </nav>
 
-        <div className="border-t border-white/10 px-3 py-4">
+        <div className="flex items-center gap-2 border-t border-white/10 px-3 py-3">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#fff1e6] font-heading text-xs font-semibold text-[#2a1810]">
+            {staff.name.slice(0, 1).toUpperCase()}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm leading-tight font-medium">{staff.name}</span>
+            <span className="block text-[11px] text-[#c9a08a]">{roleLabel}</span>
+          </span>
           <Link
             href="/"
-            className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-[#f0d4c2] transition hover:bg-white/8"
+            aria-label="View site"
+            className="flex size-8 items-center justify-center rounded-lg text-[#f0d4c2] transition hover:bg-white/8"
           >
-            <ExternalLink className="size-4 shrink-0" />
-            View site
+            <ExternalLink className="size-4" />
           </Link>
-          <div className="mt-2 flex items-center gap-3 px-3 pt-2">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#fff1e6] font-heading text-sm font-semibold text-[#2a1810]">
-              {staff.name.slice(0, 1).toUpperCase()}
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-medium">{staff.name}</span>
-              <span className="block text-xs text-[#c9a08a]">{roleLabel}</span>
-            </span>
-          </div>
-          <form action={logoutAction} className="mt-2">
+          <form action={logoutAction}>
             <button
               type="submit"
-              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-[#f0d4c2] transition hover:bg-white/8"
+              aria-label="Log out"
+              className="flex size-8 items-center justify-center rounded-lg text-[#f0d4c2] transition hover:bg-white/8"
             >
-              <LogOut className="size-4 shrink-0" />
-              Log out
+              <LogOut className="size-4" />
             </button>
           </form>
         </div>
@@ -145,7 +143,7 @@ export default async function AdminLayout({
           <Link href="/admin" className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#fff6ee]">
             <BrandMark className="size-6" />
           </Link>
-          <nav className="flex min-w-0 flex-1 gap-1 overflow-x-auto">
+          <nav className="flex min-w-0 flex-1 gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {visible.map((link) => {
               const active = isActive(link.href);
               return (
@@ -186,11 +184,11 @@ function NavLink({
     <Link
       href={link.href}
       className={cn(
-        "flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium transition",
+        "flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition",
         active ? "bg-[#fff6ee] text-[#2a1810]" : "text-[#f0d4c2] hover:bg-white/8"
       )}
     >
-      <Icon className="size-4 shrink-0" />
+      <Icon className="size-3.5 shrink-0" />
       {link.label}
     </Link>
   );
