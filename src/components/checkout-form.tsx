@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { checkoutAction } from "@/app/actions";
+import { checkoutAction, previewCartPromoAction } from "@/app/actions";
+import { PromoCodeField } from "@/components/promo-code-field";
 import { formatBdt } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
@@ -31,7 +32,10 @@ export function CheckoutForm({
   const errorCopy: Record<string, string> = {
     method: dict.checkoutForm.errorMethod,
     payer: dict.checkoutForm.errorPayer,
+    promo: dict.checkoutForm.errorPromo,
+    promoUsed: dict.checkoutForm.errorPromoUsed,
   };
+  const [payable, setPayable] = useState(totalBdt);
 
   // Only offer a wallet the admin has actually set a number for.
   const wallets = (
@@ -65,8 +69,15 @@ export function CheckoutForm({
           {dict.checkoutForm.sendMoneyTitle}
         </h2>
         <p className="mt-1.5 text-sm text-muted-foreground">
-          {dict.checkoutForm.sendMoneyBody(formatBdt(totalBdt))}
+          {dict.checkoutForm.sendMoneyBody(formatBdt(payable))}
         </p>
+        <div className="mt-5">
+          <PromoCodeField
+            tone="card"
+            preview={previewCartPromoAction}
+            onApplied={(quote) => setPayable(quote?.totalBdt ?? totalBdt)}
+          />
+        </div>
 
         {wallets.length > 1 ? (
           <div className="mt-5 grid gap-2 sm:grid-cols-2">
@@ -101,7 +112,7 @@ export function CheckoutForm({
 
         <div className="mt-4 rounded-xl border bg-muted/40 px-4 py-3.5">
           <p className="text-xs text-muted-foreground">
-            {dict.checkoutForm.numberLabel(name, formatBdt(totalBdt))}
+            {dict.checkoutForm.numberLabel(name, formatBdt(payable))}
           </p>
           <p className="mt-1 font-heading text-2xl font-semibold tracking-wide">
             {active.number}
@@ -139,7 +150,7 @@ export function CheckoutForm({
         type="submit"
         className={cn(buttonVariants({ size: "lg" }), "h-12 w-full")}
       >
-        {dict.checkoutForm.placeOrder(formatBdt(totalBdt))}
+        {dict.checkoutForm.placeOrder(formatBdt(payable))}
       </button>
       <p className="text-center text-sm text-muted-foreground">
         {dict.checkoutForm.afterOrderNote}

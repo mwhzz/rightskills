@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Infinity, XIcon } from "lucide-react";
-import { courseCheckoutAction } from "@/app/actions";
+import { courseCheckoutAction, previewCoursePromoAction } from "@/app/actions";
+import { PromoCodeField } from "@/components/promo-code-field";
+import { formatBdt } from "@/lib/format";
 import { useLocale } from "@/components/locale-provider";
 import { Dialog, DialogClose, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { buttonVariants } from "@/components/ui/button";
@@ -14,6 +16,7 @@ type MethodId = "bkash" | "nagad";
 export function CourseCheckoutDialog({
   slug,
   title,
+  priceBdt,
   priceLabel,
   originalPriceLabel,
   bkashNumber,
@@ -24,6 +27,7 @@ export function CourseCheckoutDialog({
 }: {
   slug: string;
   title: string;
+  priceBdt: number;
   priceLabel: string;
   originalPriceLabel?: string;
   bkashNumber: string;
@@ -41,6 +45,7 @@ export function CourseCheckoutDialog({
     ] satisfies { id: MethodId; number: string; label: string }[]
   ).filter((wallet) => wallet.number);
   const [method, setMethod] = useState<MethodId>(wallets[0]?.id ?? "bkash");
+  const [payable, setPayable] = useState(priceBdt);
   const active = wallets.find((wallet) => wallet.id === method) ?? wallets[0];
   const copy = dict.courseCheckout;
   const errorText = error ? copy.errors[error as keyof typeof copy.errors] : "";
@@ -81,11 +86,11 @@ export function CourseCheckoutDialog({
             </DialogTitle>
             <div className="mt-3 flex items-end gap-2.5">
               <p className="font-heading text-[2.6rem] leading-none font-semibold tracking-tight">
-                {priceLabel}
+                {formatBdt(payable)}
               </p>
-              {originalPriceLabel ? (
+              {payable < priceBdt || originalPriceLabel ? (
                 <p className="mb-1 text-sm text-muted-foreground line-through">
-                  {originalPriceLabel}
+                  {payable < priceBdt ? priceLabel : originalPriceLabel}
                 </p>
               ) : null}
             </div>
@@ -124,6 +129,11 @@ export function CourseCheckoutDialog({
                 placeholder={copy.professionPlaceholder}
                 autoComplete="organization-title"
                 required
+              />
+              <PromoCodeField
+                tone="sheet"
+                preview={(code) => previewCoursePromoAction(slug, code)}
+                onApplied={(quote) => setPayable(quote?.totalBdt ?? priceBdt)}
               />
             </div>
 
@@ -164,13 +174,13 @@ export function CourseCheckoutDialog({
                     <span className="rounded-full bg-primary px-2.5 py-0.5 text-[11px] font-semibold tracking-wide text-white">
                       {active.label}
                     </span>
-                    <span className="text-sm font-medium text-[#f6d7c2]">{priceLabel}</span>
+                    <span className="text-sm font-medium text-[#f6d7c2]">{formatBdt(payable)}</span>
                   </div>
                   <p className="mt-3 font-heading text-[1.85rem] leading-none font-semibold tracking-[0.08em]">
                     {formatWallet(active.number)}
                   </p>
                   <p className="mt-2 text-xs text-[#e8cbb6]">
-                    {copy.sendTo(active.label, priceLabel)}
+                    {copy.sendTo(active.label, formatBdt(payable))}
                   </p>
                 </div>
               </div>

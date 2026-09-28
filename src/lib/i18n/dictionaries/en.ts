@@ -208,6 +208,7 @@ export const en = {
     placedAt: (when: string) => `Placed ${when}`,
     updatedAt: (when: string) => ` · updated ${when}`,
     amountLabel: "Amount",
+    promoNote: (code: string, off: string) => `Promo ${code} · ${off} off`,
     sendViaLabel: (method: string) => `Send via ${method}`,
     numberNotSet: "Number not set",
     trxIdLabel: "TrxID",
@@ -292,6 +293,7 @@ export const en = {
     paidBody: "This order is marked paid. Lessons are on My learning.",
     openCourse: (title: string) => `Open ${title}`,
     sendExactly: "Send exactly",
+    promoLabel: "Promo",
     toMethod: (method: string) => `To ${method}`,
     numberNotSet: "Number not set yet — contact support",
     orderIdLabel: "Order ID",
@@ -362,6 +364,18 @@ export const en = {
     placeOrder: (amount: string) => `Place order · ${amount}`,
     afterOrderNote:
       "After you order, we will review your payment and unlock the course.",
+    errorPromo: "That promo code is not valid.",
+    errorPromoUsed: "That promo code has been used up.",
+  },
+  promo: {
+    label: "Promo code",
+    placeholder: "CODE",
+    apply: "Apply",
+    applying: "Checking…",
+    applied: (code: string, off: string) => `${code} applied · ${off} off`,
+    invalid: "That promo code is not valid.",
+    used: "That promo code has been used up.",
+    hint: "Optional. Apply it to see the amount to send.",
   },
   paymentSteps: {
     stepLabel: (n: number) => `Step ${n}`,
@@ -562,6 +576,8 @@ export const en = {
       method: "Payment number is not set yet.",
       owned: "This course is already unlocked on this number.",
       taken: "This number cannot be used for checkout.",
+      promo: "That promo code is not valid.",
+      promoUsed: "That promo code has been used up.",
     },
   },
 };

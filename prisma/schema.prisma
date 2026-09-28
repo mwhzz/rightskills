@@ -151,6 +151,8 @@ model Order {
   userId      String
   user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   totalBdt    Int
+  discountBdt Int           @default(0)
+  promoCode   String        @default("")
   method      PaymentMethod
   status      OrderStatus   @default(pending)
   trxId       String?
@@ -158,6 +160,17 @@ model Order {
   items       OrderItem[]
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
+}
+
+model PromoCode {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  kind      String
+  value     Int
+  active    Boolean  @default(true)
+  maxUses   Int?
+  usedCount Int      @default(0)
+  createdAt DateTime @default(now())
 }
 
 model OrderItem {

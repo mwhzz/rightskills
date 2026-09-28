@@ -208,6 +208,11 @@ export default async function OrdersPage({
                       {formatBdt(order.totalBdt)}
                       <CopyValue value={String(order.totalBdt)} />
                     </dd>
+                    {order.promoCode ? (
+                      <dd className="mt-1 text-xs text-muted-foreground">
+                        {dict.ordersPage.promoNote(order.promoCode, formatBdt(order.discountBdt))}
+                      </dd>
+                    ) : null}
                   </div>
                   <div>
                     <dt className="text-xs tracking-[0.14em] text-muted-foreground uppercase">

@@ -26,7 +26,8 @@ import {
   getPublishedCourse,
   getSettings,
 } from "@/lib/queries";
-import { makeOrderId, type PaymentMethod } from "@/lib/store";
+import { type PaymentMethod } from "@/lib/store";
+import { normalizePromoCode, placeOrderWithPromo, PromoError, quotePromo } from "@/lib/promo";
 import {
   assertImageFile,
   isUploadFile,
@@ -255,20 +256,30 @@ export async function courseCheckoutAction(formData: FormData) {
     }
   }
 
-  const order = await prisma.order.create({
-    data: {
-      orderId: makeOrderId(),
+  let order;
+  try {
+    order = await placeOrderWithPromo({
       userId,
-      totalBdt: course.priceBdt,
       method,
       payerNumber: phone,
-      status: "awaiting_review",
-      items: {
-        create: [{ courseId: course.id, priceBdt: course.priceBdt }],
-      },
-    },
-  });
+      subtotal: course.priceBdt,
+      promoRaw: String(formData.get("promo") ?? ""),
+      items: [{ courseId: course.id, priceBdt: course.priceBdt }],
+    });
+  } catch (error) {
+    if (error instanceof PromoError) return back(error.reason === "used" ? "promoUsed" : "promo");
+    throw error;
+  }
   redirect(`/checkout/success?order=${order.orderId}`);
+}
+
+export async function previewCoursePromoAction(slug: string, code: string) {
+  const course = await prisma.course.findFirst({
+    where: { slug, published: true },
+    select: { priceBdt: true },
+  });
+  if (!course) return { ok: false as const, reason: "invalid" as const };
+  return quotePromo(code, course.priceBdt);
 }
 
 export async function removeFromCartAction(formData: FormData) {
@@ -303,24 +314,88 @@ export async function checkoutAction(formData: FormData) {
   if (dbCourses.length === 0) redirect("/cart");
 
   const totalBdt = dbCourses.reduce((sum, course) => sum + course.priceBdt, 0);
-  const order = await prisma.order.create({
-    data: {
-      orderId: makeOrderId(),
+  let order;
+  try {
+    order = await placeOrderWithPromo({
       userId: user.id,
-      totalBdt,
       method,
       payerNumber,
-      status: "awaiting_review",
-      items: {
-        create: dbCourses.map((course) => ({
-          courseId: course.id,
-          priceBdt: course.priceBdt,
-        })),
-      },
-    },
-  });
+      subtotal: totalBdt,
+      promoRaw: String(formData.get("promo") ?? ""),
+      items: dbCourses.map((course) => ({
+        courseId: course.id,
+        priceBdt: course.priceBdt,
+      })),
+    });
+  } catch (error) {
+    if (error instanceof PromoError) {
+      redirect(`/checkout?error=${error.reason === "used" ? "promoUsed" : "promo"}`);
+    }
+    throw error;
+  }
   await setCartCookie([]);
   redirect(`/checkout/success?order=${order.orderId}`);
+}
+
+export async function previewCartPromoAction(code: string) {
+  const user = await getSession();
+  if (!user) return { ok: false as const, reason: "invalid" as const };
+  const owned = await getOwnedSlugsForUser(user.id);
+  const cart = (await getCart()).filter((slug) => !owned.includes(slug));
+  const dbCourses = await prisma.course.findMany({
+    where: { slug: { in: cart }, published: true },
+    select: { priceBdt: true },
+  });
+  const subtotal = dbCourses.reduce((sum, course) => sum + course.priceBdt, 0);
+  if (subtotal <= 0) return { ok: false as const, reason: "invalid" as const };
+  return quotePromo(code, subtotal);
+}
+
+export async function createPromoAction(formData: FormData) {
+  await requireAccess("orders");
+  const code = normalizePromoCode(String(formData.get("code") ?? ""));
+  const kind = String(formData.get("kind") ?? "");
+  const value = Number(formData.get("value"));
+  const maxRaw = String(formData.get("maxUses") ?? "").trim();
+  const maxUses = maxRaw === "" ? null : Number(maxRaw);
+  if (!code) redirect("/admin/promos?error=code");
+  if (kind !== "percent" && kind !== "amount") redirect("/admin/promos?error=value");
+  if (!Number.isInteger(value) || value < 1) redirect("/admin/promos?error=value");
+  if (kind === "percent" && value > 100) redirect("/admin/promos?error=value");
+  if (maxUses !== null && (!Number.isInteger(maxUses) || maxUses < 1)) {
+    redirect("/admin/promos?error=uses");
+  }
+  try {
+    await prisma.promoCode.create({
+      data: { code, kind, value, maxUses, active: true },
+    });
+  } catch {
+    redirect("/admin/promos?error=taken");
+  }
+  await logStaff("promo.create", code, code);
+  redirect("/admin/promos?saved=1");
+}
+
+export async function setPromoActiveAction(formData: FormData) {
+  await requireAccess("orders");
+  const id = String(formData.get("id") ?? "");
+  const active = String(formData.get("active") ?? "") === "1";
+  const row = await prisma.promoCode.findUnique({ where: { id } });
+  if (!row) redirect("/admin/promos");
+  await prisma.promoCode.update({ where: { id }, data: { active } });
+  await logStaff(active ? "promo.on" : "promo.off", row.code, row.code);
+  redirect("/admin/promos");
+}
+
+export async function deletePromoAction(formData: FormData) {
+  await requireAccess("orders");
+  const id = String(formData.get("id") ?? "");
+  const row = await prisma.promoCode.findUnique({ where: { id } });
+  if (row) {
+    await prisma.promoCode.delete({ where: { id } });
+    await logStaff("promo.delete", row.code, row.code);
+  }
+  redirect("/admin/promos");
 }
 
 export async function submitTrxAction(formData: FormData) {

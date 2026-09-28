@@ -111,6 +111,12 @@ export default async function CheckoutSuccessPage({
               copy={String(order.totalBdt)}
               large
             />
+            {order.promoCode ? (
+              <PayRow
+                label={dict.checkoutSuccess.promoLabel}
+                value={dict.ordersPage.promoNote(order.promoCode, formatBdt(order.discountBdt))}
+              />
+            ) : null}
             <PayRow
               label={dict.checkoutSuccess.toMethod(methodLabel)}
               value={payTo || dict.checkoutSuccess.numberNotSet}

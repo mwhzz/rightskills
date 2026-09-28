@@ -94,6 +94,7 @@ export async function CourseBuyCard({
             <CourseCheckoutDialog
               slug={course.slug}
               title={title}
+              priceBdt={course.priceBdt}
               priceLabel={formatBdt(course.priceBdt)}
               originalPriceLabel={
                 course.originalPriceBdt ? formatBdt(course.originalPriceBdt) : undefined

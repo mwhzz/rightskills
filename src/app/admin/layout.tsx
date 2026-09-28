@@ -24,6 +24,7 @@ export default async function AdminLayout({
     { href: "/admin/students", label: "Students", access: "students" },
     { href: "/admin/reviews", label: "Reviews", access: "reviews" },
     { href: "/admin/orders", label: "Orders", access: "orders" },
+    { href: "/admin/promos", label: "Promos", access: "orders" },
     { href: "/admin/users", label: "Users", access: "users" },
     { href: "/admin/activity", label: "Activity log", access: "orders" },
     { href: "/admin/banners", label: "Banners", access: "banners" },

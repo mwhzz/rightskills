@@ -256,6 +256,11 @@ export default async function AdminOrdersPage({
                     Payment
                   </dt>
                   <dd className="mt-1 text-sm font-medium">{formatBdt(order.totalBdt)}</dd>
+                  {order.promoCode ? (
+                    <dd className="text-xs text-muted-foreground">
+                      {order.promoCode} · −{formatBdt(order.discountBdt)}
+                    </dd>
+                  ) : null}
                   <dd className="text-xs uppercase text-muted-foreground">{order.method}</dd>
                 </div>
                 <div>
