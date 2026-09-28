@@ -1,5 +1,10 @@
 import Link from "next/link";
-import { createPromoAction, deletePromoAction, setPromoActiveAction } from "@/app/actions";
+import {
+  createPromoAction,
+  deletePromoAction,
+  setPromoActiveAction,
+  updatePromoAction,
+} from "@/app/actions";
 import { buttonVariants } from "@/components/ui/button";
 import { prisma } from "@/lib/db";
 import { formatBdt } from "@/lib/format";
@@ -112,8 +117,9 @@ export default async function AdminPromosPage({
           promos.map((promo) => (
             <li
               key={promo.id}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-[1.5rem] bg-card px-5 py-4 ring-1 ring-black/5"
+              className="rounded-[1.5rem] bg-card px-5 py-4 ring-1 ring-black/5"
             >
+              <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="font-heading text-lg font-semibold tracking-wide">{promo.code}</p>
                 <p className="mt-1 text-sm text-muted-foreground">
@@ -143,6 +149,69 @@ export default async function AdminPromosPage({
                   </button>
                 </form>
               </div>
+              </div>
+              <form action={updatePromoAction} className="mt-4 grid gap-3 border-t border-black/5 pt-4 sm:grid-cols-2">
+                <input type="hidden" name="id" value={promo.id} />
+                <label className="block">
+                  <span className="text-xs font-medium text-muted-foreground">Code</span>
+                  <input
+                    name="code"
+                    required
+                    maxLength={20}
+                    defaultValue={promo.code}
+                    className="mt-1.5 h-11 w-full rounded-xl border bg-[#fffaf6] px-3 text-sm uppercase outline-none focus:ring-2 focus:ring-primary/30"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-xs font-medium text-muted-foreground">Discount</span>
+                  <span className="mt-1.5 flex h-11 overflow-hidden rounded-xl border bg-[#fffaf6] focus-within:ring-2 focus-within:ring-primary/30">
+                    <select
+                      name="kind"
+                      defaultValue={promo.kind}
+                      className="bg-transparent px-3 text-sm outline-none"
+                    >
+                      <option value="percent">Percent</option>
+                      <option value="amount">Taka off</option>
+                    </select>
+                    <input
+                      name="value"
+                      type="number"
+                      min={1}
+                      required
+                      defaultValue={promo.value}
+                      className="min-w-0 flex-1 bg-transparent px-3 text-sm outline-none"
+                    />
+                  </span>
+                </label>
+                <label className="block">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Use limit <span className="font-normal">(blank means no limit)</span>
+                  </span>
+                  <input
+                    name="maxUses"
+                    type="number"
+                    min={1}
+                    defaultValue={promo.maxUses ?? ""}
+                    placeholder="Unlimited"
+                    className="mt-1.5 h-11 w-full rounded-xl border bg-[#fffaf6] px-3 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+                  />
+                </label>
+                <label className="flex items-end gap-2 pb-3 text-sm font-medium">
+                  <input
+                    type="checkbox"
+                    name="active"
+                    value="1"
+                    defaultChecked={promo.active}
+                    className="size-4 accent-primary"
+                  />
+                  On
+                </label>
+                <div className="sm:col-span-2">
+                  <button type="submit" className={cn(buttonVariants(), "h-10 rounded-xl px-4")}>
+                    Save changes
+                  </button>
+                </div>
+              </form>
             </li>
           ))
         )}

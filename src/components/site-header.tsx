@@ -165,7 +165,7 @@ export function SiteHeader({
                   </DropdownMenuItem>
                   {staff ? (
                     <DropdownMenuItem render={<Link href="/admin" />}>
-                      {dict.nav.studio}
+                      {dict.nav.admin}
                     </DropdownMenuItem>
                   ) : null}
                 </DropdownMenuGroup>
@@ -258,7 +258,7 @@ export function SiteHeader({
                 ) : null}
                 {staff ? (
                   <Link href="/admin" className="rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-muted">
-                    {dict.nav.studio}
+                    {dict.nav.admin}
                   </Link>
                 ) : null}
                 <div className="px-3 pt-2">

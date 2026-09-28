@@ -376,6 +376,34 @@ export async function createPromoAction(formData: FormData) {
   redirect("/admin/promos?saved=1");
 }
 
+export async function updatePromoAction(formData: FormData) {
+  await requireAccess("orders");
+  const id = String(formData.get("id") ?? "");
+  const code = normalizePromoCode(String(formData.get("code") ?? ""));
+  const kind = String(formData.get("kind") ?? "");
+  const value = Number(formData.get("value"));
+  const maxRaw = String(formData.get("maxUses") ?? "").trim();
+  const maxUses = maxRaw === "" ? null : Number(maxRaw);
+  const active = String(formData.get("active") ?? "") === "1";
+  if (!id || !code) redirect("/admin/promos?error=code");
+  if (kind !== "percent" && kind !== "amount") redirect("/admin/promos?error=value");
+  if (!Number.isInteger(value) || value < 1) redirect("/admin/promos?error=value");
+  if (kind === "percent" && value > 100) redirect("/admin/promos?error=value");
+  if (maxUses !== null && (!Number.isInteger(maxUses) || maxUses < 1)) {
+    redirect("/admin/promos?error=uses");
+  }
+  const existing = await prisma.promoCode.findUnique({ where: { id } });
+  if (!existing) redirect("/admin/promos");
+  const taken = await prisma.promoCode.findUnique({ where: { code } });
+  if (taken && taken.id !== id) redirect("/admin/promos?error=taken");
+  await prisma.promoCode.update({
+    where: { id },
+    data: { code, kind, value, maxUses, active },
+  });
+  await logStaff("promo.update", `${existing.code} → ${code}`, code);
+  redirect("/admin/promos?saved=1");
+}
+
 export async function setPromoActiveAction(formData: FormData) {
   await requireAccess("orders");
   const id = String(formData.get("id") ?? "");

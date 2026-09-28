@@ -24,7 +24,7 @@ export async function SiteFooter({
         { href: "/account", label: dict.nav.myPanel },
         { href: "/learn", label: dict.nav.myLearning },
         { href: "/account/orders", label: dict.nav.orders },
-        ...(staff ? [{ href: "/admin", label: dict.nav.studio }] : []),
+        ...(staff ? [{ href: "/admin", label: dict.nav.admin }] : []),
       ]
     : [
         { href: "/login", label: dict.nav.login },
