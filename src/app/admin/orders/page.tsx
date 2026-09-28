@@ -115,7 +115,7 @@ export default async function AdminOrdersPage({
         paid to unlock the course. Reject if nothing matches.
       </p>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-3">
         <Stat label="Needs review" value={pending + awaiting} />
         <Stat label="Paid orders" value={paid} />
         <Stat
@@ -141,7 +141,7 @@ export default async function AdminOrdersPage({
             name="from"
             defaultValue={from}
             aria-label="From date"
-            className="h-11 w-[10.5rem] rounded-lg border bg-background px-3 text-sm"
+            className="h-11 w-full rounded-lg border bg-background px-3 text-sm sm:w-[10.5rem]"
           />
           <span className="text-sm text-muted-foreground">to</span>
           <input
@@ -149,7 +149,7 @@ export default async function AdminOrdersPage({
             name="to"
             defaultValue={to}
             aria-label="To date"
-            className="h-11 w-[10.5rem] rounded-lg border bg-background px-3 text-sm"
+            className="h-11 w-full rounded-lg border bg-background px-3 text-sm sm:w-[10.5rem]"
           />
           {status ? <input type="hidden" name="status" value={status} /> : null}
           {needsReview ? <input type="hidden" name="status" value="needs_review" /> : null}

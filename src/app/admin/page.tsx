@@ -89,7 +89,7 @@ export default async function AdminHomePage() {
           ? "Approve payments, watch the catalogue, and read student reviews."
           : "Your courses, students, and reviews in one place."}
       </p>
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {isAdmin ? (
           <>
             <Stat label="TrxID to review" value={pending} />
@@ -158,7 +158,7 @@ export default async function AdminHomePage() {
                 <li key={course.id}>
                   <Link
                     href={`/admin/courses/${course.id}`}
-                    className="flex items-center justify-between gap-3 py-3 text-sm hover:text-primary"
+                    className="flex flex-col gap-1 py-3 text-sm hover:text-primary sm:flex-row sm:items-center sm:justify-between sm:gap-3"
                   >
                     <span className="min-w-0">
                       <span className="block truncate font-medium">{course.title}</span>
@@ -167,7 +167,7 @@ export default async function AdminHomePage() {
                         {course.reviewCount ? ` · ${course.rating.toFixed(1)}` : ""}
                       </span>
                     </span>
-                    <span className="shrink-0 text-muted-foreground">
+                    <span className="text-xs text-muted-foreground sm:shrink-0 sm:text-sm">
                       {course.published ? "Published" : "Draft"} · {formatBdt(course.priceBdt)}
                     </span>
                   </Link>
@@ -270,7 +270,7 @@ export default async function AdminHomePage() {
 
 function Stat({ label, value }: { label: string; value: number | string }) {
   return (
-    <div className="rounded-2xl border bg-card p-5">
+    <div className="rounded-2xl border bg-card p-4 sm:p-5">
       <p className="text-sm text-muted-foreground">{label}</p>
       <p className="mt-2 font-heading text-3xl font-semibold tracking-tight">{value}</p>
     </div>

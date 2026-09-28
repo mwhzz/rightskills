@@ -82,7 +82,7 @@ export default async function AdminStudentsPage({
           name="q"
           defaultValue={q}
           placeholder="Search name, phone, WhatsApp…"
-          className="h-10 min-w-60 flex-1 rounded-lg border px-3 text-sm"
+          className="h-10 w-full min-w-0 flex-1 rounded-lg border px-3 text-sm sm:min-w-60"
         />
         <button type="submit" className={cn(buttonVariants({ variant: "outline" }), "h-10")}>
           Search
@@ -102,7 +102,32 @@ export default async function AdminStudentsPage({
               : "No students in your courses yet."}
         </p>
       ) : (
-        <div className="mt-6 overflow-x-auto rounded-2xl border bg-card">
+        <>
+        <ul className="mt-4 space-y-3 md:hidden">
+          {students.map((row) => (
+            <li key={row.id} className="rounded-2xl border bg-card p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-medium">{row.name}</p>
+                  <p className="mt-0.5 font-mono text-xs text-muted-foreground">{row.phone}</p>
+                </div>
+                {isAdmin ? (
+                  <Link href={`/admin/students/${row.id}`} className="shrink-0 text-sm font-medium text-primary">
+                    Open
+                  </Link>
+                ) : null}
+              </div>
+              <p className="mt-3 text-sm text-muted-foreground">
+                {row.profession || "No profession"}
+                {row.district ? ` · ${row.district}` : ""}
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {row._count.enrollments} courses · {formatWhen(row.createdAt)}
+              </p>
+            </li>
+          ))}
+        </ul>
+        <div className="mt-6 hidden overflow-x-auto rounded-2xl border bg-card md:block">
           <table className="w-full min-w-[720px] text-left text-sm">
             <thead className="border-b bg-muted/40">
               <tr>
@@ -147,6 +172,7 @@ export default async function AdminStudentsPage({
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   );
