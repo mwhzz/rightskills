@@ -1389,7 +1389,7 @@ export async function saveMetaPixelAction(formData: FormData) {
   if (pasted && !cleanToken(pasted)) redirect("/admin/seo?meta=token");
   try {
     // Admin writes must preserve the token currently in the database, even when
-    // another Passenger worker still has an older settings cache.
+    // another server process still has an older settings cache.
     const settings = await getSettings({ fresh: true });
     const current = parseMeta(settings.metaTracking);
     let accessToken = current.accessToken;

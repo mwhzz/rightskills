@@ -1,6 +1,6 @@
 # Skills Bangladesh
 
-Production LMS on cPanel: course catalogue, student accounts (mobile + password), manual bKash/Nagad checkout with admin TrxID approval, and a shared admin/teacher panel for courses and video uploads.
+Production LMS on a DigitalOcean Droplet: course catalogue, student accounts (mobile + password), manual bKash/Nagad checkout with admin TrxID approval, and a shared admin/teacher panel for courses and video uploads.
 
 ## Run locally
 
@@ -18,9 +18,19 @@ Open [http://localhost:43127](http://localhost:43127).
 - **Student:** `/register`, buy courses, paste TrxID on `/account/orders`, watch on `/learn`
 - **Teacher / admin:** `/admin` after login. Teachers manage their courses. Admins also approve orders and create teachers.
 
-## cPanel env
+## Droplet deployment
 
-Set `DATABASE_URL`, `SESSION_SECRET`, and optionally `UPLOADS_DIR` (default `./uploads`) on the Node.js app. After deploy, run seed once if the catalogue is empty.
+Configure `DATABASE_URL`, `SESSION_SECRET`, and optionally `UPLOADS_DIR` (default `./uploads`) in the Droplet's application environment or `.env` file. Keep the environment file and uploads outside any directory replaced during deployment.
+
+In the deployment checkout, install dependencies, apply database migrations, and build before restarting the running application:
+
+```sh
+npm ci
+npm run db:migrate
+npm run build
+```
+
+After these commands succeed, activate the new build and restart the application through the Droplet's existing process manager. `npm start` serves on port `43127`; the custom server `node app.js` uses `PORT` or defaults to `3000`. Keep the process manager and Nginx upstream configured for the chosen entry point. Run seed once only if the catalogue is empty.
 
 ## Facebook tracking
 
