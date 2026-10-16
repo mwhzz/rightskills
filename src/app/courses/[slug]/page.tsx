@@ -33,9 +33,16 @@ import { getDictionary, getLocale, type Dictionary } from "@/lib/i18n";
 import {
   getHomepageLearning,
   getPublishedCourse,
+  getSettings,
   listPublishedCourses,
 } from "@/lib/queries";
 import { cn } from "@/lib/utils";
+import { prisma } from "@/lib/db";
+import { courseMetadata } from "@/lib/page-seo";
+import { courseJsonLd } from "@/lib/seo";
+import { parseMeta } from "@/lib/meta";
+import { JsonLd } from "@/components/json-ld";
+import { MetaEvent } from "@/components/meta-pixel";
 
 export const dynamic = "force-dynamic";
 
@@ -73,12 +80,25 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const course = await loadCourse(slug);
-  if (!course) return { title: "Course" };
-  return {
-    title: course.title,
-    description: course.subtitle,
-  };
+  try {
+    const course = await prisma.course.findFirst({
+      where: { slug, published: true },
+      select: {
+        slug: true,
+        title: true,
+        subtitle: true,
+        seoTitle: true,
+        seoDescription: true,
+        seoExtra: true,
+      },
+    });
+    if (!course) return { title: "Course" };
+    return courseMetadata(course);
+  } catch {
+    const course = await loadCourse(slug);
+    if (!course) return { title: "Course" };
+    return { title: course.title, description: course.subtitle };
+  }
 }
 
 export default async function CourseDetailPage({
@@ -121,10 +141,35 @@ export default async function CourseDetailPage({
   }
   const hours = courseHours(course);
   const lessons = lessonCount(course);
-  const [dict, locale] = await Promise.all([getDictionary(), getLocale()]);
+  const [dict, locale, settings] = await Promise.all([
+    getDictionary(),
+    getLocale(),
+    getSettings().catch(() => null),
+  ]);
+  const pixelId = parseMeta(settings?.metaTracking).pixelId;
 
   return (
     <div className="pb-28 lg:pb-0">
+      {pixelId ? (
+        <MetaEvent
+          event="ViewContent"
+          eventId={`view_${crypto.randomUUID()}`}
+          params={{
+            content_ids: [course.slug],
+            content_name: course.title,
+            value: course.priceBdt,
+          }}
+        />
+      ) : null}
+      <JsonLd
+        data={courseJsonLd({
+          slug: course.slug,
+          title: course.title,
+          subtitle: course.subtitle,
+          description: course.description,
+          image: course.cover.image,
+        })}
+      />
       <div className="relative">
         <div
           aria-hidden

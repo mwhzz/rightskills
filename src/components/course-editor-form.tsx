@@ -22,6 +22,7 @@ import { coverImageSrc } from "@/lib/cover-image";
 import { formatBdt, formatBytes } from "@/lib/format";
 import { instructorPhotoSrc } from "@/lib/instructor-photos";
 import { slugify } from "@/lib/slug";
+import { parseCourseSeo } from "@/lib/seo";
 import { IMAGE_MAX_BYTES } from "@/lib/upload-limits";
 import { cn } from "@/lib/utils";
 import type { Course } from "@prisma/client";
@@ -695,6 +696,67 @@ export function CourseEditorForm({
               </select>
             </Field>
           </div>
+        </Section>
+
+        <Section
+          title="Google listing"
+          description="The title and description Google shows for this course, and whether the course is included in the sitemap."
+        >
+          <Field label="SEO title" htmlFor="seoTitle" hint="About 60 characters. Leave blank to use the course title.">
+            <Input
+              id="seoTitle"
+              name="seoTitle"
+              defaultValue={course?.seoTitle ?? ""}
+              maxLength={120}
+              placeholder={title || "Course title"}
+              className={fieldClass}
+            />
+          </Field>
+          <Field
+            label="SEO description"
+            htmlFor="seoDescription"
+            hint="About 160 characters. Leave blank to use the subtitle."
+          >
+            <Textarea
+              id="seoDescription"
+              name="seoDescription"
+              defaultValue={course?.seoDescription ?? ""}
+              maxLength={320}
+              rows={3}
+              placeholder={subtitle || "A short summary of the course"}
+              className="min-h-24 rounded-lg border border-input bg-background px-3 py-2 text-base md:text-sm"
+            />
+          </Field>
+          <Field
+            label="Canonical URL"
+            htmlFor="seoCanonical"
+            hint="Leave blank. Google will use this course's own address."
+          >
+            <Input
+              id="seoCanonical"
+              name="seoCanonical"
+              defaultValue={parseCourseSeo(course?.seoExtra).canonical}
+              maxLength={300}
+              placeholder="https://rightskillsbangladesh.com/courses/…"
+              className={fieldClass}
+            />
+          </Field>
+          <input type="hidden" name="seoIndex" value="0" />
+          <label className="flex items-start gap-3 text-sm">
+            <input
+              type="checkbox"
+              name="seoIndex"
+              value="1"
+              defaultChecked={parseCourseSeo(course?.seoExtra).index}
+              className="mt-0.5 size-4 accent-[#2a1810]"
+            />
+            <span>
+              Show this course in Google
+              <span className="mt-0.5 block text-xs text-muted-foreground">
+                Published courses are added to the sitemap while this is ticked.
+              </span>
+            </span>
+          </label>
         </Section>
 
         <div className="flex flex-wrap items-center gap-3 pb-4">

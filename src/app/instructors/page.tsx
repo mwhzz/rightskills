@@ -3,13 +3,13 @@ import Link from "next/link";
 import { buildInstructors } from "@/lib/instructors";
 import { getDictionary } from "@/lib/i18n";
 import { listPublishedCourses } from "@/lib/queries";
+import { pageMetadata } from "@/lib/page-seo";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Instructors",
-  description: "Meet the practitioners who teach at Right Skills Bangladesh.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata("instructors");
+}
 
 async function loadCourses() {
   try {

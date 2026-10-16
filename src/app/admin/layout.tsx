@@ -3,6 +3,10 @@ import { can, getStaffSession, type StaffKey } from "@/lib/staff";
 
 export const dynamic = "force-dynamic";
 
+export const metadata = {
+  robots: { index: false, follow: false },
+};
+
 const links: (AdminNavLink & { access: StaffKey })[] = [
   { href: "/admin", label: "Dashboard", access: "courses" },
   { href: "/admin/courses", label: "Courses", access: "courses", group: "Teaching" },
@@ -15,6 +19,7 @@ const links: (AdminNavLink & { access: StaffKey })[] = [
   { href: "/admin/activity", label: "Activity log", access: "orders", group: "Site" },
   { href: "/admin/banners", label: "Banners", access: "banners", group: "Site" },
   { href: "/admin/offers", label: "Offers", access: "offers", group: "Site" },
+  { href: "/admin/seo", label: "SEO", access: "settings", group: "Site" },
   { href: "/admin/settings", label: "Settings", access: "settings", group: "Site" },
 ];
 

@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { getDictionary } from "@/lib/i18n";
+import { pageMetadata } from "@/lib/page-seo";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const dict = await getDictionary();
-  return { title: dict.nav.studio };
+  return pageMetadata("books");
 }
 
 export default async function BrandsPage() {

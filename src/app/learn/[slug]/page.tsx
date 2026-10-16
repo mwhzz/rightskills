@@ -18,8 +18,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const course = await getCourseBySlug(slug);
-  if (!course) return { title: "Lesson" };
-  return { title: `Learn · ${course.title}` };
+  if (!course) return { title: "Lesson", robots: { index: false, follow: false } };
+  return { title: `Learn · ${course.title}`, robots: { index: false, follow: false } };
 }
 
 export default async function LearnCoursePage({

@@ -47,20 +47,20 @@ trap 'rmdir "$LOCKDIR" 2>/dev/null || true' EXIT
 
   apply_next() {
     if [[ -f "$APPLY" ]]; then
-      bash "$APPLY" || echo "apply-next exited $?"
+      bash "$APPLY"
     fi
   }
-
-  apply_next
 
   git fetch origin main
   git reset --hard origin/main
 
-  apply_next
-
   npm install
-  npx prisma generate || echo "prisma generate failed"
-  npx prisma migrate deploy || echo "prisma migrate failed; continuing"
+  # The new build may query new columns such as Setting.metaTracking. Prepare
+  # the runtime client and database before making that build live. Keep the
+  # deploy flag and tarball for a retry if either command fails.
+  npx prisma generate
+  npx prisma migrate deploy
+  apply_next
   mkdir -p uploads/lessons tmp
   touch tmp/restart.txt
   if [[ ! -f "$TGZ" ]]; then

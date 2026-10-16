@@ -275,8 +275,8 @@ export async function getHomeOffers(): Promise<HomeOfferRow> {
   }
 }
 
-export async function getSettings() {
-  return cached("settings", PUBLIC_TTL_MS, async () => {
+export async function getSettings({ fresh = false }: { fresh?: boolean } = {}) {
+  const read = async () => {
     const existing = await prisma.setting.findUnique({ where: { id: "default" } });
     if (existing) return existing;
     return prisma.setting.create({
@@ -291,5 +291,6 @@ export async function getSettings() {
         homeOffers: "{}",
       },
     });
-  });
+  };
+  return fresh ? read() : cached("settings", PUBLIC_TTL_MS, read);
 }

@@ -1,0 +1,1 @@
+ALTER TABLE `Course` ADD COLUMN `seoExtra` TEXT NOT NULL DEFAULT ('');

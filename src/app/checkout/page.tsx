@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { CheckoutAuth } from "@/components/checkout-auth";
 import { CheckoutForm } from "@/components/checkout-form";
@@ -8,14 +9,15 @@ import { getSession } from "@/lib/auth";
 import { getOwnedSlugsForUser, getSettings, listPublishedCourses } from "@/lib/queries";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { courseTitle } from "@/lib/courses";
+import { pageMetadata } from "@/lib/page-seo";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Checkout",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata("checkout");
+}
 
 export default async function CheckoutPage({
   searchParams,

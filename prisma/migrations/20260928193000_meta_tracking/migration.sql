@@ -1,0 +1,1 @@
+ALTER TABLE `Setting` ADD COLUMN `metaTracking` TEXT NOT NULL DEFAULT ('');

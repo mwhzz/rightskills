@@ -10,12 +10,15 @@ import { getSettings } from "@/lib/queries";
 import { courseTitle } from "@/lib/courses";
 import { coverImageSrc } from "@/lib/cover-image";
 import { prisma } from "@/lib/db";
+import { parseMeta } from "@/lib/meta";
+import { MetaEvent } from "@/components/meta-pixel";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Send money",
+  robots: { index: false, follow: false },
 };
 
 export default async function CheckoutSuccessPage({
@@ -63,9 +66,22 @@ export default async function CheckoutSuccessPage({
     order.method === "nagad" ? settings.nagadNumber : settings.bkashNumber;
   const methodLabel = order.method === "nagad" ? "Nagad" : "bKash";
   const paid = order.status === "paid";
+  const pixelId = parseMeta(settings.metaTracking).pixelId;
 
   return (
     <div className="mx-auto w-full max-w-lg px-4 py-10 sm:px-6 sm:py-14">
+      {pixelId && !paid ? (
+        <MetaEvent
+          event="InitiateCheckout"
+          eventId={`init_${order.orderId}`}
+          server={false}
+          params={{
+            content_ids: order.items.map((item) => item.course.slug),
+            content_name: order.items.map((item) => item.course.title).join(", ").slice(0, 200),
+            value: order.totalBdt,
+          }}
+        />
+      ) : null}
       <div className="flex items-center gap-3">
         <span className="flex size-11 items-center justify-center rounded-full bg-primary/10 text-primary">
           {paid ? <CheckCircle2 className="size-5" /> : <Wallet className="size-5" />}

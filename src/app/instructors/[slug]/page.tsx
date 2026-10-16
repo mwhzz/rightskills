@@ -8,6 +8,7 @@ import { formatStudents } from "@/lib/format";
 import { getInstructorBySlug } from "@/lib/instructors";
 import { getDictionary } from "@/lib/i18n";
 import { getHomepageLearning, listPublishedCourses } from "@/lib/queries";
+import { metadataFrom } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -26,11 +27,16 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const person = getInstructorBySlug(slug, await loadCourses());
-  if (!person) return { title: "Instructor" };
-  return {
+  if (!person) return { title: "Instructor", robots: { index: false, follow: false } };
+  const description =
+    person.bio.trim() || `Courses taught by ${person.name} at Right Skills Bangladesh.`;
+  return metadataFrom({
     title: person.name,
-    description: person.bio,
-  };
+    description: description.slice(0, 320),
+    path: `/instructors/${person.slug}`,
+    index: true,
+    exact: false,
+  });
 }
 
 export default async function InstructorDetailPage({

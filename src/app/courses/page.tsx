@@ -4,14 +4,13 @@ import { getSession } from "@/lib/auth";
 import { getDictionary } from "@/lib/i18n";
 import { categories } from "@/lib/courses";
 import { getHomepageLearning, listPublishedCourses } from "@/lib/queries";
+import { pageMetadata } from "@/lib/page-seo";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Courses",
-  description:
-    "Browse Right Skills Bangladesh courses — web development, design, English, Excel, marketing, and career skills.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata("courses");
+}
 
 async function loadCourses() {
   try {

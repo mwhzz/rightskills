@@ -13,6 +13,7 @@ import {
   Menu,
   Receipt,
   ScrollText,
+  Search,
   Settings,
   Sparkles,
   Star,
@@ -44,6 +45,7 @@ const icons: Record<string, LucideIcon> = {
   "/admin/activity": ScrollText,
   "/admin/banners": ImageIcon,
   "/admin/offers": Tag,
+  "/admin/seo": Search,
   "/admin/settings": Settings,
 };
 

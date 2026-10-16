@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AuthForm } from "@/components/auth-form";
 import { getSession, safeNextPath } from "@/lib/auth";
 import { getDictionary } from "@/lib/i18n";
+import { pageMetadata } from "@/lib/page-seo";
+
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata("register");
+}
 
 export default async function RegisterPage({
   searchParams,

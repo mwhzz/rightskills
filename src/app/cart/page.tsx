@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { CartView } from "@/components/cart-view";
 import { getDictionary } from "@/lib/i18n";
+import { pageMetadata } from "@/lib/page-seo";
 
-export const metadata: Metadata = {
-  title: "Cart",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata("cart");
+}
 
 export default async function CartPage() {
   const dict = await getDictionary();

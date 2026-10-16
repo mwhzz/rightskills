@@ -81,6 +81,9 @@ model Course {
   coverPattern       String
   coverImage         String?
   promoVideoUrl      String?        @db.Text
+  seoTitle           String         @default("")
+  seoDescription     String         @default("") @db.Text
+  seoExtra           String         @default("") @db.Text
   teacherId          String?
   teacher            User?          @relation("TeacherCourses", fields: [teacherId], references: [id], onDelete: SetNull)
   modules            Module[]
@@ -213,6 +216,8 @@ model Setting {
   homeBanners     String @db.Text
   homeOffers      String @db.Text
   homeJustAdded   String @default("") @db.Text
+  pageSeo         String @default("") @db.Text
+  metaTracking    String @default("") @db.Text
 }
 
 model AuditLog {

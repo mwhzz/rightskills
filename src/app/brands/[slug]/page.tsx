@@ -16,10 +16,11 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const work = getStudioBrand(slug);
-  if (!work) return { title: "Brand" };
+  if (!work) return { title: "Brand", robots: { index: false, follow: false } };
   return {
     title: work.name,
     description: work.summary,
+    robots: { index: false, follow: false },
   };
 }
 

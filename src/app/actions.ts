@@ -12,7 +12,6 @@ import {
   createSession,
   getSession,
   normalizePhone,
-  requireRole,
   requireUser,
   safeNextPath,
   normalizePin,
@@ -28,6 +27,8 @@ import {
 } from "@/lib/queries";
 import { type PaymentMethod } from "@/lib/store";
 import { normalizePromoCode, placeOrderWithPromo, PromoError, quotePromo } from "@/lib/promo";
+import { cleanCanonical, cleanVerification, formFlag, SEO_PAGES, SITE_ORIGIN } from "@/lib/seo";
+import { cleanCode, cleanPixelId, cleanToken, parseMeta, trackMetaEvent } from "@/lib/meta";
 import {
   assertImageFile,
   isUploadFile,
@@ -106,6 +107,12 @@ export async function registerAction(formData: FormData) {
     phone: user.phone,
     name: user.name,
     role: user.role,
+  });
+  await trackMetaEvent({
+    eventName: "CompleteRegistration",
+    eventId: `reg_${user.id}`,
+    user: { phone: user.phone, name: user.name },
+    url: `${SITE_ORIGIN}/register`,
   });
   redirect(safeNextPath(next, user.role));
 }
@@ -201,6 +208,7 @@ export async function courseCheckoutAction(formData: FormData) {
 
   const session = await getSession();
   let userId = "";
+  let registered = false;
 
   if (session) {
     const me = await prisma.user.findUnique({ where: { id: session.id } });
@@ -253,6 +261,7 @@ export async function courseCheckoutAction(formData: FormData) {
         role: Role.student,
       });
       userId = created.id;
+      registered = true;
     }
   }
 
@@ -270,6 +279,23 @@ export async function courseCheckoutAction(formData: FormData) {
     if (error instanceof PromoError) return back(error.reason === "used" ? "promoUsed" : "promo");
     throw error;
   }
+  if (registered) {
+    await trackMetaEvent({
+      eventName: "CompleteRegistration",
+      eventId: `reg_${userId}`,
+      user: { email, phone, name },
+      url: `${SITE_ORIGIN}/checkout/success?order=${order.orderId}`,
+    });
+  }
+  await trackMetaEvent({
+    eventName: "InitiateCheckout",
+    eventId: `init_${order.orderId}`,
+    user: { email, phone, name },
+    contentIds: [course.slug],
+    contentName: course.title,
+    value: order.totalBdt,
+    url: `${SITE_ORIGIN}/checkout/success?order=${order.orderId}`,
+  });
   redirect(`/checkout/success?order=${order.orderId}`);
 }
 
@@ -334,6 +360,19 @@ export async function checkoutAction(formData: FormData) {
     throw error;
   }
   await setCartCookie([]);
+  const buyer = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { email: true, phone: true, name: true },
+  });
+  await trackMetaEvent({
+    eventName: "InitiateCheckout",
+    eventId: `init_${order.orderId}`,
+    user: buyer ?? undefined,
+    contentIds: dbCourses.map((course) => course.slug),
+    contentName: dbCourses.map((course) => course.title).join(", ").slice(0, 200),
+    value: order.totalBdt,
+    url: `${SITE_ORIGIN}/checkout/success?order=${order.orderId}`,
+  });
   redirect(`/checkout/success?order=${order.orderId}`);
 }
 
@@ -516,7 +555,10 @@ export async function approveOrderAction(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   const order = await prisma.order.findUnique({
     where: { id },
-    include: { items: true },
+    include: {
+      items: { include: { course: { select: { slug: true, title: true } } } },
+      user: { select: { email: true, phone: true, name: true } },
+    },
   });
   if (!order) redirect("/admin/orders");
 
@@ -540,6 +582,15 @@ export async function approveOrderAction(formData: FormData) {
     }
   });
   await logStaff("order.paid", `Marked ${order.orderId} paid`, order.orderId);
+  await trackMetaEvent({
+    eventName: "Purchase",
+    eventId: `purchase_${order.orderId}`,
+    user: order.user,
+    contentIds: order.items.map((item) => item.course.slug),
+    contentName: order.items.map((item) => item.course.title).join(", ").slice(0, 200),
+    value: order.totalBdt,
+    url: `${SITE_ORIGIN}/checkout/success?order=${order.orderId}`,
+  });
   redirect("/admin/orders");
 }
 
@@ -1078,6 +1129,12 @@ export async function saveCourseAction(
   const instructorName = String(formData.get("instructorName") ?? "").trim();
   const instructorTitle = String(formData.get("instructorTitle") ?? "").trim();
   const instructorBio = String(formData.get("instructorBio") ?? "").trim();
+  const seoTitle = String(formData.get("seoTitle") ?? "").trim().slice(0, 120);
+  const seoDescription = String(formData.get("seoDescription") ?? "").trim().slice(0, 320);
+  const seoExtra = JSON.stringify({
+    canonical: cleanCanonical(String(formData.get("seoCanonical") ?? "")),
+    index: formFlag(formData, "seoIndex", true),
+  });
   const coverFrom = String(formData.get("coverFrom") ?? "#EA6A1A").trim();
   const coverTo = String(formData.get("coverTo") ?? "#9A3412").trim();
   const coverPattern = String(formData.get("coverPattern") ?? "grid");
@@ -1172,6 +1229,9 @@ export async function saveCourseAction(
     coverFrom,
     coverTo,
     coverPattern,
+    seoTitle,
+    seoDescription,
+    seoExtra,
     teacherId: user.role === "teacher" ? user.id : user.id,
   };
 
@@ -1286,6 +1346,91 @@ async function rememberJustAddedCourse(id: string) {
   const saved = await readJustAdded();
   if (saved.courseIds.length === 0 || saved.courseIds.includes(id)) return;
   await writeJustAdded({ ...saved, courseIds: [id, ...saved.courseIds] });
+}
+
+export async function savePageSeoAction(formData: FormData) {
+  await requireAccess("settings");
+  const pages: Record<string, unknown> = {
+    site: {
+      googleVerification: cleanVerification(
+        String(formData.get("googleVerification") ?? ""),
+      ),
+    },
+  };
+  for (const page of SEO_PAGES) {
+    pages[page.key] = {
+      title: String(formData.get(`title-${page.key}`) ?? "").trim().slice(0, 120),
+      description: String(formData.get(`description-${page.key}`) ?? "")
+        .trim()
+        .slice(0, 320),
+      canonical: cleanCanonical(String(formData.get(`canonical-${page.key}`) ?? "")),
+      index: formFlag(formData, `index-${page.key}`, page.index),
+    };
+  }
+  await getSettings();
+  await prisma.setting.update({
+    where: { id: "default" },
+    data: { pageSeo: JSON.stringify(pages) },
+  });
+  clearPublicCache();
+  revalidatePath("/", "layout");
+  revalidatePath("/sitemap.xml");
+  revalidatePath("/robots.txt");
+  await logStaff("seo.save", "Updated Google indexing settings");
+  redirect("/admin/seo?saved=1");
+}
+
+export async function saveMetaPixelAction(formData: FormData) {
+  await requireAccess("settings");
+  const pixelRaw = String(formData.get("pixelId") ?? "").trim();
+  const pixelId = pixelRaw ? cleanPixelId(pixelRaw) : "";
+  if (pixelRaw && !pixelId) redirect("/admin/seo?meta=pixel");
+  const pasted = String(formData.get("accessToken") ?? "").trim();
+  if (pasted && !cleanToken(pasted)) redirect("/admin/seo?meta=token");
+  try {
+    // Admin writes must preserve the token currently in the database, even when
+    // another Passenger worker still has an older settings cache.
+    const settings = await getSettings({ fresh: true });
+    const current = parseMeta(settings.metaTracking);
+    let accessToken = current.accessToken;
+    if (formData.get("clearToken") === "1") accessToken = "";
+    else if (pasted) accessToken = cleanToken(pasted);
+    await prisma.setting.update({
+      where: { id: "default" },
+      data: {
+        metaTracking: JSON.stringify({
+          pixelId,
+          accessToken,
+          testEventCode: cleanCode(String(formData.get("testEventCode") ?? "")),
+        }),
+      },
+    });
+  } catch {
+    console.error("[Meta CAPI] Unable to save tracking settings");
+    redirect("/admin/seo?meta=storage");
+  }
+  clearPublicCache();
+  revalidatePath("/", "layout");
+  await logStaff("meta.save", pixelId ? "Updated Facebook pixel" : "Cleared Facebook pixel");
+  redirect("/admin/seo?saved=pixel");
+}
+
+export async function testMetaPixelAction() {
+  await requireAccess("settings");
+  const settings = await getSettings({ fresh: true });
+  const config = parseMeta(settings.metaTracking);
+  if (!config.pixelId || !config.accessToken) redirect("/admin/seo?metaTest=unconfigured");
+  if (!config.testEventCode) redirect("/admin/seo?metaTest=code");
+
+  const result = await trackMetaEvent({
+    eventName: "PageView",
+    eventId: `test_${crypto.randomUUID()}`,
+    url: SITE_ORIGIN,
+  });
+  if (result.status === "sent") redirect("/admin/seo?metaTest=sent");
+  if (result.status === "skipped") redirect("/admin/seo?metaTest=unconfigured");
+  const reason = result.code === 190 ? "token" : result.reason;
+  redirect(`/admin/seo?metaTest=${reason}`);
 }
 
 export async function saveJustAddedTitleAction(formData: FormData) {
@@ -1556,12 +1701,12 @@ export async function addLessonAction(formData: FormData) {
   const durationMin = Number(formData.get("durationMin") ?? 0);
   const preview = formData.get("preview") === "on";
   const videoUrl = normalizeVideoInput(formData.get("videoUrl"));
-  const module = await prisma.module.findUnique({
+  const courseModule = await prisma.module.findUnique({
     where: { id: moduleId },
     include: { course: true },
   });
-  if (!module || !title) redirect(courseMediaPath(courseId));
-  if (user.role === "teacher" && module.course.teacherId !== user.id) {
+  if (!courseModule || !title) redirect(courseMediaPath(courseId));
+  if (user.role === "teacher" && courseModule.course.teacherId !== user.id) {
     redirect("/admin/courses");
   }
   const last = await prisma.lesson.findFirst({

@@ -7,6 +7,8 @@ import { LocaleProvider } from "@/components/locale-provider";
 import { isMaintenanceBypass, MAINTENANCE_MODE } from "@/lib/maintenance";
 import { getLocale } from "@/lib/i18n";
 import { brand } from "@/lib/brand";
+import { getSettings } from "@/lib/queries";
+import { parseSiteSeo, SITE_ORIGIN } from "@/lib/seo";
 import "./globals.css";
 
 const sans = Figtree({
@@ -21,13 +23,24 @@ const heading = Bricolage_Grotesque({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: {
-    default: brand.name,
-    template: `%s · ${brand.name}`,
-  },
-  description: brand.description,
-};
+export async function generateMetadata(): Promise<Metadata> {
+  let google = "";
+  try {
+    const settings = await getSettings();
+    google = parseSiteSeo(settings.pageSeo).googleVerification;
+  } catch {
+    google = "";
+  }
+  return {
+    metadataBase: new URL(SITE_ORIGIN),
+    title: {
+      default: brand.name,
+      template: `%s · ${brand.name}`,
+    },
+    description: brand.description,
+    ...(google ? { verification: { google } } : {}),
+  };
+}
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const pathname = (await headers()).get("x-pathname") ?? "";
