@@ -36,6 +36,8 @@ After these commands succeed, activate the new build and restart the application
 
 Apply database migrations before starting a new build (`npx prisma migrate deploy`). In `/admin/seo`, save the Pixel ID and Conversions API token from Meta Events Manager. The page shows whether a token is saved; the password field stays empty and leaving it blank preserves the stored token.
 
+`Purchase` is sent only when staff call the customer and click **Confirm order** in `/admin/orders`. Checkout and payment submission do not send `Purchase`. Confirmation marks the order paid and unlocks its courses. Repeated or concurrent confirmations do not send another purchase. Phone confirmations use the customer's hashed contact details rather than the staff member's browser identity.
+
 To verify CAPI, save a test event code from Events Manager, then click **Send server test event**. A successful check confirms Meta accepted the event. Remove the test event code after testing. If a token was saved with an older build, paste the complete token again because older builds truncated it at 500 characters.
 
 Run the tracking regression checks with `node --test tests/meta-tracking.test.mjs`. These checks mock the database and Meta API and do not send real events.

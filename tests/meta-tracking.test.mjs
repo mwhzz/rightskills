@@ -110,7 +110,7 @@ test("Meta rejection, network errors, missing config and database errors have di
   assert.equal((await h.meta.trackMetaEvent(input)).reason, "configuration");
 });
 
-function actionHarness() {
+function actionHarness(options = {}) {
   const { meta } = serverHarness();
   let config = { ...originalConfig };
   let writeFailure = false;
@@ -120,23 +120,32 @@ function actionHarness() {
   const mocks = {
     "next/navigation": { redirect: (url) => { throw new Error(`REDIRECT:${url}`); } },
     "next/cache": { revalidatePath() {} }, "next/headers": {}, bcryptjs: {}, "@prisma/client": {},
-    "@/lib/db": { prisma: { setting: { update: async ({ data }) => {
+    "@/lib/db": { prisma: { ...options.prisma, setting: { update: async ({ data }) => {
       if (writeFailure) throw new Error("database write failed");
       config = JSON.parse(data.metaTracking); writes.push(config);
     } } } },
-    "@/lib/staff": { requireAccess: async (access) => assert.equal(access, "settings") },
+    "@/lib/staff": { requireAccess: async (access) => {
+      assert.equal(access, options.access ?? "settings");
+      if (options.denied) throw new Error("Forbidden");
+    } },
     "@/lib/audit": { logStaff: async () => {} },
     "@/lib/queries": { getSettings: async (options) => {
       assert.equal(options?.fresh, true, "saving must bypass stale worker caches");
       return { metaTracking: JSON.stringify(config) };
-    }, clearPublicCache() {} },
-    "@/lib/meta": { ...meta, trackMetaEvent: async (event) => { events.push(event); return trackResult; } },
+    }, clearPublicCache() {}, ...options.queries },
+    "@/lib/meta": { ...meta, trackMetaEvent: async (event) => {
+      options.onEvent?.(event);
+      events.push(event); return trackResult;
+    } },
     "@/lib/courses": { categories: [], levels: [] },
     "@/lib/seo": { SITE_ORIGIN: "https://example.com" },
   };
   for (const name of ["i18n/locale", "auth", "session", "promo", "uploads", "slug", "home-banners", "home-offers", "home-just-added", "video", "student-profile", "reviews"]) {
     mocks[`@/lib/${name}`] = {};
   }
+  mocks["@/lib/auth"] = options.auth ?? {};
+  mocks["@/lib/session"] = options.session ?? {};
+  mocks["@/lib/promo"] = options.promo ?? {};
   const actions = loadModule("src/app/actions.ts", mocks, { crypto: crypto.webcrypto });
   return {
     actions, writes, events, config: () => config,
@@ -265,4 +274,138 @@ test("course event waits for Pixel initialization and sends matching browser/ser
   const event = h.window.fbq.queue.find((args) => args[1] === "ViewContent");
   assert.equal(event[3].eventID, "course-view-1");
   assert.equal(h.requests.find((request) => request.event === "ViewContent").eventId, "course-view-1");
+});
+
+function orderHarness(status = "pending", options = {}) {
+  const order = {
+    id: "order-db-1", orderId: "RS-ORDER-1", userId: "customer-1", totalBdt: 600,
+    user: { id: "customer-1", name: "Customer", phone: "01712345678", email: "customer@example.com", role: "student" },
+    items: [{ courseId: "course-db-1", course: { slug: "course-1", title: "Course One" } }],
+  };
+  const state = { status, enrollmentWrites: 0, studentIncrements: 0, committed: false };
+  const snapshot = () => ({ ...order, status: state.status });
+  let transactionQueue = Promise.resolve();
+  const prisma = {
+    order: {
+      findUnique: async () => options.missing ? null : snapshot(),
+      findFirst: async () => {
+        const result = snapshot();
+        if (options.paymentRace) state.status = "paid";
+        return result;
+      },
+      updateMany: async ({ where, data }) => {
+        const filter = where.status;
+        const matches = !filter || (typeof filter === "string" ? state.status === filter
+          : filter.in ? filter.in.includes(state.status) : state.status !== filter.not);
+        if (where.id !== order.id || !matches) return { count: 0 };
+        state.status = data.status;
+        return { count: 1 };
+      },
+    },
+    enrollment: { upsert: async () => {
+      if (options.failEnrollment) throw new Error("Enrollment failed");
+      state.enrollmentWrites++;
+    } },
+    course: {
+      update: async () => { state.studentIncrements++; },
+      findMany: async () => [{ id: "course-db-1", slug: "course-1", title: "Course One", priceBdt: 600 }],
+    },
+    user: { findUnique: async () => order.user },
+    $transaction: (run) => {
+      const result = transactionQueue.then(async () => {
+        const before = { ...state };
+        try {
+          const confirmed = await run(prisma);
+          if (confirmed) state.committed = true;
+          return confirmed;
+        } catch (error) { Object.assign(state, before); throw error; }
+      });
+      transactionQueue = result.catch(() => {});
+      return result;
+    },
+  };
+  const harness = actionHarness({
+    access: "orders", prisma, denied: options.denied,
+    auth: { requireUser: async () => order.user, getSession: async () => order.user, normalizePhone: value => value },
+    queries: { getSettings: async () => ({ bkashNumber: "01712345678" }), getOwnedSlugsForUser: async () => [] },
+    session: { getCart: async () => ["course-1"], setCartCookie: async () => {} },
+    promo: { placeOrderWithPromo: async () => ({ orderId: order.orderId, totalBdt: order.totalBdt }) },
+    onEvent: event => {
+      if (event.eventName === "Purchase") {
+        assert.equal(state.committed, true, "Purchase must follow a committed confirmation");
+        assert.equal(state.status, "paid");
+      }
+    },
+  });
+  const form = new FormData();
+  form.set("id", order.id);
+  form.set("orderId", order.orderId);
+  form.set("trxId", "TEST-TRX-123");
+  form.set("payerNumber", order.user.phone);
+  return { ...harness, state, form };
+}
+
+test("checkout and payment submission do not send Purchase; staff confirmation does", async () => {
+  const h = orderHarness();
+  await assert.rejects(h.actions.checkoutAction(h.form), /REDIRECT:.*checkout\/success/);
+  assert.deepEqual(h.events.map(event => event.eventName), ["InitiateCheckout"]);
+  await assert.rejects(h.actions.submitTrxAction(h.form), /REDIRECT:.*submitted=1/);
+  assert.equal(h.state.status, "awaiting_review");
+  assert.equal(h.events.some(event => event.eventName === "Purchase"), false);
+  await assert.rejects(h.actions.approveOrderAction(h.form), /REDIRECT:.*admin\/orders/);
+  const purchase = h.events.find(event => event.eventName === "Purchase");
+  assert.equal(purchase.eventId, "purchase_RS-ORDER-1");
+  assert.equal(purchase.actionSource, "phone_call");
+  assert.equal(purchase.value, 600);
+  assert.equal(purchase.user.phone, "01712345678");
+  assert.equal(h.state.enrollmentWrites, 1);
+});
+
+test("repeat and concurrent confirmations send one Purchase and unlock courses once", async () => {
+  const h = orderHarness();
+  const results = await Promise.allSettled([
+    h.actions.approveOrderAction(h.form), h.actions.approveOrderAction(h.form),
+  ]);
+  for (const result of results) assert.match(result.reason.message, /REDIRECT:.*admin\/orders/);
+  await assert.rejects(h.actions.approveOrderAction(h.form), /REDIRECT:.*admin\/orders/);
+  assert.equal(h.events.length, 1);
+  assert.equal(h.state.enrollmentWrites, 1);
+  assert.equal(h.state.studentIncrements, 1);
+});
+
+test("paid, rejected, missing and unauthorized orders cannot trigger Purchase", async () => {
+  for (const [status, options] of [["paid", {}], ["rejected", {}], ["pending", { missing: true }], ["pending", { denied: true }]]) {
+    const h = orderHarness(status, options);
+    await assert.rejects(h.actions.approveOrderAction(h.form));
+    assert.equal(h.events.length, 0);
+    assert.equal(h.state.enrollmentWrites, 0);
+  }
+});
+
+test("failed confirmation rolls back the order and sends no Purchase", async () => {
+  const h = orderHarness("pending", { failEnrollment: true });
+  await assert.rejects(h.actions.approveOrderAction(h.form), /Enrollment failed/);
+  assert.equal(h.state.status, "pending");
+  assert.equal(h.events.length, 0);
+});
+
+test("stale reject and payment submissions cannot reopen a confirmed order", async () => {
+  const paid = orderHarness("paid");
+  await assert.rejects(paid.actions.rejectOrderAction(paid.form), /REDIRECT/);
+  assert.equal(paid.state.status, "paid");
+  const race = orderHarness("pending", { paymentRace: true });
+  await assert.rejects(race.actions.submitTrxAction(race.form), /REDIRECT/);
+  assert.equal(race.state.status, "paid");
+  await assert.rejects(race.actions.approveOrderAction(race.form), /REDIRECT/);
+  assert.equal(race.events.length, 0);
+});
+
+test("phone-confirmed Purchase uses customer hashes without the staff browser identity", async () => {
+  const { meta, requests } = serverHarness();
+  await meta.trackMetaEvent({ eventName: "Purchase", eventId: "purchase_order1",
+    actionSource: "phone_call", user: { phone: "01712345678", email: "customer@example.com" }, value: 600 });
+  const event = JSON.parse(requests[0].options.body).data[0];
+  assert.equal(event.action_source, "phone_call");
+  assert.equal(event.user_data.ph.length, 64);
+  for (const key of ["client_ip_address", "client_user_agent", "fbp", "fbc"]) assert.equal(event.user_data[key], undefined);
 });

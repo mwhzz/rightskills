@@ -484,14 +484,18 @@ export async function submitTrxAction(formData: FormData) {
     redirect(from === "success" ? successPath : "/account/orders");
   }
 
-  await prisma.order.update({
-    where: { id: order.id },
+  const submitted = await prisma.order.updateMany({
+    // A payment submission racing with staff confirmation cannot reopen a sale.
+    where: { id: order.id, status: { not: "paid" } },
     data: {
       trxId,
       status: "awaiting_review",
       ...(payerNumber ? { payerNumber } : {}),
     },
   });
+  if (submitted.count === 0) {
+    redirect(from === "success" ? successPath : "/account/orders");
+  }
   redirect(
     from === "success" ? `${successPath}&submitted=1` : "/account/orders?submitted=1"
   );
@@ -560,13 +564,17 @@ export async function approveOrderAction(formData: FormData) {
       user: { select: { email: true, phone: true, name: true } },
     },
   });
-  if (!order) redirect("/admin/orders");
+  if (!order || (order.status !== "pending" && order.status !== "awaiting_review")) {
+    redirect("/admin/orders");
+  }
 
-  await prisma.$transaction(async (tx) => {
-    await tx.order.update({
-      where: { id },
+  const confirmed = await prisma.$transaction(async (tx) => {
+    // Only one request can claim the confirmation, including concurrent clicks.
+    const changed = await tx.order.updateMany({
+      where: { id, status: { in: ["pending", "awaiting_review"] } },
       data: { status: "paid" },
     });
+    if (changed.count === 0) return false;
     for (const item of order.items) {
       await tx.enrollment.upsert({
         where: {
@@ -580,10 +588,16 @@ export async function approveOrderAction(formData: FormData) {
         data: { students: { increment: 1 } },
       });
     }
+    return true;
   });
-  await logStaff("order.paid", `Marked ${order.orderId} paid`, order.orderId);
+  if (!confirmed) redirect("/admin/orders");
+
+  clearPublicCache();
+  revalidatePath("/admin/orders");
+  await logStaff("order.paid", `Confirmed ${order.orderId} after customer call`, order.orderId);
   await trackMetaEvent({
     eventName: "Purchase",
+    actionSource: "phone_call",
     eventId: `purchase_${order.orderId}`,
     user: order.user,
     contentIds: order.items.map((item) => item.course.slug),
@@ -599,11 +613,14 @@ export async function rejectOrderAction(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   const order = await prisma.order.findUnique({ where: { id } });
   if (!order) redirect("/admin/orders");
-  await prisma.order.update({
-    where: { id },
+  const rejected = await prisma.order.updateMany({
+    // A stale Reject form must never reverse a confirmed purchase.
+    where: { id, status: { in: ["pending", "awaiting_review"] } },
     data: { status: "rejected" },
   });
-  await logStaff("order.rejected", `Rejected ${order.orderId}`, order.orderId);
+  if (rejected.count > 0) {
+    await logStaff("order.rejected", `Rejected ${order.orderId}`, order.orderId);
+  }
   redirect("/admin/orders");
 }
 

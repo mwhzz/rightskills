@@ -101,6 +101,7 @@ function cookieValue(cookie: string, name: string) {
 export async function trackMetaEvent(input: {
   eventName: string;
   eventId: string;
+  actionSource?: "website" | "phone_call";
   url?: string;
   user?: MetaUser;
   contentIds?: string[];
@@ -128,7 +129,10 @@ export async function trackMetaEvent(input: {
   }
 
   try {
-    const headerList = await headers().catch(() => null);
+    const actionSource = input.actionSource ?? "website";
+    // Staff confirming a phone order are not the customer. Do not attach their
+    // browser's cookies, IP address, or user agent to the customer's Purchase.
+    const headerList = actionSource === "website" ? await headers().catch(() => null) : null;
     const forwarded = headerList?.get("x-forwarded-for") ?? "";
     const ip = input.ip || forwarded.split(",")[0]?.trim() || headerList?.get("x-real-ip") || "";
     const userAgent = input.userAgent || headerList?.get("user-agent") || "";
@@ -163,7 +167,7 @@ export async function trackMetaEvent(input: {
           event_name: input.eventName,
           event_time: Math.floor(Date.now() / 1000),
           event_id: input.eventId.slice(0, 80),
-          action_source: "website",
+          action_source: actionSource,
           event_source_url: input.url || SITE_ORIGIN,
           user_data: userData,
           custom_data: customData,

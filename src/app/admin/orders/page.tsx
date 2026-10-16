@@ -111,8 +111,8 @@ export default async function AdminOrdersPage({
     <div className="mx-auto w-full max-w-6xl">
       <h1 className="font-heading text-3xl font-semibold tracking-tight">Orders</h1>
       <p className="mt-2 max-w-2xl text-base text-muted-foreground">
-        Check the paid-from number against your bKash or Nagad app, then mark
-        paid to unlock the course. Reject if nothing matches.
+        Call the customer and verify their payment, then confirm the order to
+        unlock the course and send the Purchase event to Facebook.
       </p>
 
       <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-3">
@@ -305,7 +305,7 @@ export default async function AdminOrdersPage({
                   <form action={approveOrderAction}>
                     <input type="hidden" name="id" value={order.id} />
                     <button type="submit" className={cn(buttonVariants({ size: "sm" }))}>
-                      Mark paid
+                      Confirm order
                     </button>
                   </form>
                   <form action={rejectOrderAction}>
