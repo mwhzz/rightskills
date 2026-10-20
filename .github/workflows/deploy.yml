@@ -1,0 +1,92 @@
+name: Deploy to Droplet
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Build and switch on the Droplet
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: ${{ secrets.DROPLET_USER || 'root' }}
+          password: ${{ secrets.DROPLET_PASSWORD }}
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          command_timeout: 25m
+          script: |
+            set -euo pipefail
+            export PATH=/usr/local/bin:$PATH
+            BASE=/var/www
+            LINK=$BASE/rightskills
+            SRC=$BASE/rs-src
+            REPO=https://github.com/${{ github.repository }}.git
+
+            # Fetch the pushed commit into a separate checkout.
+            if [ ! -d "$SRC/.git" ]; then
+              git clone --quiet "$REPO" "$SRC"
+            fi
+            git -C "$SRC" fetch --quiet origin main
+            git -C "$SRC" reset --quiet --hard ${{ github.sha }}
+            echo "commit $(git -C "$SRC" log -1 --oneline)"
+
+            # Build into the copy that is not live, so the site keeps serving.
+            if [ ! -L "$LINK" ]; then
+              mv "$LINK" "$BASE/rs-a"
+              ln -s "$BASE/rs-a" "$LINK"
+            fi
+            CURRENT=$(readlink -f "$LINK")
+            if [ "$CURRENT" = "$BASE/rs-a" ]; then NEXT=$BASE/rs-b; else NEXT=$BASE/rs-a; fi
+            echo "live $CURRENT, building $NEXT"
+
+            mkdir -p "$BASE/rs-data"
+            if [ ! -L "$CURRENT/uploads" ]; then
+              if [ -d "$CURRENT/uploads" ]; then
+                rm -rf "$BASE/rs-data/uploads"
+                mv "$CURRENT/uploads" "$BASE/rs-data/uploads"
+              else
+                mkdir -p "$BASE/rs-data/uploads"
+              fi
+              ln -s "$BASE/rs-data/uploads" "$CURRENT/uploads"
+            fi
+
+            # Start from the live copy (keeps .env and node_modules), then lay the new code over it.
+            mkdir -p "$NEXT"
+            rsync -a --delete --exclude .next --exclude uploads --exclude .git "$CURRENT/" "$NEXT/"
+            rsync -a --delete \
+              --exclude .git --exclude '.env*' --exclude node_modules \
+              --exclude .next --exclude uploads \
+              "$SRC/" "$NEXT/"
+            rm -rf "$NEXT/uploads"
+            ln -s "$BASE/rs-data/uploads" "$NEXT/uploads"
+            chmod 600 "$NEXT/.env" || true
+
+            cd "$NEXT"
+            npm install --no-audit --no-fund
+            npm run db:migrate
+            export NODE_OPTIONS=--max-old-space-size=768
+            npm run build
+
+            ln -sfn "$NEXT" "$LINK"
+            systemctl restart rightskills
+            for i in $(seq 1 30); do
+              sleep 2
+              code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 8 http://127.0.0.1:3000/ || true)
+              if [ "$code" = "200" ]; then
+                echo "live on $NEXT"
+                exit 0
+              fi
+            done
+
+            echo "New build did not answer, switching back to $CURRENT"
+            ln -sfn "$CURRENT" "$LINK"
+            systemctl restart rightskills
+            exit 1
