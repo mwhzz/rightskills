@@ -1,8 +1,10 @@
+import { AnalyticsTags } from "@/components/analytics-tags";
 import { AppHeader } from "@/components/app-header";
 import { MetaPixel } from "@/components/meta-pixel";
 import { MobileDock } from "@/components/mobile-dock";
 import { SiteFooter } from "@/components/site-footer";
 import { getSession } from "@/lib/auth";
+import { parseAnalytics } from "@/lib/analytics";
 import { getDictionary } from "@/lib/i18n";
 import { parseMeta } from "@/lib/meta";
 import { getHomepageLearning, getSettings } from "@/lib/queries";
@@ -18,10 +20,12 @@ export async function AppChrome({ children }: { children: React.ReactNode }) {
     : null;
   const continueItem = learning?.continueItem;
   const pixelId = parseMeta(settings?.metaTracking).pixelId;
+  const analytics = parseAnalytics(settings?.analyticsTracking);
 
   return (
     <>
       {pixelId ? <MetaPixel pixelId={pixelId} /> : null}
+      <AnalyticsTags {...analytics} />
       <AppHeader />
       <main className="flex-1">{children}</main>
       <SiteFooter

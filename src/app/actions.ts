@@ -29,6 +29,7 @@ import { type PaymentMethod } from "@/lib/store";
 import { normalizePromoCode, placeOrderWithPromo, PromoError, quotePromo } from "@/lib/promo";
 import { cleanCanonical, cleanVerification, formFlag, SEO_PAGES, SITE_ORIGIN } from "@/lib/seo";
 import { cleanCode, cleanPixelId, cleanToken, parseMeta, trackMetaEvent } from "@/lib/meta";
+import { cleanClarityId, cleanGaId, cleanGtmId } from "@/lib/analytics";
 import {
   assertImageFile,
   isUploadFile,
@@ -1430,6 +1431,33 @@ export async function saveMetaPixelAction(formData: FormData) {
   revalidatePath("/", "layout");
   await logStaff("meta.save", pixelId ? "Updated Facebook pixel" : "Cleared Facebook pixel");
   redirect("/admin/seo?saved=pixel");
+}
+
+export async function saveAnalyticsAction(formData: FormData) {
+  await requireAccess("settings");
+  const read = (key: string) => String(formData.get(key) ?? "").trim();
+  const gtmRaw = read("gtmId");
+  const gaRaw = read("gaId");
+  const clarityRaw = read("clarityId");
+  const gtmId = gtmRaw ? cleanGtmId(gtmRaw) : "";
+  const gaId = gaRaw ? cleanGaId(gaRaw) : "";
+  const clarityId = clarityRaw ? cleanClarityId(clarityRaw) : "";
+  if (gtmRaw && !gtmId) redirect("/admin/seo?analytics=gtm");
+  if (gaRaw && !gaId) redirect("/admin/seo?analytics=ga");
+  if (clarityRaw && !clarityId) redirect("/admin/seo?analytics=clarity");
+  try {
+    await prisma.setting.update({
+      where: { id: "default" },
+      data: { analyticsTracking: JSON.stringify({ gtmId, gaId, clarityId }) },
+    });
+  } catch {
+    console.error("[Analytics] Unable to save tracking settings");
+    redirect("/admin/seo?analytics=storage");
+  }
+  clearPublicCache();
+  revalidatePath("/", "layout");
+  await logStaff("analytics.save", "Updated Google Tag Manager, Analytics, and Clarity");
+  redirect("/admin/seo?saved=analytics");
 }
 
 export async function testMetaPixelAction() {

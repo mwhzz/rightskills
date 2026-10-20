@@ -1,4 +1,5 @@
-import { saveMetaPixelAction, savePageSeoAction, testMetaPixelAction } from "@/app/actions";
+import { saveAnalyticsAction, saveMetaPixelAction, savePageSeoAction, testMetaPixelAction } from "@/app/actions";
+import { parseAnalytics } from "@/lib/analytics";
 import { parseMeta } from "@/lib/meta";
 import { parsePageSeo, parseSiteSeo, SEO_PAGES, SITE_ORIGIN } from "@/lib/seo";
 import { getSettings } from "@/lib/queries";
@@ -8,6 +9,13 @@ export const dynamic = "force-dynamic";
 
 const fieldClass =
   "mt-1.5 h-11 w-full rounded-xl border border-[#eadfd4] bg-[#fffaf6] px-3 text-sm text-[#2a1810]";
+
+const analyticsMessages: Record<string, string> = {
+  gtm: "The Tag Manager ID should look like GTM-XXXXXXX. Copy it from the top of your Tag Manager workspace.",
+  ga: "The Measurement ID should look like G-XXXXXXXXXX. Find it in Google Analytics under Admin > Data streams.",
+  clarity: "The Clarity project ID is the short code in Settings > Overview, for example abcd1234ef.",
+  storage: "Analytics settings were not saved. Check the database connection and pending migrations, then try again.",
+};
 
 const testMessages: Record<string, string> = {
   sent: "Meta accepted the server test event. Check Test events in Events Manager.",
@@ -22,10 +30,10 @@ const testMessages: Record<string, string> = {
 export default async function AdminSeoPage({
   searchParams,
 }: {
-  searchParams: Promise<{ saved?: string; meta?: string; metaTest?: string }>;
+  searchParams: Promise<{ saved?: string; meta?: string; metaTest?: string; analytics?: string }>;
 }) {
   await requireAccess("settings");
-  const { saved, meta, metaTest } = await searchParams;
+  const { saved, meta, metaTest, analytics: analyticsError } = await searchParams;
   const settings = await getSettings({ fresh: true }).catch(() => null);
   if (!settings) {
     return (
@@ -40,6 +48,7 @@ export default async function AdminSeoPage({
   const savedSeo = parsePageSeo(settings?.pageSeo);
   const site = parseSiteSeo(settings?.pageSeo);
   const pixel = parseMeta(settings?.metaTracking);
+  const analytics = parseAnalytics(settings?.analyticsTracking);
 
   return (
     <div className="mx-auto w-full max-w-3xl">
@@ -161,6 +170,72 @@ export default async function AdminSeoPage({
         <p className="mt-2 text-xs leading-5 text-[#7a5b4a]">
           Save your tracking settings and test event code first. This checks the saved token with Meta.
         </p>
+      </form>
+
+      {saved === "analytics" ? (
+        <p className="mt-6 rounded-2xl bg-[#fff1e6] px-4 py-3 text-sm text-[#2a1810]">
+          Analytics saved. Tags load on the public site within a minute. Admin pages are never tracked.
+        </p>
+      ) : null}
+      {analyticsError && analyticsMessages[analyticsError] ? (
+        <p role="alert" className="mt-6 rounded-2xl bg-[#fff1e6] px-4 py-3 text-sm text-[#2a1810]">
+          {analyticsMessages[analyticsError]}
+        </p>
+      ) : null}
+
+      <form action={saveAnalyticsAction} className="mt-6 rounded-[1.5rem] bg-card p-4 shadow-[0_18px_40px_-28px_rgba(80,40,10,0.45)] ring-1 ring-black/5 sm:p-6">
+        <h2 className="font-heading text-lg font-semibold text-[#2a1810]">Google & Microsoft Clarity</h2>
+        <p className="mt-2 text-sm leading-6 text-[#7a5b4a]">
+          These load on every public page. Course views and checkouts are also sent
+          as view_item and begin_checkout ecommerce events. Leave a field blank to turn it off.
+        </p>
+        <p role="status" className="mt-3 text-sm font-medium text-[#2a1810]">
+          Tag Manager: {analytics.gtmId ? "on" : "off"}. Google Analytics: {analytics.gaId ? "on" : "off"}. Clarity: {analytics.clarityId ? "on" : "off"}.
+        </p>
+        <label className="mt-4 block">
+          <span className="text-xs font-medium text-[#8a6856]">Google Tag Manager container ID</span>
+          <input
+            name="gtmId"
+            defaultValue={analytics.gtmId}
+            maxLength={20}
+            autoCapitalize="characters"
+            placeholder="GTM-XXXXXXX"
+            className={fieldClass}
+          />
+        </label>
+        <label className="mt-4 block">
+          <span className="text-xs font-medium text-[#8a6856]">Google Analytics 4 Measurement ID</span>
+          <input
+            name="gaId"
+            defaultValue={analytics.gaId}
+            maxLength={20}
+            autoCapitalize="characters"
+            placeholder="G-XXXXXXXXXX"
+            className={fieldClass}
+          />
+          <span className="mt-1 block text-[11px] text-[#a67c64]">
+            Optional. If your GA4 tag is already set up inside Tag Manager, leave this blank, or every visit is counted twice.
+          </span>
+        </label>
+        <label className="mt-4 block">
+          <span className="text-xs font-medium text-[#8a6856]">Microsoft Clarity project ID</span>
+          <input
+            name="clarityId"
+            defaultValue={analytics.clarityId}
+            maxLength={20}
+            placeholder="abcd1234ef"
+            className={fieldClass}
+          />
+          <span className="mt-1 block text-[11px] text-[#a67c64]">
+            In Clarity, open Settings &gt; Overview and copy the Project ID.
+          </span>
+        </label>
+        <button
+          type="submit"
+          className="mt-5 inline-flex h-11 items-center justify-center rounded-full bg-[#2a1810] px-5 text-sm font-medium text-[#fff6ee]"
+        >
+          Save analytics
+        </button>
       </form>
 
       <form action={savePageSeoAction} className="mt-6 flex flex-col gap-4">

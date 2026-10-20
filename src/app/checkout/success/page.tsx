@@ -12,6 +12,8 @@ import { coverImageSrc } from "@/lib/cover-image";
 import { prisma } from "@/lib/db";
 import { parseMeta } from "@/lib/meta";
 import { MetaEvent } from "@/components/meta-pixel";
+import { AnalyticsEvent } from "@/components/analytics-tags";
+import { parseAnalytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -67,6 +69,7 @@ export default async function CheckoutSuccessPage({
   const methodLabel = order.method === "nagad" ? "Nagad" : "bKash";
   const paid = order.status === "paid";
   const pixelId = parseMeta(settings.metaTracking).pixelId;
+  const analytics = parseAnalytics(settings.analyticsTracking);
 
   return (
     <div className="mx-auto w-full max-w-lg px-4 py-10 sm:px-6 sm:py-14">
@@ -80,6 +83,19 @@ export default async function CheckoutSuccessPage({
             content_name: order.items.map((item) => item.course.title).join(", ").slice(0, 200),
             value: order.totalBdt,
           }}
+        />
+      ) : null}
+      {(analytics.gtmId || analytics.gaId) && !paid ? (
+        <AnalyticsEvent
+          event="begin_checkout"
+          value={order.totalBdt}
+          items={order.items.map((item) => ({
+            id: item.course.slug,
+            name: item.course.title,
+            price: item.priceBdt,
+          }))}
+          gtm={Boolean(analytics.gtmId)}
+          ga={Boolean(analytics.gaId)}
         />
       ) : null}
       <div className="flex items-center gap-3">

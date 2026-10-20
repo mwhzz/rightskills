@@ -218,6 +218,7 @@ model Setting {
   homeJustAdded   String @default("") @db.Text
   pageSeo         String @default("") @db.Text
   metaTracking    String @default("") @db.Text
+  analyticsTracking String @default("") @db.Text
 }
 
 model AuditLog {

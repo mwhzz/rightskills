@@ -43,6 +43,8 @@ import { courseJsonLd } from "@/lib/seo";
 import { parseMeta } from "@/lib/meta";
 import { JsonLd } from "@/components/json-ld";
 import { MetaEvent } from "@/components/meta-pixel";
+import { AnalyticsEvent } from "@/components/analytics-tags";
+import { parseAnalytics } from "@/lib/analytics";
 
 export const dynamic = "force-dynamic";
 
@@ -147,6 +149,7 @@ export default async function CourseDetailPage({
     getSettings().catch(() => null),
   ]);
   const pixelId = parseMeta(settings?.metaTracking).pixelId;
+  const analytics = parseAnalytics(settings?.analyticsTracking);
 
   return (
     <div className="pb-28 lg:pb-0">
@@ -159,6 +162,15 @@ export default async function CourseDetailPage({
             content_name: course.title,
             value: course.priceBdt,
           }}
+        />
+      ) : null}
+      {analytics.gtmId || analytics.gaId ? (
+        <AnalyticsEvent
+          event="view_item"
+          value={course.priceBdt}
+          items={[{ id: course.slug, name: course.title, price: course.priceBdt }]}
+          gtm={Boolean(analytics.gtmId)}
+          ga={Boolean(analytics.gaId)}
         />
       ) : null}
       <JsonLd
