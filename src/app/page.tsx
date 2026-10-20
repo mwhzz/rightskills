@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { ContinueStrip } from "@/components/home/continue-strip";
 import { CourseRail } from "@/components/home/course-rail";
 import { HomeFaq } from "@/components/home/home-faq";
@@ -21,8 +22,13 @@ import {
 import { defaultHomeBanners } from "@/lib/home-banners";
 import { defaultHomeOffers } from "@/lib/home-offers";
 import { buildInstructors } from "@/lib/instructors";
+import { pageMetadata } from "@/lib/page-seo";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata("home");
+}
 
 async function loadHome() {
   try {

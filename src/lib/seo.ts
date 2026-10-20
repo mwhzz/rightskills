@@ -184,6 +184,12 @@ export function metadataFrom(input: {
 }): Metadata {
   const canonical = absoluteUrl(input.canonical || "") || pageUrl(input.path);
   const exact = input.exact !== false;
+  const image = {
+    url: `${SITE_ORIGIN}/og-image?title=${encodeURIComponent(input.title)}`,
+    width: 1200,
+    height: 630,
+    alt: input.title,
+  };
   return {
     title: exact ? { absolute: input.title } : input.title,
     description: input.description,
@@ -199,6 +205,13 @@ export function metadataFrom(input: {
       url: canonical,
       siteName: brand.name,
       type: "website",
+      images: [image],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: input.title,
+      description: input.description,
+      images: [image.url],
     },
   };
 }

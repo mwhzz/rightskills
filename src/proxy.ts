@@ -7,6 +7,13 @@ export function proxy(request: NextRequest) {
   requestHeaders.set("x-pathname", request.nextUrl.pathname);
   const pathname = request.nextUrl.pathname;
 
+  // Send www to the main domain so Google sees one site, not two.
+  const host = (request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? "").split(",")[0].trim();
+  if (host.startsWith("www.")) {
+    const target = new URL(`${pathname}${request.nextUrl.search}`, `https://${host.slice(4)}`);
+    return NextResponse.redirect(target, 308);
+  }
+
   if (
     MAINTENANCE_MODE &&
     !isMaintenanceBypass(pathname)
